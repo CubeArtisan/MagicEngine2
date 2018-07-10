@@ -10,6 +10,8 @@
 #include "guid.hpp"
 
 #include "changeset.h"
+#include "cost.h"
+#include "mana.h"
 #include "player.h"
 
 enum CardSuperType {
@@ -71,20 +73,6 @@ enum CardSubType {
     
     FIRSTINSTANTTYPE = FIRSTSORCERYTYPE,
     LASTINSTANTTYPE = LASTSORCERYTYPE
-};
-
-enum Color {
-    WHITE,
-    BLUE,
-    BLACK,
-    RED,
-    GREEN
-};
-
-class Cost {
-public:
-    virtual bool canPay(Environment& env);
-    virtual Changeset payCost(Environment& env);
 };
 
 class ActivatedAbility;

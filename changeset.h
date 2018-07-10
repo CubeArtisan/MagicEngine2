@@ -42,6 +42,18 @@ public:
     int amount;
 };
 
+class AddMana {
+public:
+    xg::Guid player;
+    Mana amount;
+};
+
+class RemoveMana {
+public:
+    xg::Guid player;
+    Mana amount;
+};
+
 class ObjectCreation {
 public:
     xg::Guid zone;
@@ -53,6 +65,8 @@ class Changeset {
     std::vector<AddPlayerCounter> playerCounters;
     std::vector<AddPermanentCounter> permanentCounters;
     std::vector<ObjectCreation> creation;
+    AddMana addMana;
+    RemoveMana removeMana;
 };
 
 #endif
