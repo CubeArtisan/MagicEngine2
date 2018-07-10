@@ -21,7 +21,38 @@ enum PermanentCounterType {
 
 class Environment;
 
+class ObjectMovement {
+public:
+    xg::Guid sourceZone;
+    xg::Guid destinationZone;
+    xg::Guid object;
+};
+
+class AddPlayerCounter {
+public:
+    xg::Guid object;
+    PlayerCounterType counterType;
+    int amount;
+};
+
+class AddPermanentCounter {
+public:
+    xg::Guid object;
+    PermanentCounterType counterType;
+    int amount;
+};
+
+class ObjectCreation {
+public:
+    xg::Guid zone;
+    Targetable created;
+};
+
 class Changeset {
+    std::vector<ObjectMovement> moves;
+    std::vector<AddPlayerCounter> playerCounters;
+    std::vector<AddPermanentCounter> permanentCounters;
+    std::vector<ObjectCreation> creation;
 };
 
 class Strategy {
@@ -115,8 +146,8 @@ enum Color {
 
 class Cost {
 public:
-    virtual bool canPay(Environement& env);
-    virtual Changeset payCost(Environement& env);
+    virtual bool canPay(Environment& env);
+    virtual Changeset payCost(Environment& env);
 };
 
 class Ability;
@@ -155,33 +186,57 @@ public:
     Changeset apply_effect(const Environment& env);
 };
 
-class EventHandler {
-};
-
+using EventHandler = std::function<std::vector<Changeset>(Changeset, Environment&)>;
 class PropertyHandler {
 };
 
-template<typename T>
-class PrivateZone : public Targetable {
-    public:
-        std::map<xg::Guid, std::vector<T>> objects;
+enum ZoneType {
+    HAND,
+    GRAVEYARD,
+    LIBRARY,
+    BATTLEFIELD,
+    STACK,
+    EXILE,
+    COMMAND
 };
 
 template<typename T>
-class PublicZone : public Targetable {
-    public:
-        std::vector<T> objects;
+class Zone : public Targetable {
+public:
+    ZoneType type;
+    std::vector<T> objects;
+};
+
+template<typename T>
+using PrivateZone = std::map<xg::Guid, Zone<T>>;
+
+enum StepOrPhase {
+    UNTAP,
+    UPKEEP,
+    DRAW,
+    PRECOMBATMAIN,
+    BEGINCOMBAT,
+    DECLAREATTACKERS,
+    DECLAREBLOCKERS,
+    FIRSTSTRIKEDAMAGE,
+    COMBATDAMAGE,
+    ENDCOMBAT,
+    POSTCOMBATMAIN,
+    END,
+    CLEANUP
 };
 
 class Environment {
 public:
+    std::map<xg::Guid, Targetable> gameObjects;
+
     PrivateZone<std::variant<Card, Token>> hand;
     PrivateZone<std::variant<Card, Token>> library;
-    PublicZone<std::variant<Card, Token>> graveyard;
-    PublicZone<std::variant<Card, Token>> battlefield;
-    PublicZone<std::variant<Card, Token, Ability>> stack;
-    PublicZone<std::variant<Card, Token>> exile;
-    PublicZone<std::variant<Card, Token, Emblem>> commandZone;
+    Zone<std::variant<Card, Token>> graveyard;
+    Zone<std::variant<Card, Token>> battlefield;
+    Zone<std::variant<Card, Token, Ability>> stack;
+    Zone<std::variant<Card, Token>> exile;
+    Zone<std::variant<Card, Token, Emblem>> command;
 
     std::map<xg::Guid, PermanentCounterType> PermanantCounters;
     std::map<xg::Guid, PlayerCounterType> PlayerCounters;
@@ -192,6 +247,8 @@ public:
     std::vector<PropertyHandler> propertyHandlers;
 
     std::vector<Changeset> changes;
+
+    StepOrPhase currentPhase;
 
 private:
 };
