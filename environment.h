@@ -62,6 +62,8 @@ public:
     Zone<std::variant<Card, Token, Ability>> stack;
     Zone<std::variant<Card, Token>> exile;
     Zone<std::variant<Card, Token, Emblem>> command;
+    
+    std::map<xg::Guid, Mana> manaPools;
 
     std::map<xg::Guid, PermanentCounterType> PermanantCounters;
     std::map<xg::Guid, PlayerCounterType> PlayerCounters;
