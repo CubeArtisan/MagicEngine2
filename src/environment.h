@@ -35,33 +35,17 @@ public:
 template<typename T>
 using PrivateZone = std::map<xg::Guid, Zone<T>>;
 
-enum StepOrPhase {
-    UNTAP,
-    UPKEEP,
-    DRAW,
-    PRECOMBATMAIN,
-    BEGINCOMBAT,
-    DECLAREATTACKERS,
-    DECLAREBLOCKERS,
-    FIRSTSTRIKEDAMAGE,
-    COMBATDAMAGE,
-    ENDCOMBAT,
-    POSTCOMBATMAIN,
-    END,
-    CLEANUP
-};
-
 class Environment {
 public:
     std::map<xg::Guid, Targetable> gameObjects;
 
-    PrivateZone<std::variant<Card, Token>> hand;
-    PrivateZone<std::variant<Card, Token>> library;
+    PrivateZone<std::variant<Card, Token>> hands;
+    PrivateZone<std::variant<Card, Token>> libraries;
     Zone<std::variant<Card, Token>> graveyard;
     Zone<std::variant<Card, Token>> battlefield;
     Zone<std::variant<Card, Token, Ability>> stack;
     Zone<std::variant<Card, Token>> exile;
-    Zone<std::variant<Card, Token, Emblem>> command;
+    Zone<std::variant<Card, Emblem>> command;
     
     std::map<xg::Guid, Mana> manaPools;
 
@@ -76,6 +60,7 @@ public:
     std::vector<Changeset> changes;
 
     StepOrPhase currentPhase;
+    xg::Guid currentPlayer;
 
-private:
+    Changeset passPriority(xg::Guid player);
 };

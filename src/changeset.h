@@ -7,11 +7,36 @@
 #include "guid.hpp"
 
 #include "mana.h"
-class Environment;
 
-class Targetable {
-public:
+struct Environment;
+
+struct Targetable {
     xg::Guid id;
+
+    Targetable();
+};
+
+template<typename T, typename Variant>
+T getBaseClass(Variant variant){
+    // For each index see if its there and if so extract and return
+    auto visitor = [](T& base) -> T&{ return base; };
+    return std::visit(visitor, variant);
+}
+
+enum StepOrPhase {
+    UNTAP,
+    UPKEEP,
+    DRAW,
+    PRECOMBATMAIN,
+    BEGINCOMBAT,
+    DECLAREATTACKERS,
+    DECLAREBLOCKERS,
+    FIRSTSTRIKEDAMAGE,
+    COMBATDAMAGE,
+    ENDCOMBAT,
+    POSTCOMBATMAIN,
+    END,
+    CLEANUP
 };
 
 enum PlayerCounterType {
@@ -22,52 +47,65 @@ enum PermanentCounterType {
     PLUSONEPLUSONECOUNTER
 };
 
-class ObjectMovement {
-public:
+struct ObjectMovement {
+    xg::Guid object;
     xg::Guid sourceZone;
     xg::Guid destinationZone;
-    xg::Guid object;
 };
 
-class AddPlayerCounter {
-public:
+struct AddPlayerCounter {
     xg::Guid object;
     PlayerCounterType counterType;
     int amount;
 };
 
-class AddPermanentCounter {
-public:
+struct AddPermanentCounter {
     xg::Guid object;
     PermanentCounterType counterType;
     int amount;
 };
 
-class AddMana {
-public:
+struct AddMana {
     xg::Guid player;
     Mana amount;
 };
 
-class RemoveMana {
-public:
+struct RemoveMana {
     xg::Guid player;
     Mana amount;
 };
 
-class ObjectCreation {
-public:
+struct ObjectCreation {
     xg::Guid zone;
     Targetable created;
 };
 
-class Changeset {
+struct ControlChange {
+    xg::Guid object;
+    xg::Guid originalController;
+    xg::Guid newController;
+};
+
+struct RemoveObject {
+    xg::Guid object;
+    xg::Guid zone;
+};
+
+struct StepOrPhaseChange {
+    StepOrPhase starting;
+};
+
+struct Changeset {
     std::vector<ObjectMovement> moves;
     std::vector<AddPlayerCounter> playerCounters;
     std::vector<AddPermanentCounter> permanentCounters;
-    std::vector<ObjectCreation> creation;
+    std::vector<ObjectCreation> create;
+    std::vector<RemoveObject> remove;
+    std::vector<ControlChange> controlChanges;
     AddMana addMana;
     RemoveMana removeMana;
-};
+    bool millOut;
 
+    static Changeset drawCards(xg::Guid player, unsigned int amount, Environment& env);
+};
 #endif
