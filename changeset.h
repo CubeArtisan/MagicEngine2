@@ -6,6 +6,7 @@
 
 #include "guid.hpp"
 
+#include "mana.h"
 class Environment;
 
 class Targetable {

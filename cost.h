@@ -3,6 +3,8 @@
 
 #include "mana.h"
 
+class Environment;
+
 class Cost {
 public:
     virtual bool canPay(Environment& env);
@@ -11,10 +13,10 @@ public:
 
 class ManaCost : public Cost {
 public:
-    virtual bool canPay(Environement& env);
+    virtual bool canPay(Environment& env);
     virtual Changeset payCost(Environment& env);
 
 private:
     Mana mana;
-}
+};
 #endif
