@@ -8,17 +8,25 @@
 
 #include "mana.h"
 
-struct Environment;
+class Changeset;
+class Environment;
+
+class EventHandler {
+    std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&);
+};
+class PropertyHandler {
+};
+
 
 struct Targetable {
+    // This is mutable state
     xg::Guid id;
 
     Targetable();
 };
 
 template<typename T, typename Variant>
-T getBaseClass(Variant variant){
-    // For each index see if its there and if so extract and return
+T& getBaseClass(Variant& variant){
     auto visitor = [](T& base) -> T&{ return base; };
     return std::visit(visitor, variant);
 }
@@ -40,7 +48,9 @@ enum StepOrPhase {
 };
 
 enum PlayerCounterType {
-    POISONCOUNTER
+    POISONCOUNTER,
+    EXPERIENCECOUNTER,
+    ENERGYCOUNTER
 };
 
 enum PermanentCounterType {
@@ -51,6 +61,7 @@ struct ObjectMovement {
     xg::Guid object;
     xg::Guid sourceZone;
     xg::Guid destinationZone;
+    xg::Guid newObject { xg::newGuid() };
 };
 
 struct AddPlayerCounter {
@@ -86,6 +97,12 @@ struct ControlChange {
     xg::Guid newController;
 };
 
+struct LifeTotalChange {
+    xg::Guid player;
+    int oldValue;
+    int newValue;
+};
+
 struct RemoveObject {
     xg::Guid object;
     xg::Guid zone;
@@ -102,9 +119,15 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<ControlChange> controlChanges;
+    std::vector<LifeTotalChange> lifeTotalChanges;
+    std::vector<EventHandler> eventsToAdd;
+    std::vector<EventHandler> eventsToRemove;
+    std::vector<PropertyHandler> propertiesToAdd;
+    std::vector<PropertyHandler> propertiesToRemove;
     AddMana addMana;
     RemoveMana removeMana;
     bool millOut;
+    std::vector<xg::Guid> loseTheGame;
 
     static Changeset drawCards(xg::Guid player, unsigned int amount, Environment& env);
 };

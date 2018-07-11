@@ -78,13 +78,15 @@ enum CardSubType {
 class ActivatedAbility;
 class Token;
 class Emblem;
+class Player;
 
 class Card : public Targetable {
 public:
-    Player& owner;
+    xg::Guid owner;
+    // Move to environment
     Player& controller;
     std::vector<std::reference_wrapper<Targetable>> targets;
-    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
+    bool is_tapped;
 
     bool is_legal(int pos, Targetable& target);
     std::vector<bool> are_legal(std::vector<std::reference_wrapper<Targetable>>);

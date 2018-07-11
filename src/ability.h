@@ -24,7 +24,6 @@ public:
 class ActivatedAbility : public Ability {
 public:
     std::vector<Cost> costs;
-    std::vector<Cost> additionalCosts;
 };
 
 #endif

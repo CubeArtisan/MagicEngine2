@@ -17,7 +17,7 @@ Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, Environment
     }
     auto card = library.begin() + library.size() - amount;
     for(; card != library.end(); card++) {
-        Targetable c = getBaseClass<Targetable>(*card);
+        Targetable& c = getBaseClass<Targetable>(*card);
         result.moves.push_back(ObjectMovement{c.id, libraryZone.id, handZone.id});
     }
     return result;

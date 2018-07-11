@@ -1,3 +1,6 @@
+#ifndef _ENVIRONMENT_H_
+#define _ENVIRONMENT_H_
+
 #include <functional>
 #include <map>
 #include <set>
@@ -10,10 +13,6 @@
 #include "player.h"
 #include "card.h"
 #include "ability.h"
-
-using EventHandler = std::function<std::vector<Changeset>(Changeset, Environment&)>;
-class PropertyHandler {
-};
 
 enum ZoneType {
     HAND,
@@ -48,6 +47,9 @@ public:
     Zone<std::variant<Card, Emblem>> command;
     
     std::map<xg::Guid, Mana> manaPools;
+    // Does this maintain across undoing turn changes
+    std::map<xg::Guid, unsigned int> landPlays;
+    std::vector<Player> players;
 
     std::map<xg::Guid, PermanentCounterType> PermanantCounters;
     std::map<xg::Guid, PlayerCounterType> PlayerCounters;
@@ -64,3 +66,5 @@ public:
 
     Changeset passPriority(xg::Guid player);
 };
+
+#endif
