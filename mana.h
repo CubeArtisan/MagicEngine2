@@ -1,6 +1,8 @@
 #ifndef _MANA_H_
 #define _MANA_H_
 
+#include <set>
+
 enum Color {
     WHITE,
     BLUE,
@@ -12,9 +14,16 @@ enum Color {
 
 class Mana {
 public:
-    std::vector<Color> colors;
-    unsigned int generic;
+    Mana();
+    Mana(unsigned int generic, std::multiset<Color> manaString);
 
+    void add(Mana& other);
+    bool contains(Mana& other);
+    bool subtract(Mana& other);
     unsigned int cmc();
+
+private:
+    unsigned int generic;
+    std::multiset<Color> manaString;
 };
 #endif
