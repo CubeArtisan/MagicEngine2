@@ -11,8 +11,6 @@ class Cost {
 public:
     virtual bool canPay(Player& player, Environment& env) = 0;
     virtual Changeset payCost(Player& player, Environment& env) = 0;
-
-    Cost();
 };
 
 class ManaCost : public Cost {

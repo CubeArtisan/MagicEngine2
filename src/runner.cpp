@@ -3,13 +3,10 @@
 #include "runner.h"
 #include "gameAction.h"
 
-Changeset Runner::executeStep()
+std::variant<Changeset, PassPriority> Runner::executeStep()
 {
-    Player& active = (Player&)this->env.gameObjects[this->env.currentPlayer];
-
+    Player& active = (Player&)this->env.players[this->env.currentPlayer];
     GameAction action = active.strategy.chooseGameAction(active, env);
-
-    
 
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
         Changeset castSpell;
@@ -45,8 +42,42 @@ Changeset Runner::executeStep()
     }
 
     if(std::get_if<PassPriority>(&action)){
-        // CodeReview: resolve stack or pass
+        return PassPriority();
     }
 
     return Changeset();
+}
+
+void Runner::runGame(){
+    int firstPlayerToPass = -1;
+    while(true) {
+        std::variant<Changeset, PassPriority> step = this->executeStep();
+
+        if(Changeset* pChangeset = std::get_if<Changeset>(&step)){
+            this->applyChangeset(*pChangeset);
+            firstPlayerToPass = -1;
+        }
+        else {
+            int nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
+            if(firstPlayerToPass == nextPlayer){
+                auto stack = this->env.stack;
+                if(stack.objects.empty()) {
+                    Changeset passStep;
+                    passStep.phaseChange = StepOrPhaseChange{true, this->env.currentPhase};
+                    this->applyChangeset(passStep);
+                }
+                else{
+                    // CodeReview: resolveSpell here
+                }
+            }
+            if(firstPlayerToPass == -1) {
+                firstPlayerToPass = this->env.currentPlayer;
+            }
+            this->env.currentPlayer = nextPlayer;
+        }
+    }
+}
+
+void Runner::applyChangeset(Changeset& changeset) {
+    // CodeReview: Apply changesets
 }

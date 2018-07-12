@@ -32,10 +32,14 @@ Changeset Changeset::operator+(Changeset& other){
     addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
     std::vector<RemoveMana> removeMana = this->removeMana;
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
+    StepOrPhaseChange phaseChange = this->phaseChange;
+    if(!phaseChange.changed && other.phaseChange.changed){
+        phaseChange = other.phaseChange;
+    }
     bool millOut = this->millOut || other.millOut;
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, eventsToAdd,
-                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, millOut};
+                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, phaseChange, millOut};
 }
 
 Changeset& Changeset::operator+=(Changeset other){

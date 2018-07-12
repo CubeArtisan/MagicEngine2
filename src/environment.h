@@ -47,7 +47,7 @@ public:
     Zone<std::variant<Card, Emblem>> command;
     
     std::map<xg::Guid, Mana> manaPools;
-    // Does this maintain across undoing turn changes
+    // CodeReview: Does this maintain across undoing turn changes
     std::map<xg::Guid, unsigned int> landPlays;
     std::vector<Player> players;
 
@@ -62,7 +62,8 @@ public:
     std::vector<Changeset> changes;
 
     StepOrPhase currentPhase;
-    xg::Guid currentPlayer;
+    unsigned int currentPlayer;
+    unsigned int turnPlayer;
 
     Changeset passPriority(xg::Guid player);
 };

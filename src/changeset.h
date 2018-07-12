@@ -109,6 +109,7 @@ struct RemoveObject {
 };
 
 struct StepOrPhaseChange {
+    bool changed;
     StepOrPhase starting;
 };
 
@@ -126,7 +127,9 @@ struct Changeset {
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
+    StepOrPhaseChange phaseChange;
     bool millOut;
+
 
     Changeset operator+(Changeset& other);
     Changeset& operator+=(Changeset other);
