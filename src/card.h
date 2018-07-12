@@ -83,7 +83,7 @@ class Player;
 class Card : public Targetable {
 public:
     xg::Guid owner;
-    // Move to environment
+    // CodeReview: Move to environment
     Player& controller;
     std::vector<std::reference_wrapper<Targetable>> targets;
     bool is_tapped;
@@ -101,8 +101,8 @@ public:
     std::string name;
     unsigned int cmc;
     std::set<Color> colors;
-    std::vector<Cost> costs;
-    std::vector<Cost> additionalCosts;
+    std::vector<std::reference_wrapper<Cost>> costs;
+    std::vector<std::reference_wrapper<Cost>> additionalCosts;
     std::vector<std::reference_wrapper<ActivatedAbility>> activatableAbilities;
     
     Changeset apply_effect(const Environment& env);

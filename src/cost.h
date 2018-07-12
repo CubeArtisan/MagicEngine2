@@ -1,6 +1,7 @@
 #ifndef _COST_H_
 #define _COST_H_
 
+#include "changeset.h"
 #include "mana.h"
 
 class Environment;
@@ -8,8 +9,10 @@ class Player;
 
 class Cost {
 public:
-    virtual bool canPay(Player& player, Environment& env);
-    virtual Changeset payCost(Player& player, Environment& env);
+    virtual bool canPay(Player& player, Environment& env) = 0;
+    virtual Changeset payCost(Player& player, Environment& env) = 0;
+
+    Cost();
 };
 
 class ManaCost : public Cost {

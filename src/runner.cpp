@@ -3,7 +3,7 @@
 #include "runner.h"
 #include "gameAction.h"
 
-std::vector<Changeset> Runner::executeStep()
+Changeset Runner::executeStep()
 {
     Player& active = (Player&)this->env.gameObjects[this->env.currentPlayer];
 
@@ -12,25 +12,41 @@ std::vector<Changeset> Runner::executeStep()
     
 
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
-        std::vector<Changeset> results;
         Changeset castSpell;
         Targetable hand = this->env.hands[active.id];
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
-        results.push_back(castSpell);
-        // Assign targets
-        results.push_back(pCastSpell->cost.payCost(active, env));
-        for(auto& c : pCastSpell->additionalCost) {
-            results.push_back(c.payCost(active, env));
+        // CodeReview: Assign targets
+        castSpell += pCastSpell->cost.payCost(active, env);
+        for(Cost& c : pCastSpell->additionalCosts) {
+            castSpell += c.payCost(active, env);
         }
-        // Use the chosen X value
-        return results;
+        // CodeReview: Use the chosen X value
+        return castSpell;
     }
 
     if(PlayLand* pPlayLand = std::get_if<PlayLand>(&action)){
         std::vector<Changeset> results;
-        Changeset castSpell;
+        Changeset playLand;
         Targetable hand = this->env.hands[active.id];
-        castSpell.moves.push_back(ObjectMovement{pPlayLand->land, hand.id, this->env.stack.id});
-        // Use land play for the turn
+        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand.id, this->env.stack.id});
+        // CodeReview: Use land play for the turn
+        return playLand;
     }
+
+    if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
+        Changeset activateAbility;
+        ActivatedAbility result = pActivateAnAbility->ability;
+        result.source = pActivateAnAbility->source;
+        activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
+        // CodeReview: Assign targets
+        activateAbility += pActivateAnAbility->cost.payCost(active, env);
+        // CodeReview: Use the chosen X value
+        return activateAbility;
+    }
+
+    if(std::get_if<PassPriority>(&action)){
+        // CodeReview: resolve stack or pass
+    }
+
+    return Changeset();
 }

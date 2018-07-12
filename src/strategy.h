@@ -8,7 +8,7 @@ class Environment;
 
 class Strategy {
 public:
-    GameAction chooseGameAction(Player& player, Environment& env);
+    virtual GameAction chooseGameAction(Player& player, Environment& env) = 0;
 };
 
 #endif

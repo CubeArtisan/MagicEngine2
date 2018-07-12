@@ -10,9 +10,11 @@
 
 class Ability : public Targetable {
 public:
+    //CodeReview: Move onto Environment
     std::vector<std::reference_wrapper<Targetable>> targets;
-    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
     Player& controller;
+    
+    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
     std::set<Color> colors;
 
     bool is_legal(int pos, Targetable& target);
@@ -23,7 +25,7 @@ public:
 
 class ActivatedAbility : public Ability {
 public:
-    std::vector<Cost> costs;
+    std::vector<std::reference_wrapper<Cost>> costs;
 };
 
 #endif

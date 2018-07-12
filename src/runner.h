@@ -3,7 +3,7 @@
 
 class Runner {
 public:
-    std::vector<Changeset> executeStep();
+    Changeset executeStep();
 
 private:
     Environment env;

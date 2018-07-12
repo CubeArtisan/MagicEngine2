@@ -118,16 +118,18 @@ struct Changeset {
     std::vector<AddPermanentCounter> permanentCounters;
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
-    std::vector<ControlChange> controlChanges;
     std::vector<LifeTotalChange> lifeTotalChanges;
     std::vector<EventHandler> eventsToAdd;
     std::vector<EventHandler> eventsToRemove;
     std::vector<PropertyHandler> propertiesToAdd;
     std::vector<PropertyHandler> propertiesToRemove;
-    AddMana addMana;
-    RemoveMana removeMana;
-    bool millOut;
     std::vector<xg::Guid> loseTheGame;
+    std::vector<AddMana> addMana;
+    std::vector<RemoveMana> removeMana;
+    bool millOut;
+
+    Changeset operator+(Changeset& other);
+    Changeset& operator+=(Changeset other);
 
     static Changeset drawCards(xg::Guid player, unsigned int amount, Environment& env);
 };

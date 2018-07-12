@@ -6,7 +6,7 @@
 
 class Player : public Targetable {
 public:
-    Strategy strategy;
+    Strategy& strategy;
 };
 
 #endif

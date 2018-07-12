@@ -1,13 +1,13 @@
 CXX := g++-8
-CXXFLAGS := --std=c++17 -Wall -Wextra -Wpedantic
+CXXFLAGS := --std=c++17 -Wall -Wextra -Wpedantic -DGUID_LIBUUID
 INCLUDES := -I.
 
-LIBS := -L../libs -lcrossguid
-OBJECTS := mana.o cost.o card.o ability.o strategy.o player.o environment.o runner.o main.o
+LIBS := 
+OBJECTS := guid.o changeset.o mana.o cost.o card.o ability.o strategy.o player.o environment.o runner.o main.o
 OUTPUT := ../MagicEngine
 
 my_program: $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(OUTPUT) $(LIBS)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(OUTPUT) $(LIBS)
 
 %.o: %.cxx
 	$(CXX) $(INCLUDES) $(CXXFLAGS) $(inputs) -o $(output)
