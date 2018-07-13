@@ -51,8 +51,8 @@ public:
     std::map<xg::Guid, unsigned int> landPlays;
     std::vector<Player> players;
 
-    std::map<xg::Guid, PermanentCounterType> PermanantCounters;
-    std::map<xg::Guid, PlayerCounterType> PlayerCounters;
+    std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
+    std::map<xg::Guid, std::map<PlayerCounterType, unsigned int>> playerCounters;
     std::map<xg::Guid, int> lifeTotals;
 
     std::vector<std::reference_wrapper<EventHandler>> triggerHandlers;

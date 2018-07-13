@@ -99,4 +99,44 @@ void Runner::runGame(){
 
 void Runner::applyChangeset(Changeset& changeset) {
     // CodeReview: Apply changesets
+    for(ObjectMovement& om : changeset.moves) {
+        // Handle object moves
+    }
+    for(AddPlayerCounter& apc : changeset.playerCounters) {
+        if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
+            apc.amount = -this->env.playerCounters[apc.player][apc.counterType];
+        }
+        this->env.playerCounters[apc.player][apc.counterType] += apc.amount;
+    }
+    for(AddPermanentCounter& apc : changeset.permanentCounters) {
+        if(apc.amount < 0 && this->env.permanentCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
+            apc.amount = -this->env.permanentCounters[apc.player][apc.counterType];
+        }
+        this->env.permanentCounters[apc.player][apc.counterType] += apc.amount;
+    }
+    for(ObjectCreation& oc : changeset.create){
+    }
+    for(RemoveObject& ro : changeset.remove) {
+    }
+    for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
+    }
+    for(std::reference_wrapper<EventHandler> eh : changeset.eventsToAdd){
+    }
+    for(std::reference_wrapper<EventHandler> eh : changeset.eventsToRemove){
+    }
+    for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToAdd){
+    }
+    for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToRemove){
+    }
+    for(xg::Guid& g : changeset.loseTheGame){
+    }
+    for(AddMana& am : changeset.addMana){
+    }
+    for(RemoveMana& rm : changeset.removeMana){
+    }
+    if(changeset.phaseChange.changed){
+
+    }
+    if(changeset.millOut){
+    }
 }

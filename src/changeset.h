@@ -41,13 +41,13 @@ struct ObjectMovement {
 };
 
 struct AddPlayerCounter {
-    xg::Guid object;
+    xg::Guid player;
     PlayerCounterType counterType;
     int amount;
 };
 
 struct AddPermanentCounter {
-    xg::Guid object;
+    xg::Guid player;
     PermanentCounterType counterType;
     int amount;
 };
