@@ -11,80 +11,24 @@
 
 #include "changeset.h"
 #include "cost.h"
+#include "enum.h"
 #include "mana.h"
 #include "player.h"
-
-enum CardSuperType {
-    LEGENDARY,
-    BASIC,
-    SNOW,
-    WORLD
-};
-
-enum CardType {
-    CREATURE,
-    LAND,
-    PLANESWALKER,
-    ARTIFACT,
-    ENCHANTMENT,
-    TRIBAL,
-    INSTANT,
-    SORCERY
-};
-
-enum CardSubType {
-    FIRSTCREATURETYPE,
-    DJINN,
-    HUMAN,
-    PIRATE,
-    SHAPESHIFTER,
-    SIREN,
-    THOPTER,
-    WIZARD,
-    FUNGUS,
-    SAPROLING,
-    LASTCREATURETYPE,
-
-    FIRSTLANDTYPE,
-    PLAINS,
-    ISLAND,
-    SWAMP,
-    MOUNTAIN,
-    FOREST,
-    DESERT,
-    LASTLANDTYPE,
-    
-    FIRSTARTIFACTTYPE,
-    VEHICLE,
-    LASTARTIFACTTYPE,
-    
-    FIRSTENCHANTMENTTYPE,
-    AURA,
-    SAGA,
-    LASTENCHANTMENTTYPE,
-    
-    FIRSTSORCERYTYPE,
-    ARCANE,
-    TRAP,
-    LASTSORCERYTYPE,
-    
-    FIRSTTRIBALTYPE = FIRSTCREATURETYPE,
-    LASTTRIBALTYPE = LASTCREATURETYPE,
-    
-    FIRSTINSTANTTYPE = FIRSTSORCERYTYPE,
-    LASTINSTANTTYPE = LASTSORCERYTYPE
-};
 
 class ActivatedAbility;
 class Token;
 class Emblem;
 class Player;
 
-class Card : public Targetable {
+class HasEffect {
+public:
+    virtual Changeset applyEffect(const Environment& env) = 0;
+};
+
+class Card : public Targetable, public HasEffect {
 public:
     xg::Guid owner;
     // CodeReview: Move to environment
-    Player& controller;
     std::vector<std::reference_wrapper<Targetable>> targets;
     bool is_tapped;
 
@@ -104,15 +48,13 @@ public:
     std::vector<std::reference_wrapper<Cost>> costs;
     std::vector<std::reference_wrapper<Cost>> additionalCosts;
     std::vector<std::reference_wrapper<ActivatedAbility>> activatableAbilities;
-    
-    Changeset apply_effect(const Environment& env);
 };
 
-class Token : public Targetable {
+class Token : public Targetable, public HasEffect {
 public:
-    Player& owner;
+    xg::Guid owner;
     
-    Changeset apply_effect(const Environment& env);
+    Changeset applyEffect(const Environment& env);
 };
 
 class Emblem : public Targetable {

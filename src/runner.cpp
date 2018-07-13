@@ -32,7 +32,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
     if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
         Changeset activateAbility;
-        ActivatedAbility result = pActivateAnAbility->ability;
+        ActivatedAbility& result = pActivateAnAbility->ability;
         result.source = pActivateAnAbility->source;
         activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
         // CodeReview: Assign targets
@@ -67,7 +67,26 @@ void Runner::runGame(){
                     this->applyChangeset(passStep);
                 }
                 else{
-                    // CodeReview: resolveSpell here
+                    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>,
+                                 std::reference_wrapper<Ability>> top = this->env.stack.objects.back();
+                    Changeset resolveSpellAbility = getBaseClass<HasEffect>(top).applyEffect(this->env);;
+                    if(std::reference_wrapper<Card>* pCard = std::get_if<std::reference_wrapper<Card>>(&top))
+                    {
+                        bool isPermanent = false;
+                        for(CardType type : ((Card&)*pCard).type){
+                            if(type < PERMANENTEND && type > PERMANENTBEGIN){
+                                resolveSpellAbility.moves.push_back(ObjectMovement{((Card&)*pCard).id, stack.id, this->env.battlefield.id});
+                                isPermanent = true;
+                            }
+                        }
+                        if(!isPermanent){
+                            resolveSpellAbility.moves.push_back(ObjectMovement{((Card&)*pCard).id, stack.id, this->env.graveyard.id});
+                        }
+                    }
+                    else{
+                        xg::Guid id = getBaseClass<Targetable>(top).id;
+                        resolveSpellAbility.remove.push_back(RemoveObject{id, stack.id});
+                    }
                 }
             }
             if(firstPlayerToPass == -1) {

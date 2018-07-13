@@ -18,13 +18,13 @@ Changeset Changeset::operator+(Changeset& other){
     remove.insert(remove.end(), other.remove.begin(), other.remove.end());
     std::vector<LifeTotalChange> lifeTotalChanges = this->lifeTotalChanges;
     lifeTotalChanges.insert(lifeTotalChanges.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
-    std::vector<EventHandler> eventsToAdd = this->eventsToAdd;
+    std::vector<std::reference_wrapper<EventHandler>> eventsToAdd = this->eventsToAdd;
     eventsToAdd.insert(eventsToAdd.end(), other.eventsToAdd.begin(), other.eventsToAdd.end());
-    std::vector<EventHandler> eventsToRemove = this->eventsToRemove;
+    std::vector<std::reference_wrapper<EventHandler>> eventsToRemove = this->eventsToRemove;
     eventsToRemove.insert(eventsToRemove.end(), other.eventsToRemove.begin(), other.eventsToRemove.end());
-    std::vector<PropertyHandler> propertiesToAdd = this->propertiesToAdd;
+    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
     propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
-    std::vector<PropertyHandler> propertiesToRemove = this->propertiesToRemove;
+    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToRemove = this->propertiesToRemove;
     propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
     std::vector<xg::Guid> loseTheGame = this->loseTheGame;
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
@@ -57,15 +57,18 @@ Changeset& Changeset::operator+=(Changeset other){
     addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
     millOut = this->millOut || other.millOut;
+    if(!phaseChange.changed && other.phaseChange.changed){
+        phaseChange = other.phaseChange;
+    }
 
     return *this;
 }
 
 Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, Environment& env){
     Changeset result = Changeset();
-    Zone<std::variant<Card, Token>> libraryZone = env.libraries[player];
-    std::vector<std::variant<Card, Token>> library = libraryZone.objects;
-    Zone<std::variant<Card, Token>> handZone = env.hands[player];
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> libraryZone = env.libraries[player];
+    std::vector<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> library = libraryZone.objects;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> handZone = env.hands[player];
     
     if(amount > library.size()){
         result.millOut = true;

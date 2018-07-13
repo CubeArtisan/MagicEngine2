@@ -6,17 +6,19 @@
 
 #include "guid.hpp"
 
+#include "enum.h"
 #include "mana.h"
+#include "stateQuery.h"
 
 class Changeset;
 class Environment;
 
 class EventHandler {
-    std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&);
+    virtual std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&) = 0;
 };
-class PropertyHandler {
+class StateQueryHandler {
+    virtual StateQuery handleEvent(StateQuery, Environment&) = 0;
 };
-
 
 struct Targetable {
     // This is mutable state
@@ -30,32 +32,6 @@ T& getBaseClass(Variant& variant){
     auto visitor = [](T& base) -> T&{ return base; };
     return std::visit(visitor, variant);
 }
-
-enum StepOrPhase {
-    UNTAP,
-    UPKEEP,
-    DRAW,
-    PRECOMBATMAIN,
-    BEGINCOMBAT,
-    DECLAREATTACKERS,
-    DECLAREBLOCKERS,
-    FIRSTSTRIKEDAMAGE,
-    COMBATDAMAGE,
-    ENDCOMBAT,
-    POSTCOMBATMAIN,
-    END,
-    CLEANUP
-};
-
-enum PlayerCounterType {
-    POISONCOUNTER,
-    EXPERIENCECOUNTER,
-    ENERGYCOUNTER
-};
-
-enum PermanentCounterType {
-    PLUSONEPLUSONECOUNTER
-};
 
 struct ObjectMovement {
     xg::Guid object;
@@ -120,16 +96,15 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
-    std::vector<EventHandler> eventsToAdd;
-    std::vector<EventHandler> eventsToRemove;
-    std::vector<PropertyHandler> propertiesToAdd;
-    std::vector<PropertyHandler> propertiesToRemove;
+    std::vector<std::reference_wrapper<EventHandler>> eventsToAdd;
+    std::vector<std::reference_wrapper<EventHandler>> eventsToRemove;
+    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToAdd;
+    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToRemove;
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
     StepOrPhaseChange phaseChange;
     bool millOut;
-
 
     Changeset operator+(Changeset& other);
     Changeset& operator+=(Changeset other);

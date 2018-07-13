@@ -36,15 +36,15 @@ using PrivateZone = std::map<xg::Guid, Zone<T>>;
 
 class Environment {
 public:
-    std::map<xg::Guid, Targetable> gameObjects;
+    std::map<xg::Guid, std::reference_wrapper<Targetable>> gameObjects;
 
-    PrivateZone<std::variant<Card, Token>> hands;
-    PrivateZone<std::variant<Card, Token>> libraries;
-    Zone<std::variant<Card, Token>> graveyard;
-    Zone<std::variant<Card, Token>> battlefield;
-    Zone<std::variant<Card, Token, Ability>> stack;
-    Zone<std::variant<Card, Token>> exile;
-    Zone<std::variant<Card, Emblem>> command;
+    PrivateZone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> hands;
+    PrivateZone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> libraries;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> graveyard;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> battlefield;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Ability>>> stack;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> exile;
+    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Emblem>>> command;
     
     std::map<xg::Guid, Mana> manaPools;
     // CodeReview: Does this maintain across undoing turn changes
@@ -55,9 +55,9 @@ public:
     std::map<xg::Guid, PlayerCounterType> PlayerCounters;
     std::map<xg::Guid, int> lifeTotals;
 
-    std::vector<EventHandler> triggerHandlers;
-    std::vector<EventHandler> replacementEffects;
-    std::vector<PropertyHandler> propertyHandlers;
+    std::vector<std::reference_wrapper<EventHandler>> triggerHandlers;
+    std::vector<std::reference_wrapper<EventHandler>> replacementEffects;
+    std::vector<std::reference_wrapper<StateQueryHandler>> propertyHandlers;
 
     std::vector<Changeset> changes;
 
