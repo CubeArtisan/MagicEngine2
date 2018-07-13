@@ -22,6 +22,9 @@ public:
     bool subtract(Mana& other);
     unsigned int cmc();
 
+    Mana& operator+=(Mana other);
+    Mana& operator-=(Mana other);
+
 private:
     unsigned int generic;
     std::multiset<Color> manaString;

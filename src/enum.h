@@ -14,7 +14,8 @@ enum StepOrPhase {
     ENDCOMBAT,
     POSTCOMBATMAIN,
     END,
-    CLEANUP
+    CLEANUP,
+    PHASECOUNT
 };
 
 enum PlayerCounterType {

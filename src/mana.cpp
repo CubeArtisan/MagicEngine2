@@ -52,3 +52,13 @@ bool Mana::subtract(Mana& other) {
     
     return true;
 }
+
+Mana& Mana::operator+=(Mana other){
+    this->add(other);
+    return *this;
+}
+
+Mana& Mana::operator-=(Mana other){
+    this->subtract(other);
+    return *this;
+}

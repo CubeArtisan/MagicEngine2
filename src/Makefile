@@ -6,7 +6,7 @@ LIBS :=
 OBJECTS := guid.o changeset.o mana.o cost.o card.o ability.o strategy.o player.o environment.o runner.o main.o
 OUTPUT := ../MagicEngine
 
-my_program: $(OBJECTS)
+$(OUTPUT): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(OUTPUT) $(LIBS)
 
 %.o: %.cxx

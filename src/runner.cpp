@@ -50,7 +50,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
 void Runner::runGame(){
     int firstPlayerToPass = -1;
-    while(true) {
+    while(this->env.players.size() > 0) {
         std::variant<Changeset, PassPriority> step = this->executeStep();
 
         if(Changeset* pChangeset = std::get_if<Changeset>(&step)){
@@ -87,6 +87,7 @@ void Runner::runGame(){
                         xg::Guid id = getBaseClass<Targetable>(top).id;
                         resolveSpellAbility.remove.push_back(RemoveObject{id, stack.id});
                     }
+                    applyChangeset(resolveSpellAbility);
                 }
             }
             if(firstPlayerToPass == -1) {
@@ -100,7 +101,8 @@ void Runner::runGame(){
 void Runner::applyChangeset(Changeset& changeset) {
     // CodeReview: Apply changesets
     for(ObjectMovement& om : changeset.moves) {
-        // Handle object moves
+        ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
+        ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
     }
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
@@ -119,24 +121,37 @@ void Runner::applyChangeset(Changeset& changeset) {
     for(RemoveObject& ro : changeset.remove) {
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
+        ltc.oldValue = this->env.lifeTotals[ltc.player];
+        this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
     for(std::reference_wrapper<EventHandler> eh : changeset.eventsToAdd){
+        // CodeReview: Handle triggers/replacement effects
+        this->env.triggerHandlers.push_back(eh);
     }
     for(std::reference_wrapper<EventHandler> eh : changeset.eventsToRemove){
     }
     for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToAdd){
+        this->env.stateQueryHandlers.push_back(sqh);
     }
     for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToRemove){
     }
     for(xg::Guid& g : changeset.loseTheGame){
     }
     for(AddMana& am : changeset.addMana){
+        this->env.manaPools[am.player] += am.amount;
     }
     for(RemoveMana& rm : changeset.removeMana){
+        this->env.manaPools[rm.player] -= rm.amount;
     }
     if(changeset.phaseChange.changed){
-
-    }
-    if(changeset.millOut){
+        if(this->env.currentPhase == CLEANUP){
+            unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
+            this->env.currentPlayer = nextPlayer;
+            this->env.turnPlayer = nextPlayer;
+            this->env.currentPhase = UNTAP;
+        }
+        else{
+            this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
+        }
     }
 }

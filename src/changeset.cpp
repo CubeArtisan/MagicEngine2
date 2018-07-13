@@ -36,10 +36,9 @@ Changeset Changeset::operator+(Changeset& other){
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
-    bool millOut = this->millOut || other.millOut;
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, eventsToAdd,
-                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, phaseChange, millOut};
+                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, phaseChange};
 }
 
 Changeset& Changeset::operator+=(Changeset other){
@@ -56,7 +55,6 @@ Changeset& Changeset::operator+=(Changeset other){
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
     addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
-    millOut = this->millOut || other.millOut;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
@@ -66,12 +64,12 @@ Changeset& Changeset::operator+=(Changeset other){
 
 Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, Environment& env){
     Changeset result = Changeset();
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> libraryZone = env.libraries[player];
-    std::vector<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> library = libraryZone.objects;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> handZone = env.hands[player];
+    Zone<Card, Token> libraryZone = env.libraries[player];
+    auto library = libraryZone.objects;
+    Zone<Card, Token> handZone = env.hands[player];
     
     if(amount > library.size()){
-        result.millOut = true;
+        // Cause lose game
         amount = library.size();
     }
     auto card = library.begin() + library.size() - amount;

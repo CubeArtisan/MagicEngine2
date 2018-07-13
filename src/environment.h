@@ -3,7 +3,10 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <set>
+#include <typeinfo>
+#include <typeindex>
 #include <variant>
 #include <vector>
 
@@ -24,27 +27,70 @@ enum ZoneType {
     COMMAND
 };
 
-template<typename T>
-class Zone : public Targetable {
+class ZoneInterface {
 public:
-    ZoneType type;
-    std::vector<T> objects;
+    xg::Guid addObject(Targetable& object) {
+        return addObject(object, xg::newGuid());
+    }
+    virtual xg::Guid addObject(Targetable& object, xg::Guid newGuid) = 0;
+    virtual Targetable& removeObject(xg::Guid object) = 0;
 };
 
-template<typename T>
-using PrivateZone = std::map<xg::Guid, Zone<T>>;
+template<typename... Args>
+class Zone : public Targetable, public ZoneInterface {
+public:
+    ZoneType type;
+    std::vector<std::variant<std::reference_wrapper<Args>...>> objects;
+    
+    xg::Guid addObject(Targetable& object, xg::Guid newGuid) {
+        object.id = newGuid;
+        this->addObjectInternal<Args...>(object);
+        return newGuid;
+    }
+
+    Targetable& removeObject(xg::Guid object){
+        for(auto iter=objects.rbegin(); iter != objects.rend(); iter++) {
+            Targetable& val = getBaseClass<Targetable>(*iter);
+            if(val.id == object){
+                std::advance(iter, 1);
+                this->objects.erase(iter.base());
+                return val;
+            }
+        }
+        throw "Failed to find object for removal";
+    }
+
+private:
+    template<typename T, typename... Extra>
+    void addObjectInternal(Targetable& object){
+        if(std::type_index(typeid(T)) == std::type_index(typeid(object))){
+            this->objects.push_back(static_cast<T&>(object));
+        }
+        else {
+            if constexpr(sizeof...(Extra) == 0) {
+                throw "Could not convert to internal types";
+            }
+            else {
+                return addObjectInternal<Extra...>(object);
+            }
+        }
+    }
+};
+
+template<typename... Args>
+using PrivateZones = std::map<xg::Guid, Zone<Args...>>;
 
 class Environment {
 public:
-    std::map<xg::Guid, std::reference_wrapper<Targetable>> gameObjects;
+    std::map<xg::Guid, std::shared_ptr<Targetable>> gameObjects;
 
-    PrivateZone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> hands;
-    PrivateZone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> libraries;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> graveyard;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> battlefield;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Ability>>> stack;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>>> exile;
-    Zone<std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Emblem>>> command;
+    PrivateZones<Card, Token> hands;
+    PrivateZones<Card, Token> libraries;
+    Zone<Card, Token> graveyard;
+    Zone<Card, Token> battlefield;
+    Zone<Card, Token, Ability> stack;
+    Zone<Card, Token> exile;
+    Zone<Card, Emblem> command;
     
     std::map<xg::Guid, Mana> manaPools;
     // CodeReview: Does this maintain across undoing turn changes
@@ -57,7 +103,7 @@ public:
 
     std::vector<std::reference_wrapper<EventHandler>> triggerHandlers;
     std::vector<std::reference_wrapper<EventHandler>> replacementEffects;
-    std::vector<std::reference_wrapper<StateQueryHandler>> propertyHandlers;
+    std::vector<std::reference_wrapper<StateQueryHandler>> stateQueryHandlers;
 
     std::vector<Changeset> changes;
 

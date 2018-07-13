@@ -67,12 +67,6 @@ struct ObjectCreation {
     Targetable created;
 };
 
-struct ControlChange {
-    xg::Guid object;
-    xg::Guid originalController;
-    xg::Guid newController;
-};
-
 struct LifeTotalChange {
     xg::Guid player;
     int oldValue;
@@ -104,7 +98,6 @@ struct Changeset {
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
     StepOrPhaseChange phaseChange;
-    bool millOut;
 
     Changeset operator+(Changeset& other);
     Changeset& operator+=(Changeset other);
