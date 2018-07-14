@@ -103,6 +103,9 @@ void Runner::applyChangeset(Changeset& changeset) {
     for(ObjectMovement& om : changeset.moves) {
         ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
         ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
+
+        Targetable& object = source.removeObject(om.object);
+        om.newObject = dest.addObject(object, om.newObject);
     }
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
@@ -117,8 +120,12 @@ void Runner::applyChangeset(Changeset& changeset) {
         this->env.permanentCounters[apc.player][apc.counterType] += apc.amount;
     }
     for(ObjectCreation& oc : changeset.create){
+        ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[oc.zone];
+        zone.addObject(oc.created, ((Targetable&)oc.created).id);
     }
     for(RemoveObject& ro : changeset.remove) {
+        ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[ro.zone];
+        zone.removeObject(ro.object);
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
         ltc.oldValue = this->env.lifeTotals[ltc.player];
@@ -129,13 +136,20 @@ void Runner::applyChangeset(Changeset& changeset) {
         this->env.triggerHandlers.push_back(eh);
     }
     for(std::reference_wrapper<EventHandler> eh : changeset.eventsToRemove){
+        std::vector<std::reference_wrapper<EventHandler>>& list = this->env.triggerHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::reference_wrapper<EventHandler> e) ->
+                                                            bool { return (EventHandler&)e == (EventHandler&)eh; }), list.end());
     }
     for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToAdd){
         this->env.stateQueryHandlers.push_back(sqh);
     }
     for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToRemove){
+        std::vector<std::reference_wrapper<StateQueryHandler>>& list = this->env.stateQueryHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::reference_wrapper<StateQueryHandler> e) ->
+                                                            bool { return (StateQueryHandler&)e == (StateQueryHandler&)sqh; }), list.end());
     }
     for(xg::Guid& g : changeset.loseTheGame){
+        // CodeReview: Handle losing the game
     }
     for(AddMana& am : changeset.addMana){
         this->env.manaPools[am.player] += am.amount;

@@ -19,8 +19,6 @@ public:
 
     bool is_legal(int pos, Targetable& target);
     std::vector<bool> are_legal(std::vector<std::reference_wrapper<Targetable>>);
-
-    Changeset applyEffect(const Environment& env);
 };
 
 class ActivatedAbility : public Ability {

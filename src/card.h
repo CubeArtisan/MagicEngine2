@@ -48,13 +48,13 @@ public:
     std::vector<std::reference_wrapper<Cost>> costs;
     std::vector<std::reference_wrapper<Cost>> additionalCosts;
     std::vector<std::reference_wrapper<ActivatedAbility>> activatableAbilities;
+
+    virtual bool canCast() = 0;
 };
 
 class Token : public Targetable, public HasEffect {
 public:
     xg::Guid owner;
-    
-    Changeset applyEffect(const Environment& env);
 };
 
 class Emblem : public Targetable {

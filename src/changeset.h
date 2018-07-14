@@ -13,18 +13,26 @@
 class Changeset;
 class Environment;
 
-class EventHandler {
-    virtual std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&) = 0;
-};
-class StateQueryHandler {
-    virtual StateQuery handleEvent(StateQuery, Environment&) = 0;
-};
-
 struct Targetable {
     // This is mutable state
     xg::Guid id;
 
     Targetable();
+};
+
+class EventHandler : public Targetable {
+public:
+    virtual std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&) = 0;
+    bool operator==(EventHandler& other) {
+        return this->id == other.id;
+    }
+};
+class StateQueryHandler : public Targetable {
+public:
+    virtual StateQuery handleEvent(StateQuery, Environment&) = 0;
+    bool operator==(StateQueryHandler& other) {
+        return this->id == other.id;
+    }
 };
 
 template<typename T, typename Variant>
@@ -64,7 +72,7 @@ struct RemoveMana {
 
 struct ObjectCreation {
     xg::Guid zone;
-    Targetable created;
+    std::reference_wrapper<Targetable> created;
 };
 
 struct LifeTotalChange {
