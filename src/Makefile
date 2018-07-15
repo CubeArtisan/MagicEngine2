@@ -1,16 +1,23 @@
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_dir := $(dir $(mkfile_path))
+
 CXX := g++-8
-CXXFLAGS := --std=c++17 -Wall -Wextra -Wpedantic -DGUID_LIBUUID
-INCLUDES := -I.
+INCLUDES := -I$(current_dir)
+CXXFLAGS := $(INCLUDES) --std=c++17 -Wall -Wextra -Wpedantic -DGUID_LIBUUID
 
 LIBS := 
-OBJECTS := guid.o changeset.o mana.o cost.o card.o ability.o strategy.o player.o environment.o runner.o main.o
+OBJECTS := guid.o changeset.o mana.o cost.o card.o ability.o strategy.o player.o environment.o cards/cardManager.o runner.o main.o
+SRCS := $(subst .o,.cpp,$(OBJECTS))
 OUTPUT := ../MagicEngine
 
 $(OUTPUT): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(OUTPUT) $(LIBS)
 
-%.o: %.cxx
-	$(CXX) $(INCLUDES) $(CXXFLAGS) $(inputs) -o $(output)
+depend: .depends
+
+.depends: $(SRCS)
+	$(RM) ./.depend
+	$(CXX) $(CXXFLAGS) -MM $^>>./.depend;
 
 clean:
-	rm *.o $(OUTPUT)
+	rm -f $(OBJECTS) $(OUTPUT)
