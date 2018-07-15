@@ -4,7 +4,7 @@
 #include "changeset.h"
 #include "strategy.h"
 
-class Player : public Targetable {
+struct Player : public Targetable {
 public:
     std::shared_ptr<Strategy> strategy;
 

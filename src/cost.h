@@ -7,14 +7,12 @@
 class Environment;
 class Player;
 
-class Cost {
-public:
+struct Cost {
     virtual bool canPay(Player& player, Environment& env) = 0;
     virtual Changeset payCost(Player& player, Environment& env) = 0;
 };
 
-class ManaCost : public Cost {
-public:
+struct ManaCost : public Cost {
     virtual bool canPay(Player& player, Environment& env);
     virtual Changeset payCost(Player& player, Environment& env);
 

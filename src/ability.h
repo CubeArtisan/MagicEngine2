@@ -8,17 +8,12 @@
 #include "card.h"
 #include "changeset.h"
 
-class Ability : public Targetable, public HasEffect {
-public:
+struct Ability : public Targetable, public HasEffect {
     std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
     std::set<Color> colors;
-
-    bool is_legal(int pos, Targetable& target);
-    std::vector<bool> are_legal(std::vector<std::reference_wrapper<Targetable>>);
 };
 
-class ActivatedAbility : public Ability {
-public:
+struct ActivatedAbility : public Ability {
     std::vector<std::reference_wrapper<Cost>> costs;
 };
 

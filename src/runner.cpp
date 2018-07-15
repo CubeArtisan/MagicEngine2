@@ -75,7 +75,7 @@ void Runner::runGame(){
                     if(std::reference_wrapper<Card>* pCard = std::get_if<std::reference_wrapper<Card>>(&top))
                     {
                         bool isPermanent = false;
-                        for(CardType type : ((Card&)*pCard).type){
+                        for(CardType type : ((Card&)*pCard).baseTypes){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
                                 resolveSpellAbility.moves.push_back(ObjectMovement{((Card&)*pCard).id, stack.id, this->env.battlefield.id});
                                 isPermanent = true;
@@ -112,13 +112,13 @@ void Runner::applyChangeset(Changeset& changeset) {
     }
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
-            apc.amount = -this->env.playerCounters[apc.player][apc.counterType];
+            apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
         }
         this->env.playerCounters[apc.player][apc.counterType] += apc.amount;
     }
     for(AddPermanentCounter& apc : changeset.permanentCounters) {
         if(apc.amount < 0 && this->env.permanentCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
-            apc.amount = -this->env.permanentCounters[apc.player][apc.counterType];
+            apc.amount = -(int)this->env.permanentCounters[apc.player][apc.counterType];
         }
         this->env.permanentCounters[apc.player][apc.counterType] += apc.amount;
     }

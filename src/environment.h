@@ -27,8 +27,7 @@ enum ZoneType {
     COMMAND
 };
 
-class ZoneInterface {
-public:
+struct ZoneInterface {
     xg::Guid addObject(Targetable& object) {
         return addObject(object, xg::newGuid());
     }
@@ -37,8 +36,7 @@ public:
 };
 
 template<typename... Args>
-class Zone : public Targetable, public ZoneInterface {
-public:
+struct Zone : public Targetable, public ZoneInterface {
     ZoneType type;
     std::vector<std::variant<std::reference_wrapper<Args>...>> objects;
     
@@ -80,8 +78,7 @@ private:
 template<typename... Args>
 using PrivateZones = std::map<xg::Guid, Zone<Args...>>;
 
-class Environment {
-public:
+struct Environment {
     std::map<xg::Guid, std::shared_ptr<Targetable>> gameObjects;
 
     PrivateZones<Card, Token> hands;

@@ -11,7 +11,7 @@
 #include "mana.h"
 #include "stateQuery.h"
 
-class Changeset;
+struct Changeset;
 class Environment;
 
 struct Targetable {

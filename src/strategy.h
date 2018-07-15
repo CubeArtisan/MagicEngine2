@@ -3,8 +3,8 @@
 
 #include "gameAction.h"
 
-class Player;
-class Environment;
+struct Player;
+struct Environment;
 
 class Strategy {
 public:
