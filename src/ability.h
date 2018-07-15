@@ -10,10 +10,6 @@
 
 class Ability : public Targetable, public HasEffect {
 public:
-    //CodeReview: Move onto Environment
-    std::vector<std::reference_wrapper<Targetable>> targets;
-    xg::Guid controller;
-    
     std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
     std::set<Color> colors;
 

@@ -112,6 +112,8 @@ public:
     unsigned int turnPlayer;
 
     Changeset passPriority(xg::Guid player);
+
+    Environment(std::vector<Player>& players, std::vector<std::vector<std::shared_ptr<Card>>>& libraries);
 };
 
 #endif

@@ -6,7 +6,11 @@
 
 class Player : public Targetable {
 public:
-    Strategy& strategy;
+    std::shared_ptr<Strategy> strategy;
+
+    Player(std::shared_ptr<Strategy> strategy)
+        : strategy(strategy)
+    {}
 };
 
 #endif

@@ -32,13 +32,18 @@ Changeset Changeset::operator+(Changeset& other){
     addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
     std::vector<RemoveMana> removeMana = this->removeMana;
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
+    std::vector<DamageToTarget> damage = this->damage;
+    damage.insert(damage.end(), other.damage.begin(), other.damage.end());
+    std::vector<TapTarget> tap = this->tap;
+    tap.insert(tap.end(), other.tap.begin(), other.tap.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, eventsToAdd,
-                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, phaseChange};
+                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
+                     phaseChange};
 }
 
 Changeset& Changeset::operator+=(Changeset other){
@@ -55,6 +60,8 @@ Changeset& Changeset::operator+=(Changeset other){
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
     addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
+    damage.insert(damage.end(), other.damage.begin(), other.damage.end());
+    tap.insert(tap.end(), other.tap.begin(), other.tap.end());
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }

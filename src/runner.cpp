@@ -5,8 +5,9 @@
 
 std::variant<Changeset, PassPriority> Runner::executeStep()
 {
+    // CodeReview: Check state based actions
     Player& active = (Player&)this->env.players[this->env.currentPlayer];
-    GameAction action = active.strategy.chooseGameAction(active, env);
+    GameAction action = active.strategy->chooseGameAction(active, env);
 
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
         Changeset castSpell;
@@ -32,8 +33,9 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
     if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
         Changeset activateAbility;
-        ActivatedAbility& result = pActivateAnAbility->ability;
-        result.source = pActivateAnAbility->source;
+        std::shared_ptr<ActivatedAbility> result = pActivateAnAbility->ability;
+        result->source = pActivateAnAbility->source;
+        result->id = xg::newGuid();
         activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
         // CodeReview: Assign targets
         activateAbility += pActivateAnAbility->cost.payCost(active, env);
@@ -99,7 +101,8 @@ void Runner::runGame(){
 }
 
 void Runner::applyChangeset(Changeset& changeset) {
-    // CodeReview: Apply changesets
+    // CodeReview: Use the event system
+    // CodeReveiw: update GameObjects
     for(ObjectMovement& om : changeset.moves) {
         ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
         ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
@@ -121,7 +124,9 @@ void Runner::applyChangeset(Changeset& changeset) {
     }
     for(ObjectCreation& oc : changeset.create){
         ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[oc.zone];
-        zone.addObject(oc.created, ((Targetable&)oc.created).id);
+        xg::Guid id = oc.created->id;
+        zone.addObject(*oc.created, id);
+        this->env.gameObjects[id] = oc.created;
     }
     for(RemoveObject& ro : changeset.remove) {
         ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[ro.zone];
@@ -136,6 +141,7 @@ void Runner::applyChangeset(Changeset& changeset) {
         this->env.triggerHandlers.push_back(eh);
     }
     for(std::reference_wrapper<EventHandler> eh : changeset.eventsToRemove){
+        // CodeReview: Handle triggers/replacement effects
         std::vector<std::reference_wrapper<EventHandler>>& list = this->env.triggerHandlers;
         list.erase(std::remove_if(list.begin(), list.end(), [&](std::reference_wrapper<EventHandler> e) ->
                                                             bool { return (EventHandler&)e == (EventHandler&)eh; }), list.end());
@@ -168,4 +174,27 @@ void Runner::applyChangeset(Changeset& changeset) {
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
         }
     }
+
+    this->env.changes.push_back(changeset);
+}
+
+void Runner::startGame(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<std::shared_ptr<Strategy>> strategies) {
+    if(strategies.size() < libraries.size()) {
+        throw "Not enough strategies";
+    }
+
+    std::vector<Player> players;
+    for(auto& strategy : strategies) {
+        players.push_back(Player(strategy));
+    }
+
+    this->env = Environment(players, libraries);
+
+    Changeset startDraw;
+    for(Player& player : this->env.players) {
+        startDraw += Changeset::drawCards(player.id, 7, this->env);
+    }
+    this->applyChangeset(startDraw);
+
+    this->runGame();
 }

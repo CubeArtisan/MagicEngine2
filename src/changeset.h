@@ -1,6 +1,7 @@
 #ifndef _CHANGESET_H_
 #define _CHANGESET_H_
 
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -16,6 +17,7 @@ class Environment;
 struct Targetable {
     // This is mutable state
     xg::Guid id;
+    xg::Guid owner;
 
     Targetable();
 };
@@ -72,7 +74,7 @@ struct RemoveMana {
 
 struct ObjectCreation {
     xg::Guid zone;
-    std::reference_wrapper<Targetable> created;
+    std::shared_ptr<Targetable> created;
 };
 
 struct LifeTotalChange {
@@ -91,6 +93,16 @@ struct StepOrPhaseChange {
     StepOrPhase starting;
 };
 
+struct DamageToTarget {
+    xg::Guid target;
+    unsigned int amount;
+};
+
+struct TapTarget {
+    xg::Guid target;
+    bool tap;
+};
+
 struct Changeset {
     std::vector<ObjectMovement> moves;
     std::vector<AddPlayerCounter> playerCounters;
@@ -105,6 +117,8 @@ struct Changeset {
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
+    std::vector<DamageToTarget> damage;
+    std::vector<TapTarget> tap;
     StepOrPhaseChange phaseChange;
 
     Changeset operator+(Changeset& other);

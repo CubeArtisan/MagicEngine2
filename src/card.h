@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <set>
 #include <variant>
 #include <vector>
@@ -13,7 +14,6 @@
 #include "cost.h"
 #include "enum.h"
 #include "mana.h"
-#include "player.h"
 
 class ActivatedAbility;
 class Token;
@@ -23,17 +23,16 @@ class Player;
 class HasEffect {
 public:
     virtual Changeset applyEffect(const Environment& env) = 0;
-};
-
-class Card : public Targetable, public HasEffect {
-public:
-    xg::Guid owner;
-    // CodeReview: Move to environment
-    std::vector<std::reference_wrapper<Targetable>> targets;
-    bool is_tapped;
-
     bool is_legal(int pos, Targetable& target);
     std::vector<bool> are_legal(std::vector<std::reference_wrapper<Targetable>>);
+    // CodeReview: Move to environment
+    std::vector<xg::Guid> targets;
+};
+
+class CardToken : public Targetable, public HasEffect {
+public:
+    // CodeReview: Move to environment
+    bool is_tapped;
 
     std::set<CardSuperType> superType;
     std::set<CardType> type;
@@ -47,18 +46,20 @@ public:
     std::set<Color> colors;
     std::vector<std::reference_wrapper<Cost>> costs;
     std::vector<std::reference_wrapper<Cost>> additionalCosts;
-    std::vector<std::reference_wrapper<ActivatedAbility>> activatableAbilities;
+    std::vector<std::shared_ptr<ActivatedAbility>> activatableAbilities;
+};
+
+class Card : public CardToken {
+public:
 
     virtual bool canCast() = 0;
 };
 
-class Token : public Targetable, public HasEffect {
+class Token : public CardToken {
 public:
-    xg::Guid owner;
 };
 
 class Emblem : public Targetable {
 public:
-    Player& owner;
 };
 #endif
