@@ -25,14 +25,14 @@ struct Targetable {
 
 class EventHandler : public Targetable {
 public:
-    virtual std::vector<std::reference_wrapper<Changeset>> handleEvent(Changeset, Environment&) = 0;
+    virtual std::vector<Changeset> handleEvent(Changeset&, const Environment&) = 0;
     bool operator==(EventHandler& other) {
         return this->id == other.id;
     }
 };
 class StateQueryHandler : public Targetable {
 public:
-    virtual StateQuery handleEvent(StateQuery, Environment&) = 0;
+    virtual StateQuery& handleEvent(StateQuery&, const Environment&) = 0;
     bool operator==(StateQueryHandler& other) {
         return this->id == other.id;
     }

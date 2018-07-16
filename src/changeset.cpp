@@ -93,6 +93,9 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 			os << ' ' << t << std::endl;
 		}
 	}
+	for (xg::Guid& player : changeset.loseTheGame) {
+		os << player << " loses the game" << std::endl;
+	}
     if(changeset.phaseChange.changed) {
         os << "Leaving step " << changeset.phaseChange.starting << std::endl;
     }

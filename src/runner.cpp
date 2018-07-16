@@ -60,7 +60,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 void Runner::runGame(){
     int firstPlayerToPass = -1;
 	int count = 1;
-    while(this->env.players.size() > 0) {
+    while(this->env.players.size() > 1) {
         std::variant<Changeset, PassPriority> step = this->executeStep();
 
         if(Changeset* pChangeset = std::get_if<Changeset>(&step)){
@@ -107,7 +107,7 @@ void Runner::runGame(){
 			this->env.currentPlayer = nextPlayer;
         }
 		count++;
-		if (count > 30) break;
+		// if (count > 30) break;
     }
 }
 
@@ -115,7 +115,27 @@ void Runner::applyChangeset(Changeset& changeset) {
 #ifdef DEBUG
     std::cout << changeset;
 #endif
-    // CodeReview: Use the event system
+    // CodeReview: Reevaluate the Replacement effect system for recursion
+	// CodeReview: Allow strategy to specify order to evaluate in
+	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
+		std::vector<Changeset> changes = eh->handleEvent(changeset, this->env);
+		if (changes.empty()) return;
+		Changeset newChange;
+		for (Changeset& change : changes) {
+			newChange += change;
+		}
+		changeset = newChange;
+	}
+	for (std::shared_ptr<EventHandler> eh : this->env.triggerHandlers) {
+		std::vector<Changeset> changes = eh->handleEvent(changeset, this->env);
+		// This should only happen with replacement effects
+		if (changes.empty()) return;
+		Changeset newChange;
+		for (Changeset& change : changes) {
+			newChange += change;
+		}
+		changeset = newChange;
+	}
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
             apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
@@ -144,11 +164,11 @@ void Runner::applyChangeset(Changeset& changeset) {
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
     for(std::shared_ptr<EventHandler> eh : changeset.eventsToAdd){
-        // CodeReview: Handle triggers/replacement effects
+        // CodeReview: Handle triggers/replacement effects differences
         this->env.triggerHandlers.push_back(eh);
     }
     for(std::shared_ptr<EventHandler> eh : changeset.eventsToRemove){
-        // CodeReview: Handle triggers/replacement effects
+        // CodeReview: Handle triggers/replacement effects differences
         std::vector<std::shared_ptr<EventHandler>>& list = this->env.triggerHandlers;
         list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
                                                             bool { return *e == *eh; }), list.end());
@@ -240,8 +260,34 @@ void Runner::applyChangeset(Changeset& changeset) {
 		// this->env.gameObjects.erase(om.object);
     }
 	// CodeReview: Handle losing the game
-    // for(xg::Guid& g : changeset.loseTheGame){
-    // }
+	for (xg::Guid& ltg : changeset.loseTheGame) {
+		int index = 0;
+		for (auto iter = this->env.players.begin(); iter != this->env.players.end(); iter++) {
+			if (iter->id == ltg) {
+				if (env.turnPlayer == index)
+				{
+					env.currentPhase = END;
+					Changeset endTurn;
+					endTurn.phaseChange = StepOrPhaseChange{ true, END };
+					applyChangeset(endTurn);
+				}
+				if (env.currentPlayer == index) env.currentPlayer = (env.currentPlayer + 1) % env.players.size();
+				// CodeReview remove unneeded data structures
+				// CodeReview remove eventhandlers registered to that player
+				// Need a way to find what zone an object is in to do this for all objects
+				Changeset removeCards;
+				for (auto& card : this->env.battlefield.objects) {
+					if (getBaseClassPtr<CardToken>(card)->owner == ltg) {
+						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<CardToken>(card)->id, this->env.battlefield.id });
+					}
+				}
+				applyChangeset(removeCards);
+				env.players.erase(iter);
+				break;
+			}
+			index++;
+		}
+	}
 
     this->env.changes.push_back(changeset);
 }
