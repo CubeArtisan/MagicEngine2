@@ -7,9 +7,9 @@
 #include "cost.h"
 
 // CodeReview: Only handles casting from hand currently
+// CodeReview: Implement Modes
 struct CastSpell {
     xg::Guid spell;
-    // Modes
     std::vector<xg::Guid> targets;
     Cost& cost;
     std::vector<std::shared_ptr<Cost>> additionalCosts;

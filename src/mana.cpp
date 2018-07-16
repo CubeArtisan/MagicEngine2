@@ -76,7 +76,7 @@ void Mana::clear() {
 	this->generic = 0;
 }
 
-unsigned int Mana::cmc() {
+size_t Mana::cmc() {
 	return this->generic + this->manaString.size();
 }
 

@@ -17,18 +17,20 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
         this->hands[players[i].id] = Zone<Card, Token>(HAND);
 		this->gameObjects[this->hands[players[i].id].id] = std::shared_ptr<Targetable>(&this->hands[players[i].id]);
         this->libraries[players[i].id] = Zone<Card, Token>(LIBRARY);
-		this->landPlays[players[i].id] = 1;
-
 		this->gameObjects[this->libraries[players[i].id].id] = std::shared_ptr<Targetable>(&this->libraries[players[i].id]);
-        this->lifeTotals[players[i].id] = 20;
+
+		// CodeReview: Handle Land play incrementing/decrementing
+		// CodeReview: Handle land plays with two counts for available/played
+		this->landPlays[players[i].id] = 1;
+		this->lifeTotals[players[i].id] = 20;
 		this->manaPools[players[i].id] = Mana();
         for(Card card : libraries[i]) {
 			Card* copy = new Card(card);
 			copy->owner = players[i].id;
 			copy->id = xg::newGuid();
-            this->gameObjects[copy->id] = std::shared_ptr<Card>(copy);
 			std::shared_ptr<Targetable> ptr(copy);
-            this->libraries[players[i].id].addObject(ptr, copy->id);
+			this->libraries[players[i].id].addObject(ptr, copy->id);
+            this->gameObjects[copy->id] = std::shared_ptr<Card>(copy);
         }
         
 		std::random_device rd;

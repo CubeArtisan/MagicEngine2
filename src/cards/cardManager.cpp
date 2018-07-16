@@ -33,7 +33,11 @@
 CardManager::CardManager(){
 	AManager().getCards(this->cards, this->mvids);
     DManager().getCards(this->cards, this->mvids);
+	FManager().getCards(this->cards, this->mvids);
     IManager().getCards(this->cards, this->mvids);
+	MManager().getCards(this->cards, this->mvids);
+	PManager().getCards(this->cards, this->mvids);
+	SManager().getCards(this->cards, this->mvids);
 }
 
 Card CardManager::getCard(int mvid){

@@ -19,3 +19,7 @@ Changeset ManaAbility::applyEffect(const Environment&) {
     changes.addMana.push_back(AddMana{this->owner, mana});
     return changes;
 }
+
+std::shared_ptr<Ability> ManaAbility::clone() {
+	return std::shared_ptr<Ability>(new ManaAbility(*this));
+}

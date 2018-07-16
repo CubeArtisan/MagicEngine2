@@ -22,7 +22,7 @@ public:
     bool contains(Mana& other);
     bool subtract(Mana& other);
 	void clear();
-    unsigned int cmc();
+    size_t cmc();
 
     Mana& operator+=(Mana other);
     Mana& operator-=(Mana other);

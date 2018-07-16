@@ -105,13 +105,16 @@ struct Environment {
 
     PrivateZones<Card, Token> hands;
     PrivateZones<Card, Token> libraries;
-    Zone<Card, Token> graveyard;
+    // CodeReview: Make PrivateZone
+	Zone<Card, Token> graveyard;
     Zone<Card, Token> battlefield;
     Zone<Card, Token, Ability> stack;
     Zone<Card, Token> exile;
     Zone<Card, Emblem> command;
+	// CodeReview: Create Sideboard?
 
 	std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
+	//CodeReview: Damage Mapping
 
 	std::vector<Player> players;
     std::map<xg::Guid, Mana> manaPools;
@@ -133,6 +136,8 @@ struct Environment {
     unsigned int turnPlayer;
 
     Environment(std::vector<Player>& players, std::vector<std::vector<Card>>& libraries);
+
+	std::vector<StepOrPhase> phasesOfTurn;
 };
 
 #endif

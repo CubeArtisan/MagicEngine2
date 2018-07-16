@@ -6,7 +6,7 @@
 std::variant<Changeset, PassPriority> Runner::executeStep()
 {
     // CodeReview: Check state based actions
-    Player& active = (Player&)this->env.players[this->env.currentPlayer];
+    Player& active = this->env.players[this->env.currentPlayer];
     GameAction action = active.strategy->chooseGameAction(active, env);
 
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
@@ -32,19 +32,23 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         std::vector<Changeset> results;
         Changeset playLand;
         Targetable hand = this->env.hands[active.id];
-        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand.id, this->env.stack.id});
+        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand.id, this->env.battlefield.id});
         // CodeReview: Use land play for the turn
         return playLand;
     }
 
     if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
         Changeset activateAbility;
-        std::shared_ptr<ActivatedAbility> result = pActivateAnAbility->ability;
+		// CodeReview: Copy ability when put on the stack
+        std::shared_ptr<ActivatedAbility> result =
+			std::dynamic_pointer_cast<ActivatedAbility>(pActivateAnAbility->ability->clone());
         result->source = pActivateAnAbility->source;
 		result->owner = active.id;
         result->id = xg::newGuid();
         activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
-        // CodeReview: Assign targets
+		if (pActivateAnAbility->targets.size() > 0) {
+			activateAbility.target.push_back(CreateTargets{ result->id, pActivateAnAbility->targets });
+		}
         activateAbility += pActivateAnAbility->cost.payCost(active, env, result->source);
         // CodeReview: Use the chosen X value
         return activateAbility;
@@ -79,9 +83,8 @@ void Runner::runGame(){
                 else{
                     std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
                                  std::shared_ptr<Ability>> top = this->env.stack.objects.back();
-                    Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);;
-                    if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top))
-                    {
+                    Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);
+                    if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
 						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
                         for(CardType type : card->baseTypes){
@@ -94,7 +97,7 @@ void Runner::runGame(){
                             resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.graveyard.id});
                         }
                     }
-                    else{
+                    else {
                         xg::Guid id = getBaseClassPtr<Targetable>(top)->id;
                         resolveSpellAbility.remove.push_back(RemoveObject{id, stack.id});
                     }
@@ -117,6 +120,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 #endif
     // CodeReview: Reevaluate the Replacement effect system for recursion
 	// CodeReview: Allow strategy to specify order to evaluate in
+	// CodeReview: Replacement effect for less than 0 damage to not happen
 	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
 		std::vector<Changeset> changes = eh->handleEvent(changeset, this->env);
 		if (changes.empty()) return;
@@ -181,21 +185,18 @@ void Runner::applyChangeset(Changeset& changeset) {
         list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<StateQueryHandler> e) ->
                                                             bool { return *e == *sqh; }), list.end());
     }
-    for(AddMana& am : changeset.addMana){
+    for(AddMana& am : changeset.addMana) {
         this->env.manaPools.at(am.player) += am.amount;
     }
-    for(RemoveMana& rm : changeset.removeMana){
+    for(RemoveMana& rm : changeset.removeMana) {
         this->env.manaPools.at(rm.player) -= rm.amount;
     }
-    for(DamageToTarget& dtt : changeset.damage){
+    for(DamageToTarget& dtt : changeset.damage) {
         std::shared_ptr<Targetable> pObject = this->env.gameObjects[dtt.target];
-        Targetable& object = *pObject;
-        if(std::type_index(typeid(Player)) == std::type_index(typeid(object)))
-        {
-            Player player = (Player&)object;
-            int lifeTotal = this->env.lifeTotals[object.id];
+        if(std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(pObject)) {
+            int lifeTotal = this->env.lifeTotals[player->id];
             Changeset lifeLoss;
-            lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{object.id, lifeTotal - (int)dtt.amount, lifeTotal});
+            lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{player->id, lifeTotal - (int)dtt.amount, lifeTotal});
         }
         // CodeReview: Handle other cases
     }
@@ -208,15 +209,19 @@ void Runner::applyChangeset(Changeset& changeset) {
 		this->env.targets[ct.object] = ct.targets;
 	}
     if(changeset.phaseChange.changed){
+		changeset.phaseChange.starting = this->env.currentPhase;
+		// CodeReview: How to handle extra steps?
+		// CodeReview: Handle mana that doesn't empty
 		for (auto& manaPool : this->env.manaPools) {
 			manaPool.second.clear();
 		}
 		if (this->env.currentPhase == END) {
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
+			this->env.currentPhase = CLEANUP;
+			// CodeReview: Do this with Hand Size from StateQuery
 			if (this->env.hands[turnPlayerId].objects.size() > 7) {
 				// CodeReview: Implement discarding
 			}
-			this->env.currentPhase = CLEANUP;
 			// CodeReview: Remove marked damage
 			Changeset cleanup;
 			// CodeReview: Only do if nothing is on the stack
@@ -224,6 +229,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 			this->applyChangeset(cleanup);
 		}
 		else if(this->env.currentPhase == CLEANUP) {
+			// CodeReview: Get next player from Environment
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
             this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
@@ -275,6 +281,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 				// CodeReview remove unneeded data structures
 				// CodeReview remove eventhandlers registered to that player
 				// Need a way to find what zone an object is in to do this for all objects
+				// This isn't working currently for an unknown reason
 				Changeset removeCards;
 				for (auto& card : this->env.battlefield.objects) {
 					if (getBaseClassPtr<CardToken>(card)->owner == ltg) {
@@ -307,6 +314,7 @@ Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> pl
         startDraw += Changeset::drawCards(player.id, 7, this->env);
     }
     this->applyChangeset(startDraw);
+	// CodeReview: Handle mulligans
 
     this->runGame();
 }

@@ -13,6 +13,8 @@ struct Ability : public Targetable, public HasEffect {
     std::set<Color> colors;
 
 	Ability(std::shared_ptr<TargetingRestriction> targeting);
+	
+	virtual std::shared_ptr<Ability> clone() = 0;
 };
 
 struct ActivatedAbility : public Ability, public CostedEffect {
@@ -27,6 +29,8 @@ struct ManaAbility : public ActivatedAbility {
 
 private:
     Mana mana;
+
+	virtual std::shared_ptr<Ability> clone();
 };
 
 #endif
