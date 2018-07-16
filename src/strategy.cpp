@@ -9,7 +9,7 @@
 
 template<typename Iter, typename RandomGenerator>
 Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
-    std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+    std::uniform_int_distribution<> dis(0, (int)std::distance(start, end) - 1);
     std::advance(start, dis(g));
     return start;
 }
@@ -47,13 +47,13 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
     std::vector<GameAction> possibilities;
     for(auto& cardWrapper : env.hands[player.id].objects) {
         if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&cardWrapper)) {
-            Card& card = **pCard;
-            if(std::shared_ptr<Cost> pCost = card.canPlay(player, env)) {
-                if(card.baseTypes.find(LAND) != card.baseTypes.end()) {
-                    possibilities.push_back(PlayLand{card.id});
+            std::shared_ptr<Card> card = *pCard;
+            if(std::shared_ptr<Cost> pCost = card->canPlay(player, env)) {
+                if(card->baseTypes.find(LAND) != card->baseTypes.end()) {
+                    possibilities.push_back(PlayLand{card->id});
                 }
                 else {
-                    possibilities.push_back(CastSpell{card.id, std::vector<xg::Guid>(), *pCost,
+                    possibilities.push_back(CastSpell{card->id, std::vector<xg::Guid>(), *pCost,
                                             std::vector<std::shared_ptr<Cost>>(), 0});
                 }
             }
@@ -63,8 +63,9 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
     for(auto& cardWrapper : env.battlefield.objects){
         CardToken& card = *getBaseClassPtr<CardToken>(cardWrapper);
         for(std::shared_ptr<ActivatedAbility> pAbility : card.activatableAbilities) {
+			pAbility->source = cardWrapper;
             if(std::shared_ptr<Cost> pCost = pAbility->canPlay(player, env)) {
-                possibilities.push_back(ActivateAnAbility{upShiftVariant(cardWrapper), pAbility, std::vector<xg::Guid>(), *pCost, 0});
+                possibilities.push_back(ActivateAnAbility{cardWrapper, pAbility, std::vector<xg::Guid>(), *pCost, 0});
             }
         }
     }

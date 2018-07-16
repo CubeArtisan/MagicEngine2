@@ -4,7 +4,7 @@
 #include <variant>
 
 #include "enum.h"
-class Ability;
+struct Ability;
 
 struct PowerQuery {
     xg::Guid target;

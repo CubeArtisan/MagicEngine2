@@ -6,34 +6,30 @@ ManaCost::ManaCost(Mana mana)
     : mana(mana)
 {}
 
-bool ManaCost::canPay(Player& player, Environment& env) {
+bool ManaCost::canPay(Player& player, Environment& env, SourceType source) {
     return env.manaPools[player.id].contains(this->mana);
 }
 
-Changeset ManaCost::payCost(Player& player, Environment&) {
+Changeset ManaCost::payCost(Player& player, Environment&, SourceType source) {
     Changeset changes;
     changes.removeMana.push_back(RemoveMana{player.id, this->mana});
     return changes;
 }
 
-bool LandPlayCost::canPay(Player& player, Environment& env) {
+bool LandPlayCost::canPay(Player& player, Environment& env, SourceType source) {
     return env.landPlays[player.id] > 0;
 }
 
-Changeset LandPlayCost::payCost(Player&, Environment&) {
+Changeset LandPlayCost::payCost(Player&, Environment&, SourceType source) {
     return Changeset();
 }
 
-TapCost::TapCost(CardToken& object)
-    : object(object)
-{}
-
-bool TapCost::canPay(Player&, Environment&) {
-    return !object.is_tapped;
+bool TapCost::canPay(Player&, Environment&, SourceType source) {
+    return !getBaseClassPtr<CardToken>(source)->is_tapped;
 }
 
-Changeset TapCost::payCost(Player&, Environment&) {
+Changeset TapCost::payCost(Player&, Environment&, SourceType source) {
     Changeset tap;
-    tap.tap.push_back(TapTarget{object.id, true});
+    tap.tap.push_back(TapTarget{getBaseClassPtr<Targetable>(source)->id, true});
     return tap;
 }

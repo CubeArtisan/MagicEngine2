@@ -19,6 +19,7 @@ struct ActivatedAbility;
 struct Token;
 struct Emblem;
 struct Player;
+struct Card;
 
 struct HasEffect {
     virtual Changeset applyEffect(const Environment& env) = 0;
@@ -31,9 +32,12 @@ struct HasEffect {
 struct CostedEffect {
     std::vector<std::shared_ptr<Cost>> costs;
     std::vector<std::shared_ptr<Cost>> additionalCosts;
+	std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>> source;
     std::shared_ptr<Cost> canPlay(Player& player, Environment& env);
 
-    CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts);
+	CostedEffect();
+    CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
+		         std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>> source);
 };
 
 struct CardToken : public Targetable, public HasEffect {
@@ -54,6 +58,7 @@ struct CardToken : public Targetable, public HasEffect {
     std::vector<std::shared_ptr<ActivatedAbility>> activatableAbilities;
     std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyEffects;
 
+	CardToken();
     CardToken(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
               int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
               std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
@@ -61,7 +66,8 @@ struct CardToken : public Targetable, public HasEffect {
 };
 
 struct Card : public CardToken, public CostedEffect {
-    Card(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
+	Card();
+	Card(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
          int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
          std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
          std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyAbilities,

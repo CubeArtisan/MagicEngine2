@@ -21,7 +21,7 @@ struct PlayLand {
 };
 
 struct ActivateAnAbility {
-    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> source;
+    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>> source;
     std::shared_ptr<ActivatedAbility> ability;
     std::vector<xg::Guid> targets;
     Cost& cost;

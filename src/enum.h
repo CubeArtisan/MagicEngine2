@@ -1,8 +1,10 @@
 #ifndef _ENUM_H_
 #define _ENUM_H_
+#include <map>
+#include <string>
 
 enum StepOrPhase : unsigned int {
-    UNTAP,
+    UNTAP = 0,
     UPKEEP,
     DRAW,
     PRECOMBATMAIN,
@@ -17,6 +19,8 @@ enum StepOrPhase : unsigned int {
     CLEANUP,
     PHASECOUNT
 };
+
+std::ostream& operator<<(std::ostream& os, StepOrPhase& step);
 
 enum PlayerCounterType : unsigned int {
     POISONCOUNTER,

@@ -20,6 +20,7 @@ struct Targetable {
     xg::Guid owner;
 
     Targetable();
+	virtual ~Targetable() {}
 };
 
 class EventHandler : public Targetable {
@@ -95,8 +96,8 @@ struct RemoveObject {
 };
 
 struct StepOrPhaseChange {
-    bool changed;
-    StepOrPhase starting;
+	bool changed{ false };
+	StepOrPhase starting{ UNTAP };
 };
 
 struct DamageToTarget {
@@ -132,6 +133,6 @@ struct Changeset {
 
     friend std::ostream& operator<<(std::ostream& os, Changeset& changeset);
 
-    static Changeset drawCards(xg::Guid player, unsigned int amount, const Environment& env);
+    static Changeset drawCards(xg::Guid player, size_t amount, const Environment& env);
 };
 #endif

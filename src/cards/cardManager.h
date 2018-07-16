@@ -4,22 +4,22 @@
 #include <memory>
 #include <string>
 
-#include "card.h"
+#include "../card.h"
 
 class CardManager {
 public:
-    std::shared_ptr<Card> getCard(int mvid);
-    std::shared_ptr<Card> getCard(std::string name);
+    Card getCard(int mvid);
+    Card getCard(std::string name);
 
     CardManager();
 
 private:
-    std::map<std::string, std::shared_ptr<Card>> cards;
+    std::map<std::string, Card> cards;
     std::map<int, std::string> mvids;
 };
 
 struct LetterManager {
-    virtual void getCards(std::map<std::string, std::shared_ptr<Card>>&, std::map<int, std::string>&) = 0;
+    virtual void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>& mvids) = 0;
 };
 
 #endif

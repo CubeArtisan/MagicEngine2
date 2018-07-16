@@ -71,6 +71,15 @@ bool Mana::subtract(Mana& other) {
     return true;
 }
 
+void Mana::clear() {
+	this->manaString.clear();
+	this->generic = 0;
+}
+
+unsigned int Mana::cmc() {
+	return this->generic + this->manaString.size();
+}
+
 Mana& Mana::operator+=(Mana other){
     this->add(other);
     return *this;

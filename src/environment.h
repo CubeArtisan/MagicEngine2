@@ -28,10 +28,10 @@ enum ZoneType {
 };
 
 struct ZoneInterface {
-    xg::Guid addObject(Targetable& object) {
+    xg::Guid addObject(std::shared_ptr<Targetable> object) {
         return addObject(object, xg::newGuid());
     }
-    virtual xg::Guid addObject(Targetable& object, xg::Guid newGuid) = 0;
+    virtual xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) = 0;
     virtual std::shared_ptr<Targetable> removeObject(xg::Guid object) = 0;
 };
 
@@ -40,8 +40,8 @@ struct Zone : public Targetable, public ZoneInterface {
     ZoneType type;
     std::vector<std::variant<std::shared_ptr<Args>...>> objects;
     
-    xg::Guid addObject(Targetable& object, xg::Guid newGuid) {
-        object.id = newGuid;
+    xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) {
+        object->id = newGuid;
         this->addObjectInternal<Args...>(object);
         return newGuid;
     }
@@ -61,11 +61,17 @@ struct Zone : public Targetable, public ZoneInterface {
         throw "Failed to find object for removal";
     }
 
+	Zone()
+	{}
+	Zone(ZoneType type)
+		: type(type)
+	{}
+
 private:
     template<typename T, typename... Extra>
-    void addObjectInternal(Targetable& object){
-        if(std::type_index(typeid(T)) == std::type_index(typeid(object))){
-            this->objects.push_back(std::shared_ptr<T>(&static_cast<T&>(object)));
+    void addObjectInternal(std::shared_ptr<Targetable>& object){
+        if(std::shared_ptr<T> result = std::dynamic_pointer_cast<T>(object)){
+            this->objects.push_back(result);
         }
         else {
             if constexpr(sizeof...(Extra) == 0) {
@@ -116,7 +122,7 @@ struct Environment {
 
     Changeset passPriority(xg::Guid player);
 
-    Environment(std::vector<Player>& players, std::vector<std::vector<std::shared_ptr<Card>>>& libraries);
+    Environment(std::vector<Player>& players, std::vector<std::vector<Card>>& libraries);
 };
 
 #endif

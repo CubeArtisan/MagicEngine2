@@ -1,5 +1,5 @@
-#include "cards/cardManager.h"
-#include "environment.h"
+#include "cardManager.h"
+#include "../environment.h"
 
 Card Divination = Card(std::set<CardSuperType>{}, std::set<CardType>{SORCERY}, std::set<CardSubType>{}, 0, 0, 0,
                        "Divination", 3, std::set<Color>{BLUE}, std::vector<std::shared_ptr<ActivatedAbility>>{},
@@ -13,8 +13,8 @@ Card Divination = Card(std::set<CardSuperType>{}, std::set<CardType>{SORCERY}, s
 
 class DManager : public LetterManager {
 public:
-    void getCards(std::map<std::string, std::shared_ptr<Card>>& cards, std::map<int, std::string>&)
+    void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
     {
-        cards[Divination.name] = std::shared_ptr<Card>(&Divination);
+        cards[Divination.name] = Divination;
     }
 };

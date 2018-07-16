@@ -1,15 +1,18 @@
 #include "card.h"
 
-CostedEffect::CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
-    : costs(costs), additionalCosts(additionalCosts)
+CostedEffect::CostedEffect() {}
+
+CostedEffect::CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
+						   std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>> source)
+    : costs(costs), additionalCosts(additionalCosts), source(source)
 {}
 
 std::shared_ptr<Cost> CostedEffect::canPlay(Player& player, Environment& env) {
     // CodeReview: Can choose targets if *this is a HasEffect
     // CodeReview: Handle timing restrictions
     
-    for(std::shared_ptr<Cost> cost : this->costs) {
-        if(cost->canPay(player, env)) return cost;
+    for(std::shared_ptr<Cost>& cost : this->costs) {
+        if(cost->canPay(player, env, this->source)) return cost;
     }
     return std::shared_ptr<Cost>();
 }
@@ -20,6 +23,8 @@ Changeset CardToken::applyEffect(const Environment& env) {
     return change;
 }
 
+CardToken::CardToken() {}
+
 CardToken::CardToken(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
                      int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
                      std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
@@ -29,13 +34,15 @@ CardToken::CardToken(std::set<CardSuperType> superTypes, std::set<CardType> type
       applyEffects(applyEffects)
     {}
 
+Card::Card() {}
+
 Card::Card(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
            int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
            std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
            std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyAbilities,
            std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                applyAbilities), CostedEffect(costs, additionalCosts)
+                applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>(this))
     {}
 
 Token::Token(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,

@@ -1,7 +1,7 @@
 #include "ability.h"
 
 ActivatedAbility::ActivatedAbility(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
-    : CostedEffect(costs, additionalCosts)
+    : CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
 {}
 
 ManaAbility::ManaAbility(Mana mana, std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)

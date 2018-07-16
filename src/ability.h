@@ -9,7 +9,7 @@
 #include "changeset.h"
 
 struct Ability : public Targetable, public HasEffect {
-    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> source;
+    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> origin;
     std::set<Color> colors;
 };
 

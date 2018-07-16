@@ -70,6 +70,7 @@ Changeset& Changeset::operator+=(Changeset other){
 }
 
 std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
+	os << "Beginning Changeset" << std::endl;
     if(changeset.moves.size() > 0) {
         for(ObjectMovement& move : changeset.moves) {
             os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
@@ -94,17 +95,17 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
     if(changeset.phaseChange.changed) {
         os << "Leaving step " << changeset.phaseChange.starting << std::endl;
     }
+	os << "Ending Changeset" << std::endl << std::endl;
     return os;
 }
 
-Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, const Environment& env){
+Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment& env){
     Changeset result = Changeset();
-    const Zone<Card, Token> libraryZone = env.libraries.at(player);
+    const Zone<Card, Token>& libraryZone = env.libraries.at(player);
     auto library = libraryZone.objects;
-    const Zone<Card, Token> handZone = env.hands.at(player);
-    
+    const Zone<Card, Token>& handZone = env.hands.at(player);
     if(amount > library.size()){
-        // Cause lose game
+		result.loseTheGame.push_back(player);
         amount = library.size();
     }
     auto card = library.begin() + (library.size() - amount);

@@ -21,6 +21,7 @@ public:
     void add(Mana& other);
     bool contains(Mana& other);
     bool subtract(Mana& other);
+	void clear();
     unsigned int cmc();
 
     Mana& operator+=(Mana other);

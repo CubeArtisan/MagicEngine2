@@ -13,10 +13,11 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         Changeset castSpell;
         Targetable hand = this->env.hands[active.id];
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
+		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects[pCastSpell->spell]);
         // CodeReview: Assign targets
-        castSpell += pCastSpell->cost.payCost(active, env);
+        castSpell += pCastSpell->cost.payCost(active, env, spell);
         for(std::shared_ptr<Cost> c : pCastSpell->additionalCosts) {
-            castSpell += c->payCost(active, env);
+            castSpell += c->payCost(active, env, spell);
         }
         // CodeReview: Use the chosen X value
         return castSpell;
@@ -38,7 +39,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         result->id = xg::newGuid();
         activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
         // CodeReview: Assign targets
-        activateAbility += pActivateAnAbility->cost.payCost(active, env);
+        activateAbility += pActivateAnAbility->cost.payCost(active, env, result->source);
         // CodeReview: Use the chosen X value
         return activateAbility;
     }
@@ -52,6 +53,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
 void Runner::runGame(){
     int firstPlayerToPass = -1;
+	int count = 1;
     while(this->env.players.size() > 0) {
         std::variant<Changeset, PassPriority> step = this->executeStep();
 
@@ -74,15 +76,16 @@ void Runner::runGame(){
                     Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);;
                     if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top))
                     {
+						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
-                        for(CardType type : ((Card&)*pCard).baseTypes){
+                        for(CardType type : card->baseTypes){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
-                                resolveSpellAbility.moves.push_back(ObjectMovement{((Card&)*pCard).id, stack.id, this->env.battlefield.id});
+                                resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.battlefield.id});
                                 isPermanent = true;
                             }
                         }
                         if(!isPermanent){
-                            resolveSpellAbility.moves.push_back(ObjectMovement{((Card&)*pCard).id, stack.id, this->env.graveyard.id});
+                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.graveyard.id});
                         }
                     }
                     else{
@@ -92,11 +95,13 @@ void Runner::runGame(){
                     applyChangeset(resolveSpellAbility);
                 }
             }
-            if(firstPlayerToPass == -1) {
+            else if(firstPlayerToPass == -1) {
                 firstPlayerToPass = this->env.currentPlayer;
             }
-            this->env.currentPlayer = nextPlayer;
+			this->env.currentPlayer = nextPlayer;
         }
+		count++;
+		if (count > 25) break;
     }
 }
 
@@ -105,7 +110,6 @@ void Runner::applyChangeset(Changeset& changeset) {
     std::cout << changeset;
 #endif
     // CodeReview: Use the event system
-    // CodeReveiw: update GameObjects
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
             apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
@@ -119,14 +123,15 @@ void Runner::applyChangeset(Changeset& changeset) {
         this->env.permanentCounters[apc.player][apc.counterType] += apc.amount;
     }
     for(ObjectCreation& oc : changeset.create){
-        ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[oc.zone];
+        std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
         xg::Guid id = oc.created->id;
-        zone.addObject(*oc.created, id);
+        zone->addObject(oc.created, id);
         this->env.gameObjects[id] = oc.created;
     }
     for(RemoveObject& ro : changeset.remove) {
-        ZoneInterface& zone = (ZoneInterface&)this->env.gameObjects[ro.zone];
-        zone.removeObject(ro.object);
+		std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[ro.zone]);
+		zone->removeObject(ro.object);
+		this->env.gameObjects.erase(ro.object);
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
         ltc.oldValue = this->env.lifeTotals[ltc.player];
@@ -168,35 +173,46 @@ void Runner::applyChangeset(Changeset& changeset) {
         }
         // CodeReview: Handle other cases
     }
+	for (TapTarget& tt : changeset.tap) {
+		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
+		std::shared_ptr<CardToken> pObject = std::dynamic_pointer_cast<CardToken>(object);
+		pObject->is_tapped = tt.tap;
+	}
     if(changeset.phaseChange.changed){
-        // CodeReview: Empty mana pools
-        // CodeReview: Do untap
+		for (auto& manaPool : this->env.manaPools) {
+			manaPool.second.clear();
+		}
+		// CodeReview: Do draw step
         if(this->env.currentPhase == CLEANUP){
             // CodeReview: Do cleanup steps
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
             this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
+			// CodeReview: Do untap
         }
         else{
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
         }
     }
     for(ObjectMovement& om : changeset.moves) {
-        ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
-        ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
+        ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
+        ZoneInterface& dest = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.destinationZone));
 
         std::shared_ptr<Targetable> object = source.removeObject(om.object);
-        om.newObject = dest.addObject(*object, om.newObject);
+        om.newObject = dest.addObject(object, om.newObject);
+		this->env.gameObjects[om.newObject] = object;
+		// CodeReview: Figure out why this line corrupts the shared_ptr
+		// this->env.gameObjects.erase(om.object);
     }
+	// CodeReview: Handle losing the game
     // for(xg::Guid& g : changeset.loseTheGame){
-        // CodeReview: Handle losing the game
     // }
 
     this->env.changes.push_back(changeset);
 }
 
-Runner::Runner(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<Player> players)
+Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> players)
  : env(players, libraries)
 {
     if(players.size() != libraries.size()) {
