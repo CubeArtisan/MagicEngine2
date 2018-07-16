@@ -7,10 +7,10 @@ int main(int argc, char* argv[]){
     char* name = argv[0];
 	std::vector<std::vector<Card>> libraries{ std::vector<Card>(), std::vector<Card>() };
     CardManager cardManager;
-    for(int i=0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Divination"));
-    for(int i=0; i < 3; i++) libraries[0].push_back(cardManager.getCard("Island"));
-    for(int i=0; i < 4; i++) libraries[1].push_back(cardManager.getCard("Divination"));
-    for(int i=0; i < 3; i++) libraries[1].push_back(cardManager.getCard("Island"));
+    for(int i=0; i < 40; i++) libraries[0].push_back(cardManager.getCard("Divination"));
+    for(int i=0; i < 20; i++) libraries[0].push_back(cardManager.getCard("Island"));
+    for(int i=0; i < 40; i++) libraries[1].push_back(cardManager.getCard("Divination"));
+    for(int i=0; i < 20; i++) libraries[1].push_back(cardManager.getCard("Island"));
     std::vector<Player> players{Player(std::shared_ptr<Strategy>(new RandomStrategy())),
                                 Player(std::shared_ptr<Strategy>(new RandomStrategy()))};
     Runner runner(libraries, players);

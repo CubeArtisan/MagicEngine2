@@ -21,6 +21,7 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
 
 		this->gameObjects[this->libraries[players[i].id].id] = std::shared_ptr<Targetable>(&this->libraries[players[i].id]);
         this->lifeTotals[players[i].id] = 20;
+		this->manaPools[players[i].id] = Mana();
         for(Card card : libraries[i]) {
 			Card* copy = new Card(card);
 			copy->owner = players[i].id;

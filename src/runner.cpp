@@ -101,7 +101,7 @@ void Runner::runGame(){
 			this->env.currentPlayer = nextPlayer;
         }
 		count++;
-		if (count > 25) break;
+		if (count > 100) break;
     }
 }
 
@@ -182,18 +182,43 @@ void Runner::applyChangeset(Changeset& changeset) {
 		for (auto& manaPool : this->env.manaPools) {
 			manaPool.second.clear();
 		}
-		// CodeReview: Do draw step
-        if(this->env.currentPhase == CLEANUP){
-            // CodeReview: Do cleanup steps
+		if (this->env.currentPhase == END) {
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
+			if (this->env.hands[turnPlayerId].objects.size() > 7) {
+				// CodeReview: Implement discarding
+			}
+			this->env.currentPhase = CLEANUP;
+			// CodeReview: Remove marked damage
+			Changeset cleanup;
+			// CodeReview: Only do if nothing is on the stack
+			cleanup.phaseChange = StepOrPhaseChange{ true, CLEANUP };
+			this->applyChangeset(cleanup);
+		}
+		else if(this->env.currentPhase == CLEANUP) {
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
             this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
-			// CodeReview: Do untap
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
+			
+			Changeset untap;
+			for (auto& object : this->env.battlefield.objects) {
+				std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(object);
+				if (card->owner == turnPlayerId && card->is_tapped) {
+					untap.tap.push_back(TapTarget{ card->id, false });
+				}
+			}
+			untap.phaseChange = StepOrPhaseChange{ true, UNTAP };
+			this->applyChangeset(untap);
         }
         else{
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
         }
+
+		if (this->env.currentPhase == DRAW) {
+			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer].id, 1, env);
+			this->applyChangeset(drawCard);
+		}
     }
     for(ObjectMovement& om : changeset.moves) {
         ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
