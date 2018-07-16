@@ -14,7 +14,10 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         Targetable hand = this->env.hands[active.id];
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
 		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects[pCastSpell->spell]);
-        // CodeReview: Assign targets
+#ifdef DEBUG
+		std::cout << "Casting " << spell->name << std::endl;
+#endif
+		// CodeReview: Assign targets
         castSpell += pCastSpell->cost.payCost(active, env, spell);
         for(std::shared_ptr<Cost> c : pCastSpell->additionalCosts) {
             castSpell += c->payCost(active, env, spell);
@@ -36,6 +39,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         Changeset activateAbility;
         std::shared_ptr<ActivatedAbility> result = pActivateAnAbility->ability;
         result->source = pActivateAnAbility->source;
+		result->owner = active.id;
         result->id = xg::newGuid();
         activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
         // CodeReview: Assign targets
@@ -156,10 +160,10 @@ void Runner::applyChangeset(Changeset& changeset) {
                                                             bool { return *e == *sqh; }), list.end());
     }
     for(AddMana& am : changeset.addMana){
-        this->env.manaPools[am.player] += am.amount;
+        this->env.manaPools.at(am.player) += am.amount;
     }
     for(RemoveMana& rm : changeset.removeMana){
-        this->env.manaPools[rm.player] -= rm.amount;
+        this->env.manaPools.at(rm.player) -= rm.amount;
     }
     for(DamageToTarget& dtt : changeset.damage){
         std::shared_ptr<Targetable> pObject = this->env.gameObjects[dtt.target];

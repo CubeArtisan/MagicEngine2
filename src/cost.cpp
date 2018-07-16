@@ -7,7 +7,7 @@ ManaCost::ManaCost(Mana mana)
 {}
 
 bool ManaCost::canPay(Player& player, Environment& env, SourceType source) {
-    return env.manaPools[player.id].contains(this->mana);
+    return env.manaPools.at(player.id).contains(this->mana);
 }
 
 Changeset ManaCost::payCost(Player& player, Environment&, SourceType source) {
