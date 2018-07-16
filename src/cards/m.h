@@ -9,8 +9,8 @@ Card Mountain = Card(std::set<CardSuperType>{BASIC}, std::set<CardType>{LAND}, s
 					std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{RED}),
 						std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new TapCost())}))},
 					std::shared_ptr<TargetingRestriction>(new NoTargets()),
-						std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{},
-						std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new LandPlayCost())}, std::vector<std::shared_ptr<Cost>>{});
+					std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{},
+					std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new LandPlayCost())}, std::vector<std::shared_ptr<Cost>>{});
 
 class MManager : public LetterManager {
 public:

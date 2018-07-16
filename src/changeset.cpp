@@ -74,18 +74,16 @@ Changeset& Changeset::operator+=(Changeset other){
 
 std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 	os << "Beginning Changeset" << std::endl;
-    for(ObjectMovement& move : changeset.moves) {
-        os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
-            << " new GUID " << move.newObject << std::endl;
-    }
+
     for(AddMana& mana : changeset.addMana) {
         os << "Add Mana: " << mana.player << " gets " << mana.amount << std::endl;
     }
     for(RemoveMana& mana : changeset.removeMana) {
-        os << "Remove Mana: " << mana.player << " gets " << mana.amount << std::endl;
+        os << "Remove Mana: " << mana.player << " uses " << mana.amount << std::endl;
     }
     for(TapTarget& tap : changeset.tap) {
-        os << "Tapping Target: " << tap.target << " " << tap.tap << std::endl;
+		if(tap.tap) os << "Tapping Target: " << tap.target << std::endl;
+		else os << "Untapping Target: " << tap.target << std::endl;
     }
 	for (CreateTargets& target : changeset.target) {
 		os << "Creating targets for " << target.object << " with targets";
@@ -93,12 +91,23 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 			os << ' ' << t << std::endl;
 		}
 	}
+	for (LifeTotalChange& lifeTotalChange : changeset.lifeTotalChanges) {
+		os << lifeTotalChange.player << " life total changing from " << lifeTotalChange.oldValue
+		   << " to " << lifeTotalChange.newValue << std::endl;
+	}
+	for (DamageToTarget& damage : changeset.damage) {
+		os << damage.amount << " damage to  " << damage.target << std::endl;
+	}
+	if (changeset.phaseChange.changed) {
+		os << "Leaving step " << changeset.phaseChange.starting << std::endl;
+	}
+	for (ObjectMovement& move : changeset.moves) {
+		os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
+			<< " new GUID " << move.newObject << std::endl;
+	}
 	for (xg::Guid& player : changeset.loseTheGame) {
 		os << player << " loses the game" << std::endl;
 	}
-    if(changeset.phaseChange.changed) {
-        os << "Leaving step " << changeset.phaseChange.starting << std::endl;
-    }
 	os << "Ending Changeset" << std::endl << std::endl;
     return os;
 }

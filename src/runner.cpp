@@ -6,6 +6,16 @@
 std::variant<Changeset, PassPriority> Runner::executeStep()
 {
     // CodeReview: Check state based actions
+
+	bool lost = false;
+	Changeset loseTheGame;
+	for (Player& player : this->env.players) {
+		if (this->env.lifeTotals[player.id] <= 0) {
+			lost = true;
+			loseTheGame.loseTheGame.push_back(player.id);
+		}
+	}
+	if (lost) return loseTheGame;
     Player& active = this->env.players[this->env.currentPlayer];
     GameAction action = active.strategy->chooseGameAction(active, env);
 
@@ -196,8 +206,9 @@ void Runner::applyChangeset(Changeset& changeset) {
         if(std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(pObject)) {
             int lifeTotal = this->env.lifeTotals[player->id];
             Changeset lifeLoss;
-            lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{player->id, lifeTotal - (int)dtt.amount, lifeTotal});
-        }
+            lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{player->id, lifeTotal, lifeTotal - (int)dtt.amount});
+			applyChangeset(lifeLoss);
+		}
         // CodeReview: Handle other cases
     }
 	for (TapTarget& tt : changeset.tap) {
@@ -261,9 +272,9 @@ void Runner::applyChangeset(Changeset& changeset) {
 
         std::shared_ptr<Targetable> object = source.removeObject(om.object);
         om.newObject = dest.addObject(object, om.newObject);
-		this->env.gameObjects[om.newObject] = object;
-		// CodeReview: Figure out why this line corrupts the shared_ptr
-		// this->env.gameObjects.erase(om.object);
+		std::shared_ptr<Targetable> obj2 = this->env.gameObjects[om.object];
+		this->env.gameObjects.erase(om.object);
+		this->env.gameObjects[om.newObject] = obj2;
     }
 	// CodeReview: Handle losing the game
 	for (xg::Guid& ltg : changeset.loseTheGame) {
@@ -272,6 +283,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 			if (iter->id == ltg) {
 				if (env.turnPlayer == index)
 				{
+					// CodeReview: Exile everything on the stack
 					env.currentPhase = END;
 					Changeset endTurn;
 					endTurn.phaseChange = StepOrPhaseChange{ true, END };
