@@ -49,7 +49,6 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
     if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
         Changeset activateAbility;
-		// CodeReview: Copy ability when put on the stack
         std::shared_ptr<ActivatedAbility> result =
 			std::dynamic_pointer_cast<ActivatedAbility>(pActivateAnAbility->ability->clone());
         result->source = pActivateAnAbility->source;
@@ -73,7 +72,6 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
 void Runner::runGame(){
     int firstPlayerToPass = -1;
-	int count = 1;
     while(this->env.players.size() > 1) {
         std::variant<Changeset, PassPriority> step = this->executeStep();
 
@@ -97,7 +95,7 @@ void Runner::runGame(){
                     if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
 						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
-                        for(CardType type : card->baseTypes){
+                        for(CardType type : this->env.getTypes(card->id)){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
                                 resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.battlefield.id});
                                 isPermanent = true;
@@ -119,8 +117,6 @@ void Runner::runGame(){
             }
 			this->env.currentPlayer = nextPlayer;
         }
-		count++;
-		// if (count > 30) break;
     }
 }
 
@@ -272,9 +268,8 @@ void Runner::applyChangeset(Changeset& changeset) {
 
         std::shared_ptr<Targetable> object = source.removeObject(om.object);
         om.newObject = dest.addObject(object, om.newObject);
-		std::shared_ptr<Targetable> obj2 = this->env.gameObjects[om.object];
 		this->env.gameObjects.erase(om.object);
-		this->env.gameObjects[om.newObject] = obj2;
+		this->env.gameObjects[om.newObject] = object;
     }
 	// CodeReview: Handle losing the game
 	for (xg::Guid& ltg : changeset.loseTheGame) {
@@ -296,8 +291,8 @@ void Runner::applyChangeset(Changeset& changeset) {
 				// This isn't working currently for an unknown reason
 				Changeset removeCards;
 				for (auto& card : this->env.battlefield.objects) {
-					if (getBaseClassPtr<CardToken>(card)->owner == ltg) {
-						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<CardToken>(card)->id, this->env.battlefield.id });
+					if (getBaseClassPtr<Targetable>(card)->owner == ltg) {
+						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<Targetable>(card)->id, this->env.battlefield.id });
 					}
 				}
 				applyChangeset(removeCards);

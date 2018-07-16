@@ -4,54 +4,58 @@
 #include <variant>
 
 #include "enum.h"
-struct Ability;
+struct ActivatedAbility;
+struct CardToken;
+struct CostedEffect;
+struct Targetable;
 
 struct PowerQuery {
-    xg::Guid target;
+    CardToken& target;
     int currentValue;
 };
 
 struct ToughnessQuery {
-    xg::Guid target;
+    CardToken& target;
     int currentValue;
 };
 
 struct TimingQuery {
-    xg::Guid target;
+	CostedEffect& effect;
     bool timing;
 };
 
 struct SuperTypesQuery {
-    xg::Guid target;
-    std::set<CardSuperType> supertypes;
+    CardToken& target;
+    std::set<CardSuperType> superTypes;
 };
 
 struct TypesQuery {
-    xg::Guid target;
+    CardToken& target;
     std::set<CardType> types;
 };
 
 struct SubTypesQuery {
-    xg::Guid target;
-    std::set<CardSubType> subtypes;
+    CardToken& target;
+    std::set<CardSubType> subTypes;
 };
 
 struct ColorsQuery {
-    xg::Guid target;
+    CardToken& target;
     std::set<Color> colors;
 };
 
 struct ControllerQuery {
-    xg::Guid target;
+    Targetable& target;
     xg::Guid controller;
 };
 
-struct AbilitiesQuery {
-    xg::Guid target;
-    std::vector<std::reference_wrapper<Ability>> abilities;
+// CodeReview: How to handle losing static/continuous abilities
+struct ActivatedAbilitiesQuery {
+    CardToken& target;
+    std::vector<std::shared_ptr<ActivatedAbility>> abilities;
 };
 
 using StateQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
-                                ColorsQuery, ControllerQuery, AbilitiesQuery>;
+                                ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery>;
 
 #endif

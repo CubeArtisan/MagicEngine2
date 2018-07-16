@@ -14,8 +14,12 @@ CostedEffect::CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector
 
 std::shared_ptr<Cost> CostedEffect::canPlay(Player& player, Environment& env) {
     // CodeReview: Can choose targets if *this is a HasEffect
-    // CodeReview: Handle timing restrictions
-    
+	// Might not be neccesary
+	if (Card* self = dynamic_cast<Card*>(this)) {
+		if (!env.goodTiming(self->id)) return std::shared_ptr<Cost>();
+	}
+	// CodeReview: Figure out timing for abilities
+
     for(std::shared_ptr<Cost>& cost : this->costs) {
         if(cost->canPay(player, env, this->source)) return cost;
     }

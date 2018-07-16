@@ -176,6 +176,7 @@
     <ClInclude Include="src\runner.h" />
     <ClInclude Include="src\stateQuery.h" />
     <ClInclude Include="src\strategy.h" />
+    <ClInclude Include="src\targeting.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

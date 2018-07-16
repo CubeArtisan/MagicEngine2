@@ -29,11 +29,12 @@ struct HasEffect {
 	HasEffect(std::shared_ptr<TargetingRestriction> targeting);
 };
 
+// All subclasses of this class must inherit from Targetable as well
 struct CostedEffect {
     std::vector<std::shared_ptr<Cost>> costs;
     std::vector<std::shared_ptr<Cost>> additionalCosts;
 	std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>> source;
-    std::shared_ptr<Cost> canPlay(Player& player, Environment& env);
+    virtual std::shared_ptr<Cost> canPlay(Player& player, Environment& env);
 
 	CostedEffect();
     CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
@@ -42,15 +43,14 @@ struct CostedEffect {
 
 struct CardToken : public Targetable, public HasEffect {
     Changeset applyEffect(const Environment& env); 
-    // CodeReview: Move to environment
     bool is_tapped;
 
     std::set<CardSuperType> baseSuperTypes;
     std::set<CardType> baseTypes;
     std::set<CardSubType> baseSubTypes;
     // CodeReview: Implement devotion
-    unsigned int basePower;
-    unsigned int baseToughness;
+    int basePower;
+    int baseToughness;
     unsigned int startingLoyalty;
     std::string name;
     unsigned int cmc;

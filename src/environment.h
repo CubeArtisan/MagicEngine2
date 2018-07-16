@@ -137,7 +137,18 @@ struct Environment {
 
     Environment(std::vector<Player>& players, std::vector<std::vector<Card>>& libraries);
 
-	std::vector<StepOrPhase> phasesOfTurn;
+	int getPower(xg::Guid target)  const;
+	int getToughness(xg::Guid target)  const;
+	bool goodTiming(xg::Guid target) const;
+	std::set<CardSuperType> getSuperTypes(xg::Guid target)  const;
+	std::set<CardType> getTypes(xg::Guid target) const;
+	std::set<CardSubType> getSubTypes(xg::Guid target)  const;
+	std::set<Color> getColors(xg::Guid target)  const;
+	xg::Guid getController(xg::Guid target) const;
+	std::vector<std::shared_ptr<ActivatedAbility>> getActivatedAbilities(xg::Guid target) const;
+
+private:
+	StateQuery executeStateQuery(StateQuery query) const;
 };
 
 #endif
