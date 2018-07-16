@@ -5,7 +5,7 @@
 
 Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::vector<Card>>& libraries)
 : players(prelimPlayers), graveyard(GRAVEYARD), battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND),
-  currentPhase(UNTAP), currentPlayer(0), turnPlayer(0)
+  currentPhase(UPKEEP), currentPlayer(0), turnPlayer(0)
 {
 	this->gameObjects[graveyard.id] = std::shared_ptr<Targetable>(&graveyard);
 	this->gameObjects[battlefield.id] = std::shared_ptr<Targetable>(&battlefield);

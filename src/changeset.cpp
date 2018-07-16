@@ -36,6 +36,8 @@ Changeset Changeset::operator+(Changeset& other){
     damage.insert(damage.end(), other.damage.begin(), other.damage.end());
     std::vector<TapTarget> tap = this->tap;
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
+	std::vector<CreateTargets> target = this->target;
+	target.insert(target.end(), other.target.begin(), other.target.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
@@ -43,7 +45,7 @@ Changeset Changeset::operator+(Changeset& other){
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, eventsToAdd,
                      eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     phaseChange};
+                     target, phaseChange};
 }
 
 Changeset& Changeset::operator+=(Changeset other){
@@ -62,6 +64,7 @@ Changeset& Changeset::operator+=(Changeset other){
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
     damage.insert(damage.end(), other.damage.begin(), other.damage.end());
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
+	target.insert(target.end(), other.target.begin(), other.target.end());
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
@@ -71,27 +74,25 @@ Changeset& Changeset::operator+=(Changeset other){
 
 std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 	os << "Beginning Changeset" << std::endl;
-    if(changeset.moves.size() > 0) {
-        for(ObjectMovement& move : changeset.moves) {
-            os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
-               << " new GUID " << move.newObject << std::endl;
-        }
+    for(ObjectMovement& move : changeset.moves) {
+        os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
+            << " new GUID " << move.newObject << std::endl;
     }
-    if(changeset.addMana.size() > 0) {
-        for(AddMana& mana : changeset.addMana) {
-            os << "Add Mana: " << mana.player << " gets " << mana.amount << std::endl;
-        }
+    for(AddMana& mana : changeset.addMana) {
+        os << "Add Mana: " << mana.player << " gets " << mana.amount << std::endl;
     }
-    if(changeset.removeMana.size() > 0) {
-        for(RemoveMana& mana : changeset.removeMana) {
-            os << "Remove Mana: " << mana.player << " gets " << mana.amount << std::endl;
-        }
+    for(RemoveMana& mana : changeset.removeMana) {
+        os << "Remove Mana: " << mana.player << " gets " << mana.amount << std::endl;
     }
-    if(changeset.tap.size() > 0) {
-        for(TapTarget& tap : changeset.tap) {
-            os << "Tapping Target: " << tap.target << " " << tap.tap << std::endl;
-        }
+    for(TapTarget& tap : changeset.tap) {
+        os << "Tapping Target: " << tap.target << " " << tap.tap << std::endl;
     }
+	for (CreateTargets& target : changeset.target) {
+		os << "Creating targets for " << target.object << " with targets";
+		for(xg::Guid& t : target.targets) {
+			os << ' ' << t << std::endl;
+		}
+	}
     if(changeset.phaseChange.changed) {
         os << "Leaving step " << changeset.phaseChange.starting << std::endl;
     }

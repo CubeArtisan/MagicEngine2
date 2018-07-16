@@ -1,11 +1,17 @@
 #include "ability.h"
+#include "targeting.h"
 
-ActivatedAbility::ActivatedAbility(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
-    : CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
+Ability::Ability(std::shared_ptr<TargetingRestriction> targeting)
+	: HasEffect(targeting)
+{}
+
+ActivatedAbility::ActivatedAbility(std::shared_ptr<TargetingRestriction> targeting, std::vector<std::shared_ptr<Cost>> costs,
+								   std::vector<std::shared_ptr<Cost>> additionalCosts)
+    : Ability(targeting), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
 {}
 
 ManaAbility::ManaAbility(Mana mana, std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
-    : ActivatedAbility(costs, additionalCosts), mana(mana)
+    : ActivatedAbility(std::shared_ptr<TargetingRestriction>(new NoTargets()), costs, additionalCosts), mana(mana)
 {}
 
 Changeset ManaAbility::applyEffect(const Environment&) {

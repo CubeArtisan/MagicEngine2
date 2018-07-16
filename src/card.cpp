@@ -1,4 +1,9 @@
 #include "card.h"
+#include "targeting.h"
+
+HasEffect::HasEffect(std::shared_ptr<TargetingRestriction> targeting)
+	: targeting(targeting)
+{}
 
 CostedEffect::CostedEffect() {}
 
@@ -19,19 +24,22 @@ std::shared_ptr<Cost> CostedEffect::canPlay(Player& player, Environment& env) {
 
 Changeset CardToken::applyEffect(const Environment& env) {
     Changeset change;
-    for(auto& c : this->applyEffects) c(change, env);
+    for(auto& c : this->applyEffects) c(change, env, this->id);
     return change;
 }
 
-CardToken::CardToken() {}
+CardToken::CardToken()
+	: HasEffect(std::shared_ptr<TargetingRestriction>(new NoTargets()))
+{}
 
 CardToken::CardToken(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
                      int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
                      std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
-                     std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyEffects)
-    : baseSuperTypes(superTypes), baseTypes(types), baseSubTypes(subTypes), basePower(power), baseToughness(toughness),
-      startingLoyalty(loyalty), name(name), cmc(cmc), baseColors(colors), activatableAbilities(activatedAbilities),
-      applyEffects(applyEffects)
+                     std::shared_ptr<TargetingRestriction> targeting,
+					 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyEffects)
+    : HasEffect(targeting), baseSuperTypes(superTypes), baseTypes(types), baseSubTypes(subTypes), basePower(power),
+	  baseToughness(toughness), startingLoyalty(loyalty), name(name), cmc(cmc), baseColors(colors),
+	  activatableAbilities(activatedAbilities), applyEffects(applyEffects)
     {}
 
 Card::Card() {}
@@ -39,16 +47,18 @@ Card::Card() {}
 Card::Card(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
            int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
            std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
-           std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyAbilities,
+		   std::shared_ptr<TargetingRestriction> targeting,
+           std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
            std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>(this))
+                targeting, applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>(this))
     {}
 
 Token::Token(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
            int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
            std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
-           std::vector<std::function<Changeset&(Changeset&, const Environment&)>> applyAbilities)
+		   std::shared_ptr<TargetingRestriction> targeting,
+           std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                applyAbilities)
+                targeting, applyAbilities)
     {}

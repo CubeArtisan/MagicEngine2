@@ -110,6 +110,11 @@ struct TapTarget {
     bool tap;
 };
 
+struct CreateTargets {
+	xg::Guid object;
+	std::vector<xg::Guid> targets;
+};
+
 struct Changeset {
     std::vector<ObjectMovement> moves;
     std::vector<AddPlayerCounter> playerCounters;
@@ -126,6 +131,7 @@ struct Changeset {
     std::vector<RemoveMana> removeMana;
     std::vector<DamageToTarget> damage;
     std::vector<TapTarget> tap;
+	std::vector<CreateTargets> target;
     StepOrPhaseChange phaseChange;
 
     Changeset operator+(Changeset& other);

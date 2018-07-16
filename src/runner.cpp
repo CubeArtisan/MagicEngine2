@@ -11,13 +11,15 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
         Changeset castSpell;
-        Targetable hand = this->env.hands[active.id];
+        Targetable hand = this->env.hands.at(active.id);
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
 		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects[pCastSpell->spell]);
 #ifdef DEBUG
 		std::cout << "Casting " << spell->name << std::endl;
 #endif
-		// CodeReview: Assign targets
+		if (pCastSpell->targets.size() > 0) {
+			castSpell.target.push_back(CreateTargets{ castSpell.moves[0].newObject, pCastSpell->targets });
+		}
         castSpell += pCastSpell->cost.payCost(active, env, spell);
         for(std::shared_ptr<Cost> c : pCastSpell->additionalCosts) {
             castSpell += c->payCost(active, env, spell);
@@ -105,7 +107,7 @@ void Runner::runGame(){
 			this->env.currentPlayer = nextPlayer;
         }
 		count++;
-		if (count > 100) break;
+		if (count > 30) break;
     }
 }
 
@@ -181,6 +183,9 @@ void Runner::applyChangeset(Changeset& changeset) {
 		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
 		std::shared_ptr<CardToken> pObject = std::dynamic_pointer_cast<CardToken>(object);
 		pObject->is_tapped = tt.tap;
+	}
+	for (CreateTargets& ct : changeset.target) {
+		this->env.targets[ct.object] = ct.targets;
 	}
     if(changeset.phaseChange.changed){
 		for (auto& manaPool : this->env.manaPools) {

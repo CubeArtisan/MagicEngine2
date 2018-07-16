@@ -33,6 +33,7 @@ struct ZoneInterface {
     }
     virtual xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) = 0;
     virtual std::shared_ptr<Targetable> removeObject(xg::Guid object) = 0;
+	virtual std::shared_ptr<Targetable> findObject(xg::Guid object) = 0;
 };
 
 template<typename... Args>
@@ -60,6 +61,15 @@ struct Zone : public Targetable, public ZoneInterface {
 #endif
         throw "Failed to find object for removal";
     }
+	std::shared_ptr<Targetable> findObject(xg::Guid object) {
+		for (auto iter = objects.rbegin(); iter != objects.rend(); iter++) {
+			std::shared_ptr<Targetable> val = getBaseClassPtr<Targetable>(*iter);
+			if (val->id == object) {
+				return val;
+			}
+		}
+		return std::shared_ptr<Targetable>();
+	}
 
 	Zone()
 	{}
@@ -100,15 +110,17 @@ struct Environment {
     Zone<Card, Token, Ability> stack;
     Zone<Card, Token> exile;
     Zone<Card, Emblem> command;
-    
+
+	std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
+
+	std::vector<Player> players;
     std::map<xg::Guid, Mana> manaPools;
     // CodeReview: Does this maintain across undoing turn changes
     std::map<xg::Guid, unsigned int> landPlays;
-    std::vector<Player> players;
-
-    std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
     std::map<xg::Guid, std::map<PlayerCounterType, unsigned int>> playerCounters;
     std::map<xg::Guid, int> lifeTotals;
+
+	std::map<xg::Guid, std::vector<xg::Guid>> targets;
 
     std::vector<std::shared_ptr<EventHandler>> triggerHandlers;
     std::vector<std::shared_ptr<EventHandler>> replacementEffects;

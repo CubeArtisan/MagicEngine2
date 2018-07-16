@@ -31,14 +31,15 @@
 #include "z.h"
 
 CardManager::CardManager(){
+	AManager().getCards(this->cards, this->mvids);
     DManager().getCards(this->cards, this->mvids);
     IManager().getCards(this->cards, this->mvids);
 }
 
 Card CardManager::getCard(int mvid){
-    std::string name = this->mvids[mvid];
+    std::string name = this->mvids.at(mvid);
     return getCard(name);
 }
 Card CardManager::getCard(std::string name) {
-    return this->cards[name];
+    return this->cards.at(name);
 }

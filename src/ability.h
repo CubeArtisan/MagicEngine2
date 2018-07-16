@@ -11,10 +11,13 @@
 struct Ability : public Targetable, public HasEffect {
     std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> origin;
     std::set<Color> colors;
+
+	Ability(std::shared_ptr<TargetingRestriction> targeting);
 };
 
 struct ActivatedAbility : public Ability, public CostedEffect {
-    ActivatedAbility(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts={});
+    ActivatedAbility(std::shared_ptr<TargetingRestriction> targeting, std::vector<std::shared_ptr<Cost>> costs,
+					 std::vector<std::shared_ptr<Cost>> additionalCosts={});
 };
 
 struct ManaAbility : public ActivatedAbility {

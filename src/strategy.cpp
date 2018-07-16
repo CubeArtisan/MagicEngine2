@@ -6,6 +6,7 @@
 #include "gameAction.h"
 #include "player.h"
 #include "strategy.h"
+#include "targeting.h"
 
 template<typename Iter, typename RandomGenerator>
 Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
@@ -53,7 +54,21 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
                     possibilities.push_back(PlayLand{card->id});
                 }
                 else {
-                    possibilities.push_back(CastSpell{card->id, std::vector<xg::Guid>(), *pCost,
+					std::vector<xg::Guid> targets;
+					if (card->targeting->maxTargets > 0) {
+						for (int i = 0; i < card->targeting->maxTargets; i++) {
+							for (const auto& object : env.gameObjects) {
+								if (object.first != object.second->id) continue;
+								targets.push_back(object.first);
+								if (card->targeting->validFirstN(targets, env)) {
+									break;
+								}
+								targets.pop_back();
+							}
+								
+						}
+					}
+                    possibilities.push_back(CastSpell{card->id, targets, *pCost,
                                             std::vector<std::shared_ptr<Cost>>(), 0});
                 }
             }
