@@ -18,13 +18,13 @@ Changeset Changeset::operator+(Changeset& other){
     remove.insert(remove.end(), other.remove.begin(), other.remove.end());
     std::vector<LifeTotalChange> lifeTotalChanges = this->lifeTotalChanges;
     lifeTotalChanges.insert(lifeTotalChanges.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
-    std::vector<std::reference_wrapper<EventHandler>> eventsToAdd = this->eventsToAdd;
+    std::vector<std::shared_ptr<EventHandler>> eventsToAdd = this->eventsToAdd;
     eventsToAdd.insert(eventsToAdd.end(), other.eventsToAdd.begin(), other.eventsToAdd.end());
-    std::vector<std::reference_wrapper<EventHandler>> eventsToRemove = this->eventsToRemove;
+    std::vector<std::shared_ptr<EventHandler>> eventsToRemove = this->eventsToRemove;
     eventsToRemove.insert(eventsToRemove.end(), other.eventsToRemove.begin(), other.eventsToRemove.end());
-    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
+    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
     propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
-    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToRemove = this->propertiesToRemove;
+    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove = this->propertiesToRemove;
     propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
     std::vector<xg::Guid> loseTheGame = this->loseTheGame;
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
@@ -69,20 +69,48 @@ Changeset& Changeset::operator+=(Changeset other){
     return *this;
 }
 
-Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, Environment& env){
+std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
+    if(changeset.moves.size() > 0) {
+        for(ObjectMovement& move : changeset.moves) {
+            os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
+               << " new GUID " << move.newObject << std::endl;
+        }
+    }
+    if(changeset.addMana.size() > 0) {
+        for(AddMana& mana : changeset.addMana) {
+            os << "Add Mana: " << mana.player << " gets " << mana.amount << std::endl;
+        }
+    }
+    if(changeset.removeMana.size() > 0) {
+        for(RemoveMana& mana : changeset.removeMana) {
+            os << "Remove Mana: " << mana.player << " gets " << mana.amount << std::endl;
+        }
+    }
+    if(changeset.tap.size() > 0) {
+        for(TapTarget& tap : changeset.tap) {
+            os << "Tapping Target: " << tap.target << " " << tap.tap << std::endl;
+        }
+    }
+    if(changeset.phaseChange.changed) {
+        os << "Leaving step " << changeset.phaseChange.starting << std::endl;
+    }
+    return os;
+}
+
+Changeset Changeset::drawCards(xg::Guid player, unsigned int amount, const Environment& env){
     Changeset result = Changeset();
-    Zone<Card, Token> libraryZone = env.libraries[player];
+    const Zone<Card, Token> libraryZone = env.libraries.at(player);
     auto library = libraryZone.objects;
-    Zone<Card, Token> handZone = env.hands[player];
+    const Zone<Card, Token> handZone = env.hands.at(player);
     
     if(amount > library.size()){
         // Cause lose game
         amount = library.size();
     }
-    auto card = library.begin() + library.size() - amount;
+    auto card = library.begin() + (library.size() - amount);
     for(; card != library.end(); card++) {
-        Targetable& c = getBaseClass<Targetable>(*card);
-        result.moves.push_back(ObjectMovement{c.id, libraryZone.id, handZone.id});
+        std::shared_ptr<Targetable> c = getBaseClassPtr<Targetable>(*card);
+        result.moves.push_back(ObjectMovement{c->id, libraryZone.id, handZone.id});
     }
     return result;
 }

@@ -19,8 +19,7 @@ private:
 };
 
 struct LetterManager {
-public:
-    virtual void getCards(std::map<std::string, std::shared_ptr<Card>>, std::map<int, std::string>) = 0;
+    virtual void getCards(std::map<std::string, std::shared_ptr<Card>>&, std::map<int, std::string>&) = 0;
 };
 
 #endif

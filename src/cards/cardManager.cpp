@@ -1,3 +1,5 @@
+#include "cards/cardManager.h"
+
 #include "cards/a.h"
 #include "cards/b.h"
 #include "cards/c.h"
@@ -24,8 +26,6 @@
 #include "cards/x.h"
 #include "cards/y.h"
 #include "cards/z.h"
-
-#include "cards/cardManager.h"
 
 CardManager::CardManager(){
     DManager().getCards(this->cards, this->mvids);

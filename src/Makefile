@@ -10,6 +10,14 @@ OBJECTS := guid.o changeset.o mana.o cost.o card.o ability.o strategy.o player.o
 SRCS := $(subst .o,.cpp,$(OBJECTS))
 OUTPUT := ../MagicEngine
 
+debug: CXXFLAGS += -DDEBUG -g
+debug: all
+
+release: CXXFLAGS += -O3
+release: all
+
+all: $(OUTPUT)
+
 $(OUTPUT): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(OUTPUT) $(LIBS)
 

@@ -1,7 +1,7 @@
 #ifndef _ENUM_H_
 #define _ENUM_H_
 
-enum StepOrPhase {
+enum StepOrPhase : unsigned int {
     UNTAP,
     UPKEEP,
     DRAW,
@@ -18,24 +18,24 @@ enum StepOrPhase {
     PHASECOUNT
 };
 
-enum PlayerCounterType {
+enum PlayerCounterType : unsigned int {
     POISONCOUNTER,
     EXPERIENCECOUNTER,
     ENERGYCOUNTER
 };
 
-enum PermanentCounterType {
+enum PermanentCounterType : unsigned int {
     PLUSONEPLUSONECOUNTER
 };
 
-enum CardSuperType {
+enum CardSuperType : unsigned int {
     LEGENDARY,
     BASIC,
     SNOW,
     WORLD
 };
 
-enum CardType {
+enum CardType : unsigned int {
     PERMANENTBEGIN,
     CREATURE,
     LAND,
@@ -48,7 +48,7 @@ enum CardType {
     SORCERY
 };
 
-enum CardSubType {
+enum CardSubType : unsigned int {
     FIRSTCREATURETYPE,
     DJINN,
     HUMAN,

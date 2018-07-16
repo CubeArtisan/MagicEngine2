@@ -12,7 +12,7 @@
 #include "stateQuery.h"
 
 struct Changeset;
-class Environment;
+struct Environment;
 
 struct Targetable {
     // This is mutable state
@@ -40,6 +40,12 @@ public:
 template<typename T, typename Variant>
 T& getBaseClass(Variant& variant){
     auto visitor = [](T& base) -> T&{ return base; };
+    return std::visit(visitor, variant);
+}
+
+template<typename T, typename Variant>
+std::shared_ptr<T> getBaseClassPtr(Variant& variant){
+    auto visitor = [](auto base) -> std::shared_ptr<T>{ return std::dynamic_pointer_cast<T>(base); };
     return std::visit(visitor, variant);
 }
 
@@ -110,10 +116,10 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
-    std::vector<std::reference_wrapper<EventHandler>> eventsToAdd;
-    std::vector<std::reference_wrapper<EventHandler>> eventsToRemove;
-    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToAdd;
-    std::vector<std::reference_wrapper<StateQueryHandler>> propertiesToRemove;
+    std::vector<std::shared_ptr<EventHandler>> eventsToAdd;
+    std::vector<std::shared_ptr<EventHandler>> eventsToRemove;
+    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd;
+    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove;
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
@@ -124,6 +130,8 @@ struct Changeset {
     Changeset operator+(Changeset& other);
     Changeset& operator+=(Changeset other);
 
-    static Changeset drawCards(xg::Guid player, unsigned int amount, Environment& env);
+    friend std::ostream& operator<<(std::ostream& os, Changeset& changeset);
+
+    static Changeset drawCards(xg::Guid player, unsigned int amount, const Environment& env);
 };
 #endif

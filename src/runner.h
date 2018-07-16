@@ -8,7 +8,7 @@ public:
     std::variant<Changeset, PassPriority> executeStep();
     void runGame();
     void applyChangeset(Changeset& changeset);
-    void startGame(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<std::shared_ptr<Strategy>> strategies);
+    Runner(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<Player> players);
 
 private:
     Environment env;

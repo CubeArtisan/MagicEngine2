@@ -32,13 +32,13 @@ struct ZoneInterface {
         return addObject(object, xg::newGuid());
     }
     virtual xg::Guid addObject(Targetable& object, xg::Guid newGuid) = 0;
-    virtual Targetable& removeObject(xg::Guid object) = 0;
+    virtual std::shared_ptr<Targetable> removeObject(xg::Guid object) = 0;
 };
 
 template<typename... Args>
 struct Zone : public Targetable, public ZoneInterface {
     ZoneType type;
-    std::vector<std::variant<std::reference_wrapper<Args>...>> objects;
+    std::vector<std::variant<std::shared_ptr<Args>...>> objects;
     
     xg::Guid addObject(Targetable& object, xg::Guid newGuid) {
         object.id = newGuid;
@@ -46,15 +46,18 @@ struct Zone : public Targetable, public ZoneInterface {
         return newGuid;
     }
 
-    Targetable& removeObject(xg::Guid object){
+    std::shared_ptr<Targetable> removeObject(xg::Guid object){
         for(auto iter=objects.rbegin(); iter != objects.rend(); iter++) {
-            Targetable& val = getBaseClass<Targetable>(*iter);
-            if(val.id == object){
+            std::shared_ptr<Targetable> val = getBaseClassPtr<Targetable>(*iter);
+            if(val->id == object){
                 std::advance(iter, 1);
                 this->objects.erase(iter.base());
                 return val;
             }
         }
+#ifdef DEBUG
+        std::cerr << "Failed to find object for removal" << std::endl;
+#endif
         throw "Failed to find object for removal";
     }
 
@@ -62,10 +65,13 @@ private:
     template<typename T, typename... Extra>
     void addObjectInternal(Targetable& object){
         if(std::type_index(typeid(T)) == std::type_index(typeid(object))){
-            this->objects.push_back(static_cast<T&>(object));
+            this->objects.push_back(std::shared_ptr<T>(&static_cast<T&>(object)));
         }
         else {
             if constexpr(sizeof...(Extra) == 0) {
+#ifdef DEBUG
+                std::cerr << "Could not convert to internal types" << std::endl;
+#endif
                 throw "Could not convert to internal types";
             }
             else {
@@ -98,9 +104,9 @@ struct Environment {
     std::map<xg::Guid, std::map<PlayerCounterType, unsigned int>> playerCounters;
     std::map<xg::Guid, int> lifeTotals;
 
-    std::vector<std::reference_wrapper<EventHandler>> triggerHandlers;
-    std::vector<std::reference_wrapper<EventHandler>> replacementEffects;
-    std::vector<std::reference_wrapper<StateQueryHandler>> stateQueryHandlers;
+    std::vector<std::shared_ptr<EventHandler>> triggerHandlers;
+    std::vector<std::shared_ptr<EventHandler>> replacementEffects;
+    std::vector<std::shared_ptr<StateQueryHandler>> stateQueryHandlers;
 
     std::vector<Changeset> changes;
 

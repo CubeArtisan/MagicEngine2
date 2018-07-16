@@ -6,12 +6,13 @@
 #include "ability.h"
 #include "cost.h"
 
+// CodeReview: Only handles casting from hand currently
 struct CastSpell {
     xg::Guid spell;
     // Modes
     std::vector<xg::Guid> targets;
     Cost& cost;
-    std::vector<std::reference_wrapper<Cost>> additionalCosts;
+    std::vector<std::shared_ptr<Cost>> additionalCosts;
     unsigned int x;
 };
 
@@ -20,7 +21,7 @@ struct PlayLand {
 };
 
 struct ActivateAnAbility {
-    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
+    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> source;
     std::shared_ptr<ActivatedAbility> ability;
     std::vector<xg::Guid> targets;
     Cost& cost;

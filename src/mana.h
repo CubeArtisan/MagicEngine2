@@ -15,6 +15,7 @@ enum Color {
 class Mana {
 public:
     Mana();
+    Mana(std::multiset<Color> manaString);
     Mana(unsigned int generic, std::multiset<Color> manaString);
 
     void add(Mana& other);
@@ -26,6 +27,7 @@ public:
     Mana& operator-=(Mana other);
 
 private:
+    friend std::ostream& operator<<(std::ostream& os, Mana& mana);
     unsigned int generic;
     std::multiset<Color> manaString;
 };

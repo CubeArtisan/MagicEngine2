@@ -11,7 +11,7 @@ public:
     virtual GameAction chooseGameAction(Player& player, Environment& env) = 0;
 };
 
-class RandomStrategy {
+class RandomStrategy : public Strategy {
 public:
     GameAction chooseGameAction(Player& player, Environment& env);
 };

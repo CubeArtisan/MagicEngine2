@@ -15,8 +15,8 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
         // CodeReview: Assign targets
         castSpell += pCastSpell->cost.payCost(active, env);
-        for(Cost& c : pCastSpell->additionalCosts) {
-            castSpell += c.payCost(active, env);
+        for(std::shared_ptr<Cost> c : pCastSpell->additionalCosts) {
+            castSpell += c->payCost(active, env);
         }
         // CodeReview: Use the chosen X value
         return castSpell;
@@ -69,10 +69,10 @@ void Runner::runGame(){
                     this->applyChangeset(passStep);
                 }
                 else{
-                    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>,
-                                 std::reference_wrapper<Ability>> top = this->env.stack.objects.back();
-                    Changeset resolveSpellAbility = getBaseClass<HasEffect>(top).applyEffect(this->env);;
-                    if(std::reference_wrapper<Card>* pCard = std::get_if<std::reference_wrapper<Card>>(&top))
+                    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
+                                 std::shared_ptr<Ability>> top = this->env.stack.objects.back();
+                    Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);;
+                    if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top))
                     {
                         bool isPermanent = false;
                         for(CardType type : ((Card&)*pCard).baseTypes){
@@ -86,7 +86,7 @@ void Runner::runGame(){
                         }
                     }
                     else{
-                        xg::Guid id = getBaseClass<Targetable>(top).id;
+                        xg::Guid id = getBaseClassPtr<Targetable>(top)->id;
                         resolveSpellAbility.remove.push_back(RemoveObject{id, stack.id});
                     }
                     applyChangeset(resolveSpellAbility);
@@ -101,15 +101,11 @@ void Runner::runGame(){
 }
 
 void Runner::applyChangeset(Changeset& changeset) {
+#ifdef DEBUG
+    std::cout << changeset;
+#endif
     // CodeReview: Use the event system
     // CodeReveiw: update GameObjects
-    for(ObjectMovement& om : changeset.moves) {
-        ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
-        ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
-
-        Targetable& object = source.removeObject(om.object);
-        om.newObject = dest.addObject(object, om.newObject);
-    }
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
             apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
@@ -136,26 +132,23 @@ void Runner::applyChangeset(Changeset& changeset) {
         ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
-    for(std::reference_wrapper<EventHandler> eh : changeset.eventsToAdd){
+    for(std::shared_ptr<EventHandler> eh : changeset.eventsToAdd){
         // CodeReview: Handle triggers/replacement effects
         this->env.triggerHandlers.push_back(eh);
     }
-    for(std::reference_wrapper<EventHandler> eh : changeset.eventsToRemove){
+    for(std::shared_ptr<EventHandler> eh : changeset.eventsToRemove){
         // CodeReview: Handle triggers/replacement effects
-        std::vector<std::reference_wrapper<EventHandler>>& list = this->env.triggerHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::reference_wrapper<EventHandler> e) ->
-                                                            bool { return (EventHandler&)e == (EventHandler&)eh; }), list.end());
+        std::vector<std::shared_ptr<EventHandler>>& list = this->env.triggerHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
+                                                            bool { return *e == *eh; }), list.end());
     }
-    for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToAdd){
+    for(std::shared_ptr<StateQueryHandler> sqh : changeset.propertiesToAdd){
         this->env.stateQueryHandlers.push_back(sqh);
     }
-    for(std::reference_wrapper<StateQueryHandler> sqh : changeset.propertiesToRemove){
-        std::vector<std::reference_wrapper<StateQueryHandler>>& list = this->env.stateQueryHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::reference_wrapper<StateQueryHandler> e) ->
-                                                            bool { return (StateQueryHandler&)e == (StateQueryHandler&)sqh; }), list.end());
-    }
-    for(xg::Guid& g : changeset.loseTheGame){
-        // CodeReview: Handle losing the game
+    for(std::shared_ptr<StateQueryHandler> sqh : changeset.propertiesToRemove){
+        std::vector<std::shared_ptr<StateQueryHandler>>& list = this->env.stateQueryHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<StateQueryHandler> e) ->
+                                                            bool { return *e == *sqh; }), list.end());
     }
     for(AddMana& am : changeset.addMana){
         this->env.manaPools[am.player] += am.amount;
@@ -163,8 +156,23 @@ void Runner::applyChangeset(Changeset& changeset) {
     for(RemoveMana& rm : changeset.removeMana){
         this->env.manaPools[rm.player] -= rm.amount;
     }
+    for(DamageToTarget& dtt : changeset.damage){
+        std::shared_ptr<Targetable> pObject = this->env.gameObjects[dtt.target];
+        Targetable& object = *pObject;
+        if(std::type_index(typeid(Player)) == std::type_index(typeid(object)))
+        {
+            Player player = (Player&)object;
+            int lifeTotal = this->env.lifeTotals[object.id];
+            Changeset lifeLoss;
+            lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{object.id, lifeTotal - (int)dtt.amount, lifeTotal});
+        }
+        // CodeReview: Handle other cases
+    }
     if(changeset.phaseChange.changed){
+        // CodeReview: Empty mana pools
+        // CodeReview: Do untap
         if(this->env.currentPhase == CLEANUP){
+            // CodeReview: Do cleanup steps
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
             this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
@@ -174,21 +182,29 @@ void Runner::applyChangeset(Changeset& changeset) {
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
         }
     }
+    for(ObjectMovement& om : changeset.moves) {
+        ZoneInterface& source = (ZoneInterface&)this->env.gameObjects[om.sourceZone];
+        ZoneInterface& dest = (ZoneInterface&)this->env.gameObjects[om.destinationZone];
+
+        std::shared_ptr<Targetable> object = source.removeObject(om.object);
+        om.newObject = dest.addObject(*object, om.newObject);
+    }
+    // for(xg::Guid& g : changeset.loseTheGame){
+        // CodeReview: Handle losing the game
+    // }
 
     this->env.changes.push_back(changeset);
 }
 
-void Runner::startGame(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<std::shared_ptr<Strategy>> strategies) {
-    if(strategies.size() < libraries.size()) {
-        throw "Not enough strategies";
+Runner::Runner(std::vector<std::vector<std::shared_ptr<Card>>> libraries, std::vector<Player> players)
+ : env(players, libraries)
+{
+    if(players.size() != libraries.size()) {
+#ifdef DEBUG
+        std::cerr << "Not equal players and libraries" << std::endl;
+#endif
+        throw "Not equal players and libraries";
     }
-
-    std::vector<Player> players;
-    for(auto& strategy : strategies) {
-        players.push_back(Player(strategy));
-    }
-
-    this->env = Environment(players, libraries);
 
     Changeset startDraw;
     for(Player& player : this->env.players) {

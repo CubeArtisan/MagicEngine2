@@ -9,12 +9,21 @@
 #include "changeset.h"
 
 struct Ability : public Targetable, public HasEffect {
-    std::variant<std::reference_wrapper<Card>, std::reference_wrapper<Token>, std::reference_wrapper<Emblem>> source;
+    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>, std::shared_ptr<Emblem>> source;
     std::set<Color> colors;
 };
 
-struct ActivatedAbility : public Ability {
-    std::vector<std::reference_wrapper<Cost>> costs;
+struct ActivatedAbility : public Ability, public CostedEffect {
+    ActivatedAbility(std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts={});
+};
+
+struct ManaAbility : public ActivatedAbility {
+    Changeset applyEffect(const Environment& env);
+
+    ManaAbility(Mana mana, std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts={});
+
+private:
+    Mana mana;
 };
 
 #endif

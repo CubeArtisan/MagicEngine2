@@ -1,13 +1,31 @@
 #include <algorithm>
+#include <iostream>
+#include <map>
 
 #include "mana.h"
 
 Mana::Mana()
+    : generic(0)
 {}
+
+Mana::Mana(std::multiset<Color> manaString)
+: generic(0), manaString(manaString)
+{
+}
 
 Mana::Mana(unsigned int generic, std::multiset<Color> manaString)
 : generic(generic), manaString(manaString)
 {
+}
+
+std::ostream& operator<<(std::ostream& os, Mana& mana)
+{
+    os << mana.generic;
+    std::map<Color, char> mapping { {WHITE, 'W'}, {BLUE, 'U'}, {BLACK, 'B'}, {RED, 'R'}, {GREEN, 'G'}, {COLORLESS, 'C'}};
+    for(Color color : mana.manaString) {
+        os << ", " << mapping[color];
+    }
+    return os;
 }
 
 void Mana::add(Mana& other) {
