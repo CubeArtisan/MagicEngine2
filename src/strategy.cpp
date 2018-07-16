@@ -45,6 +45,7 @@ std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
 
 GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env) 
 {
+	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
     std::vector<GameAction> possibilities;
     for(auto& cardWrapper : env.hands[player.id].objects) {
         if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&cardWrapper)) {

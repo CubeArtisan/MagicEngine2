@@ -3,10 +3,7 @@
 #include "runner.h"
 #include "gameAction.h"
 
-std::variant<Changeset, PassPriority> Runner::executeStep()
-{
-    // CodeReview: Check state based actions
-
+std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	bool lost = false;
 	Changeset loseTheGame;
 	for (Player& player : this->env.players) {
@@ -16,9 +13,38 @@ std::variant<Changeset, PassPriority> Runner::executeStep()
 		}
 	}
 	if (lost) return loseTheGame;
-    Player& active = this->env.players[this->env.currentPlayer];
-    GameAction action = active.strategy->chooseGameAction(active, env);
 
+	bool apply = false;
+	Changeset stateBasedAction;
+	for (auto& variant : this->env.battlefield.objects) {
+		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
+		std::set<CardType> types = this->env.getTypes(card->id);
+		if(types.find(CREATURE) != types.end()){
+			int toughness = this->env.getToughness(card->id);
+			int damage = this->env.damage[card->id];
+#ifdef DEBUG
+			std::cout << card->name << " " << card->id << " has " << damage << " marked on it with " << toughness << " toughness" << std::endl;
+#endif
+			if (this->env.getToughness(card->id) <= this->env.damage[card->id]) {
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield.id, this->env.graveyard.id });
+				apply = true;
+			}
+		}
+	}
+
+	if (apply)  return stateBasedAction;
+	return {};
+}
+
+std::variant<Changeset, PassPriority> Runner::executeStep() {
+    // CodeReview: Check state based actions
+	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
+	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
+		return *sba;
+	}
+
+	Player& active = this->env.players[this->env.currentPlayer];
+	GameAction action = active.strategy->chooseGameAction(active, env);
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
         Changeset castSpell;
         Targetable hand = this->env.hands.at(active.id);
@@ -99,6 +125,7 @@ void Runner::runGame(){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
                                 resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.battlefield.id});
                                 isPermanent = true;
+								break;
                             }
                         }
                         if(!isPermanent){
@@ -205,7 +232,12 @@ void Runner::applyChangeset(Changeset& changeset) {
             lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{player->id, lifeTotal, lifeTotal - (int)dtt.amount});
 			applyChangeset(lifeLoss);
 		}
-        // CodeReview: Handle other cases
+		else if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(pObject)) {
+#ifdef DEBUG
+			std::cout << dtt.amount << " dealt to " << card->name << " " << card->id << std::endl;
+#endif
+			this->env.damage[card->id] += dtt.amount;
+		}
     }
 	for (TapTarget& tt : changeset.tap) {
 		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
@@ -229,7 +261,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 			if (this->env.hands[turnPlayerId].objects.size() > 7) {
 				// CodeReview: Implement discarding
 			}
-			// CodeReview: Remove marked damage
+			this->env.damage.clear();
 			Changeset cleanup;
 			// CodeReview: Only do if nothing is on the stack
 			cleanup.phaseChange = StepOrPhaseChange{ true, CLEANUP };
@@ -238,7 +270,10 @@ void Runner::applyChangeset(Changeset& changeset) {
 		else if(this->env.currentPhase == CLEANUP) {
 			// CodeReview: Get next player from Environment
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
-            this->env.currentPlayer = nextPlayer;
+#ifdef DEBUG
+			std::cout << "Starting player " << nextPlayer << "'s turn" << std::endl;
+#endif
+			this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
@@ -246,7 +281,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 			Changeset untap;
 			for (auto& object : this->env.battlefield.objects) {
 				std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(object);
-				if (card->owner == turnPlayerId && card->is_tapped) {
+				if (this->env.getController(card->id) == turnPlayerId && card->is_tapped) {
 					untap.tap.push_back(TapTarget{ card->id, false });
 				}
 			}

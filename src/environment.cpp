@@ -37,6 +37,7 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
 		std::mt19937 g(rd());
 		std::shuffle(this->libraries[players[i].id].objects.begin(), this->libraries[players[i].id].objects.end(), g);
 	}
+	// Create StateQueryHandler for +1/+1 and -1/-1 counters
 }
 
 int Environment::getPower(xg::Guid target)  const {
@@ -57,9 +58,9 @@ bool Environment::goodTiming(xg::Guid target) const {
 	if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(effect)) {
 		std::set<CardType> types = this->getTypes(target);
 		if (types.find(INSTANT) != types.end()) value = true;
-		else value = (this->currentPhase == PRECOMBATMAIN
-			|| this->currentPhase == POSTCOMBATMAIN)
-			&& this->stack.objects.empty();
+		else value = (this->currentPhase == PRECOMBATMAIN || this->currentPhase == POSTCOMBATMAIN)
+			&& this->stack.objects.empty()
+			&& this->players[this->turnPlayer].id == card->owner;
 	}
 	// CodeReview: Handle abilities that are sorcery speed only
 	else value = true;

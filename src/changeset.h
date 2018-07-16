@@ -122,6 +122,7 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
+	// CodeReview: Add ReplacementEffectToAdd/Remove
     std::vector<std::shared_ptr<EventHandler>> eventsToAdd;
     std::vector<std::shared_ptr<EventHandler>> eventsToRemove;
     std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd;
@@ -133,6 +134,7 @@ struct Changeset {
     std::vector<TapTarget> tap;
 	std::vector<CreateTargets> target;
     StepOrPhaseChange phaseChange;
+	// CodeReview: Add Destroy
 
     Changeset operator+(Changeset& other);
     Changeset& operator+=(Changeset other);

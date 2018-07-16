@@ -54,7 +54,7 @@ struct ActivatedAbilitiesQuery {
     CardToken& target;
     std::vector<std::shared_ptr<ActivatedAbility>> abilities;
 };
-
+// CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StateQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
                                 ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery>;
 

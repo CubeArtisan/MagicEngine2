@@ -33,7 +33,7 @@ struct ZoneInterface {
     }
     virtual xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) = 0;
     virtual std::shared_ptr<Targetable> removeObject(xg::Guid object) = 0;
-	virtual std::shared_ptr<Targetable> findObject(xg::Guid object) = 0;
+	virtual std::shared_ptr<Targetable> findObject(xg::Guid object) const = 0;
 };
 
 template<typename... Args>
@@ -61,7 +61,7 @@ struct Zone : public Targetable, public ZoneInterface {
 #endif
         throw "Failed to find object for removal";
     }
-	std::shared_ptr<Targetable> findObject(xg::Guid object) {
+	std::shared_ptr<Targetable> findObject(xg::Guid object) const {
 		for (auto iter = objects.rbegin(); iter != objects.rend(); iter++) {
 			std::shared_ptr<Targetable> val = getBaseClassPtr<Targetable>(*iter);
 			if (val->id == object) {
@@ -114,7 +114,8 @@ struct Environment {
 	// CodeReview: Create Sideboard?
 
 	std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
-	//CodeReview: Damage Mapping
+	// Should be unsigned but that causes issues with comparisons
+	std::map<xg::Guid, int> damage;
 
 	std::vector<Player> players;
     std::map<xg::Guid, Mana> manaPools;

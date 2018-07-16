@@ -110,6 +110,7 @@ public:
 			return true;
 		}
 		else if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(object)) {
+			if (!env.battlefield.findObject(target)) return false;
 			std::set<CardType> types = env.getTypes(card->id);
 			if (types.find(CREATURE) != types.end()
 				|| types.find(PLANESWALKER) != types.end()) {
