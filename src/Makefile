@@ -5,7 +5,7 @@ CXX := g++-8
 INCLUDES := -I$(current_dir)
 CXXFLAGS := $(INCLUDES) --std=c++17 -Wall -Wextra -Wpedantic -DGUID_LIBUUID
 
-LIBS := -luuid
+LIBS :=
 OBJECTS := guid.o changeset.o mana.o cost.o card.o enum.o ability.o strategy.o player.o environment.o cards/cardManager.o runner.o main.o
 SRCS := $(subst .o,.cpp,$(OBJECTS))
 OUTPUT := ../MagicEngine

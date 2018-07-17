@@ -6,21 +6,21 @@ ManaCost::ManaCost(Mana mana)
     : mana(mana)
 {}
 
-bool ManaCost::canPay(Player& player, Environment& env, SourceType source) {
+bool ManaCost::canPay(Player& player, Environment& env, SourceType) {
     return env.manaPools.at(player.id).contains(this->mana);
 }
 
-Changeset ManaCost::payCost(Player& player, Environment&, SourceType source) {
+Changeset ManaCost::payCost(Player& player, Environment&, SourceType) {
     Changeset changes;
     changes.removeMana.push_back(RemoveMana{player.id, this->mana});
     return changes;
 }
 
-bool LandPlayCost::canPay(Player& player, Environment& env, SourceType source) {
+bool LandPlayCost::canPay(Player& player, Environment& env, SourceType) {
     return env.landPlays[player.id] > 0;
 }
 
-Changeset LandPlayCost::payCost(Player&, Environment&, SourceType source) {
+Changeset LandPlayCost::payCost(Player&, Environment&, SourceType) {
     return Changeset();
 }
 

@@ -15,8 +15,8 @@ bool isUnique(const std::vector<T>& x) {
 	std::vector< T const * > vp;
 	vp.reserve(x.size());
 	for (size_t i = 0; i < x.size(); ++i) vp.push_back(&x[i]);
-	std::sort(vp.begin(), vp.end(), [](auto l, auto r) -> bool { *l < *r; }); // O(N log N)
-	return std::adjacent_find(vp.begin(), vp.end(), [](auto l, auto r) -> bool { *l >= *r; }) // "opposite functor"
+	std::sort(vp.begin(), vp.end(), [](auto l, auto r) -> bool { return *l < *r; }); // O(N log N)
+	return std::adjacent_find(vp.begin(), vp.end(), [](auto l, auto r) -> bool { return *l >= *r; }) // "opposite functor"
 		== vp.end(); // if no adjacent pair (vp_n,vp_n+1) has *vp_n >= *vp_n+1
 }
 
@@ -35,11 +35,11 @@ public:
 
 class NoTargets : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment&) {
 		return targets.size() == 0;
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment&) {
 		return targets.size() == 0;
 	}
 

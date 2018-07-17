@@ -4,7 +4,7 @@
 #include "environment.h"
 
 Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::vector<Card>>& libraries)
-: players(prelimPlayers), battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND),
+: battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND), players(prelimPlayers),
   currentPhase(UPKEEP), currentPlayer(0), turnPlayer(0)
 {
 	// CodeReview: Holding pointers to class members causes crashes on destruction

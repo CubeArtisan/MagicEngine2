@@ -20,8 +20,6 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
 		std::set<CardType> types = this->env.getTypes(card);
 		if(types.find(CREATURE) != types.end()){
-			int toughness = this->env.getToughness(card->id);
-			int damage = this->env.damage[card->id];
 			if (this->env.getToughness(card->id) <= this->env.damage[card->id]) {
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield.id, this->env.graveyards[card->owner].id });
 				apply = true;
@@ -303,7 +301,7 @@ void Runner::applyChangeset(Changeset& changeset) {
     }
 	// CodeReview: Handle losing the game
 	for (xg::Guid& ltg : changeset.loseTheGame) {
-		int index = 0;
+		unsigned int index = 0;
 		for (auto iter = this->env.players.begin(); iter != this->env.players.end(); iter++) {
 			if (iter->id == ltg) {
 				if (env.turnPlayer == index)
