@@ -99,7 +99,7 @@ private:
 };
 
 template<typename... Args>
-using PrivateZones = std::map<xg::Guid, Zone<Args...>>;
+using PrivateZones = std::map<xg::Guid, std::shared_ptr<Zone<Args...>>>;
 
 struct Environment {
     std::unordered_map<xg::Guid, std::shared_ptr<Targetable>> gameObjects;
@@ -107,17 +107,17 @@ struct Environment {
     PrivateZones<Card, Token> hands;
     PrivateZones<Card, Token> libraries;
     PrivateZones<Card, Token> graveyards;
-    Zone<Card, Token> battlefield;
-    Zone<Card, Token, Ability> stack;
-    Zone<Card, Token> exile;
-    Zone<Card, Emblem> command;
+    std::shared_ptr<Zone<Card, Token>> battlefield;
+    std::shared_ptr<Zone<Card, Token, Ability>> stack;
+    std::shared_ptr<Zone<Card, Token>> exile;
+    std::shared_ptr<Zone<Card, Emblem>> command;
 	// CodeReview: Create Sideboard?
 
 	std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
 	// Should be unsigned but that causes issues with comparisons
 	std::map<xg::Guid, int> damage;
 
-	std::vector<Player> players;
+	std::vector<std::shared_ptr<Player>> players;
     std::map<xg::Guid, Mana> manaPools;
     // CodeReview: Does this maintain across undoing turn changes
     std::map<xg::Guid, unsigned int> landPlays;

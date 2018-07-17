@@ -6,24 +6,24 @@
 std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	bool lost = false;
 	Changeset loseTheGame;
-	for (Player& player : this->env.players) {
-		if (this->env.lifeTotals[player.id] <= 0) {
+	for (std::shared_ptr<Player>& player : this->env.players) {
+		if (this->env.lifeTotals[player->id] <= 0) {
 			lost = true;
-			loseTheGame.loseTheGame.push_back(player.id);
+			loseTheGame.loseTheGame.push_back(player->id);
 		}
 	}
 	if (lost) return loseTheGame;
 
 	bool apply = false;
 	Changeset stateBasedAction;
-	for (auto& variant : this->env.battlefield.objects) {
+	for (auto& variant : this->env.battlefield->objects) {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
 		std::set<CardType> types = this->env.getTypes(card);
 		if(types.find(CREATURE) != types.end()){
 			int toughness = this->env.getToughness(card->id);
 			int damage = this->env.damage[card->id];
 			if (this->env.getToughness(card->id) <= this->env.damage[card->id]) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield.id, this->env.graveyards[card->owner].id });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
 				apply = true;
 			}
 		}
@@ -40,12 +40,12 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 		return *sba;
 	}
 
-	Player& active = this->env.players[this->env.currentPlayer];
+	Player& active = *this->env.players[this->env.currentPlayer];
 	GameAction action = active.strategy->chooseGameAction(active, env);
     if(CastSpell* pCastSpell = std::get_if<CastSpell>(&action)){
         Changeset castSpell;
-        Targetable hand = this->env.hands.at(active.id);
-        castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand.id, this->env.stack.id});
+        std::shared_ptr<Zone<Card, Token>> hand = this->env.hands.at(active.id);
+        castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand->id, this->env.stack->id});
 		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects[pCastSpell->spell]);
 #ifdef DEBUG
 		std::cout << "Casting " << spell->name << std::endl;
@@ -64,8 +64,8 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
     if(PlayLand* pPlayLand = std::get_if<PlayLand>(&action)){
         std::vector<Changeset> results;
         Changeset playLand;
-        Targetable hand = this->env.hands[active.id];
-        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand.id, this->env.battlefield.id});
+        std::shared_ptr<Zone<Card, Token>> hand = this->env.hands.at(active.id);
+        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand->id, this->env.battlefield->id});
         // CodeReview: Use land play for the turn
         return playLand;
     }
@@ -77,7 +77,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
         result->source = pActivateAnAbility->source;
 		result->owner = active.id;
         result->id = xg::newGuid();
-        activateAbility.create.push_back(ObjectCreation{this->env.stack.id, result});
+        activateAbility.create.push_back(ObjectCreation{this->env.stack->id, result});
 		if (pActivateAnAbility->targets.size() > 0) {
 			activateAbility.target.push_back(CreateTargets{ result->id, pActivateAnAbility->targets });
 		}
@@ -106,32 +106,32 @@ void Runner::runGame(){
             int nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
             if(firstPlayerToPass == nextPlayer){
                 auto stack = this->env.stack;
-                if(stack.objects.empty()) {
+                if(stack->objects.empty()) {
                     Changeset passStep;
                     passStep.phaseChange = StepOrPhaseChange{true, this->env.currentPhase};
                     this->applyChangeset(passStep);
                 }
                 else{
                     std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
-                                 std::shared_ptr<Ability>> top = this->env.stack.objects.back();
+                                 std::shared_ptr<Ability>> top = this->env.stack->objects.back();
                     Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);
                     if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
 						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
                         for(CardType type : this->env.getTypes(card)){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
-                                resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.battlefield.id});
+                                resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.battlefield->id});
                                 isPermanent = true;
 								break;
                             }
                         }
                         if(!isPermanent){
-                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.graveyards[card->owner].id});
+                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.graveyards.at(card->owner)->id});
                         }
                     }
                     else {
                         xg::Guid id = getBaseClassPtr<Targetable>(top)->id;
-                        resolveSpellAbility.remove.push_back(RemoveObject{id, stack.id});
+                        resolveSpellAbility.remove.push_back(RemoveObject{id, stack->id});
                     }
                     applyChangeset(resolveSpellAbility);
                 }
@@ -146,7 +146,7 @@ void Runner::runGame(){
 
 void Runner::applyChangeset(Changeset& changeset) {
 #ifdef DEBUG
-//    std::cout << changeset;
+    std::cout << changeset;
 #endif
     // CodeReview: Reevaluate the Replacement effect system for recursion
 	// CodeReview: Allow strategy to specify order to evaluate in
@@ -252,10 +252,10 @@ void Runner::applyChangeset(Changeset& changeset) {
 			manaPool.second.clear();
 		}
 		if (this->env.currentPhase == END) {
-			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			this->env.currentPhase = CLEANUP;
 			// CodeReview: Do this with Hand Size from StateQuery
-			if (this->env.hands[turnPlayerId].objects.size() > 7) {
+			if (this->env.hands.at(turnPlayerId)->objects.size() > 7) {
 				// CodeReview: Implement discarding
 			}
 			this->env.damage.clear();
@@ -270,11 +270,11 @@ void Runner::applyChangeset(Changeset& changeset) {
 			this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
-			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			
 			Changeset untap;
-			untap.tap.reserve(this->env.battlefield.objects.size());
-			for (auto& object : this->env.battlefield.objects) {
+			untap.tap.reserve(this->env.battlefield->objects.size());
+			for (auto& object : this->env.battlefield->objects) {
 				std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(object);
 				if (this->env.getController(card->id) == turnPlayerId && card->is_tapped) {
 					untap.tap.push_back(TapTarget{ card->id, false });
@@ -288,7 +288,7 @@ void Runner::applyChangeset(Changeset& changeset) {
         }
 
 		if (this->env.currentPhase == DRAW) {
-			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer].id, 1, env);
+			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer]->id, 1, env);
 			this->applyChangeset(drawCard);
 		}
     }
@@ -305,7 +305,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 	for (xg::Guid& ltg : changeset.loseTheGame) {
 		int index = 0;
 		for (auto iter = this->env.players.begin(); iter != this->env.players.end(); iter++) {
-			if (iter->id == ltg) {
+			if ((*iter)->id == ltg) {
 				if (env.turnPlayer == index)
 				{
 					// CodeReview: Exile everything on the stack
@@ -320,9 +320,9 @@ void Runner::applyChangeset(Changeset& changeset) {
 				// Need a way to find what zone an object is in to do this for all objects
 				// This isn't working currently for an unknown reason
 				Changeset removeCards;
-				for (auto& card : this->env.battlefield.objects) {
+				for (auto& card : this->env.battlefield->objects) {
 					if (getBaseClassPtr<Targetable>(card)->owner == ltg) {
-						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<Targetable>(card)->id, this->env.battlefield.id });
+						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<Targetable>(card)->id, this->env.battlefield->id });
 					}
 				}
 				applyChangeset(removeCards);
@@ -347,8 +347,8 @@ Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> pl
     }
 
     Changeset startDraw;
-    for(Player& player : this->env.players) {
-        startDraw += Changeset::drawCards(player.id, 7, this->env);
+    for(std::shared_ptr<Player> player : this->env.players) {
+        startDraw += Changeset::drawCards(player->id, 7, this->env);
     }
     this->applyChangeset(startDraw);
 	// CodeReview: Handle mulligans

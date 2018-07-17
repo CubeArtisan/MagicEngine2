@@ -7,7 +7,7 @@ Card Divination = Card(std::set<CardSuperType>{}, std::set<CardType>{SORCERY}, s
                        std::shared_ptr<TargetingRestriction>(new NoTargets()),
 					   std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{
 							[](Changeset& changeset, const Environment& env, xg::Guid) -> Changeset& {
-								return changeset += Changeset::drawCards(env.players[0].id, 2, env);
+								return changeset += Changeset::drawCards(env.players[0]->id, 2, env);
 							}},
                        std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new ManaCost(Mana(2, std::multiset<Color>{BLUE})))},
                        std::vector<std::shared_ptr<Cost>>{});

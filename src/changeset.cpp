@@ -120,9 +120,9 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 
 Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment& env){
     Changeset result = Changeset();
-    const Zone<Card, Token>& libraryZone = env.libraries.at(player);
+    const Zone<Card, Token>& libraryZone = *env.libraries.at(player);
     auto library = libraryZone.objects;
-    const Zone<Card, Token>& handZone = env.hands.at(player);
+    const Zone<Card, Token>& handZone = *env.hands.at(player);
     if(amount > library.size()){
 		result.loseTheGame.push_back(player);
         amount = library.size();

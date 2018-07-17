@@ -47,7 +47,7 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
 {
 	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
     std::vector<GameAction> possibilities;
-    for(auto& cardWrapper : env.hands[player.id].objects) {
+    for(auto& cardWrapper : env.hands[player.id]->objects) {
         if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&cardWrapper)) {
             std::shared_ptr<Card> card = *pCard;
             if(std::shared_ptr<Cost> pCost = card->canPlay(player, env)) {
@@ -77,7 +77,7 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
         }
     }
 
-    for(auto& cardWrapper : env.battlefield.objects){
+    for(auto& cardWrapper : env.battlefield->objects){
         std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(cardWrapper);
         for(std::shared_ptr<ActivatedAbility> pAbility : env.getActivatedAbilities(card)) {
 			pAbility->source = cardWrapper;

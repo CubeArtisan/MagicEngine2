@@ -4,39 +4,44 @@
 #include "environment.h"
 
 Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::vector<Card>>& libraries)
-: players(prelimPlayers), battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND),
-  currentPhase(UPKEEP), currentPlayer(0), turnPlayer(0)
+: battlefield(new Zone<Card, Token>(BATTLEFIELD)), stack(new Zone<Card, Token, Ability>(STACK)),
+  exile(new Zone<Card, Token>(EXILE)), command(new Zone<Card, Emblem>(COMMAND)), currentPhase(UPKEEP),
+  currentPlayer(0), turnPlayer(0)
 {
 	// CodeReview: Holding pointers to class members causes crashes on destruction
-	this->gameObjects[battlefield.id] = std::shared_ptr<Targetable>(&battlefield);
-	this->gameObjects[stack.id] = std::shared_ptr<Targetable>(&stack);
-	this->gameObjects[exile.id] = std::shared_ptr<Targetable>(&exile);
-	this->gameObjects[command.id] = std::shared_ptr<Targetable>(&command);
+	this->gameObjects[battlefield->id] = battlefield;
+	this->gameObjects[stack->id] = stack;
+	this->gameObjects[exile->id] = exile;
+	this->gameObjects[command->id] = command;
+	for (Player& player : prelimPlayers) {
+		players.push_back(std::shared_ptr<Player>(new Player(player)));
+	}
     for(unsigned int i=0; i < players.size(); i++) {
-        this->gameObjects[players[i].id] = std::shared_ptr<Targetable>(&players[0]);
-        this->hands[players[i].id] = Zone<Card, Token>(HAND);
-		this->gameObjects[this->hands[players[i].id].id] = std::shared_ptr<Targetable>(&this->hands[players[i].id]);
-        this->libraries[players[i].id] = Zone<Card, Token>(LIBRARY);
-		this->gameObjects[this->libraries[players[i].id].id] = std::shared_ptr<Targetable>(&this->libraries[players[i].id]);
-		this->graveyards[players[i].id] = Zone<Card, Token>(GRAVEYARD);
-		this->gameObjects[this->graveyards[players[i].id].id] = std::shared_ptr<Targetable>(&this->graveyards[players[i].id]);
+        this->gameObjects[players[i]->id] = players[i];
+        this->hands[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(HAND));
+		this->gameObjects[this->hands[players[i]->id]->id] = std::dynamic_pointer_cast<Targetable>(this->hands[players[i]->id]);
+		this->libraries[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(LIBRARY));
+		this->gameObjects[this->libraries[players[i]->id]->id] = std::dynamic_pointer_cast<Targetable>(this->libraries[players[i]->id]);
+		this->graveyards[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(GRAVEYARD));
+		this->gameObjects[this->graveyards[players[i]->id]->id] = std::dynamic_pointer_cast<Targetable>(this->graveyards[players[i]->id]);
 
 		// CodeReview: Handle Land play incrementing/decrementing
 		// CodeReview: Handle land plays with two counts for available/played
-		this->landPlays[players[i].id] = 1;
-		this->lifeTotals[players[i].id] = 20;
-		this->manaPools[players[i].id] = Mana();
+		this->landPlays[players[i]->id] = 1;
+		this->lifeTotals[players[i]->id] = 20;
+		this->manaPools[players[i]->id] = Mana();
         for(const Card& card : libraries[i]) {
 			std::shared_ptr<Targetable> copy(new Card(card));
-			copy->owner = players[i].id;
+			copy->owner = players[i]->id;
 			copy->id = xg::newGuid();
-			this->libraries[players[i].id].addObject(copy, copy->id);
+			std::dynamic_pointer_cast<Card>(copy)->source = std::dynamic_pointer_cast<Card>(copy);
+			this->libraries[players[i]->id]->addObject(copy, copy->id);
             this->gameObjects[copy->id] = copy;
         }
         
 		std::random_device rd;
 		std::mt19937 g(rd());
-		std::shuffle(this->libraries[players[i].id].objects.begin(), this->libraries[players[i].id].objects.end(), g);
+		std::shuffle(this->libraries[players[i]->id]->objects.begin(), this->libraries[players[i]->id]->objects.end(), g);
 	}
 	// Create StateQueryHandler for +1/+1 and -1/-1 counters
 }
@@ -74,8 +79,8 @@ bool Environment::goodTiming(std::shared_ptr<CostedEffect> target) const {
 		std::set<CardType> types = this->getTypes(std::dynamic_pointer_cast<CardToken>(card));
 		if (types.find(INSTANT) != types.end()) value = true;
 		else value = (this->currentPhase == PRECOMBATMAIN || this->currentPhase == POSTCOMBATMAIN)
-			&& this->stack.objects.empty()
-			&& this->players[this->turnPlayer].id == card->owner;
+			&& this->stack->objects.empty()
+			&& this->players[this->turnPlayer]->id == card->owner;
 	}
 	// CodeReview: Handle abilities that are sorcery speed only
 	else value = true;

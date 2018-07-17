@@ -55,7 +55,7 @@ Card::Card(std::set<CardSuperType> superTypes, std::set<CardType> types, std::se
            std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
            std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                targeting, applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>(this))
+                targeting, applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
     {}
 
 Token::Token(std::set<CardSuperType> superTypes, std::set<CardType> types, std::set<CardSubType> subTypes, int power,
