@@ -18,9 +18,9 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	Changeset stateBasedAction;
 	for (auto& variant : this->env.battlefield->objects) {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
-		std::set<CardType> types = this->env.getTypes(card);
-		if(types.find(CREATURE) != types.end()){
-			if (this->env.getToughness(card->id) <= this->env.damage[card->id]) {
+		std::shared_ptr<std::set<CardType>> types = this->env.getTypes(card);
+		if(types->find(CREATURE) != types->end()){
+			if (this->env.getToughness(card) <= this->env.damage[card->id]) {
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
 				apply = true;
 			}
@@ -123,7 +123,7 @@ void Runner::runGame(){
                     if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
 						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
-                        for(CardType type : this->env.getTypes(card)){
+                        for(CardType type : *this->env.getTypes(card)){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
                                 resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.battlefield->id});
                                 isPermanent = true;

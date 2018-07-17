@@ -26,17 +26,17 @@ struct TimingQuery {
 
 struct SuperTypesQuery {
     CardToken& target;
-    std::set<CardSuperType> superTypes;
+	std::shared_ptr<std::set<CardSuperType>> superTypes;
 };
 
 struct TypesQuery {
     CardToken& target;
-    std::set<CardType> types;
+	std::shared_ptr<std::set<CardType>> types;
 };
 
 struct SubTypesQuery {
     CardToken& target;
-    std::set<CardSubType> subTypes;
+	std::shared_ptr<std::set<CardSubType>> subTypes;
 };
 
 struct ColorsQuery {
@@ -52,7 +52,7 @@ struct ControllerQuery {
 // CodeReview: How to handle losing static/continuous abilities
 struct ActivatedAbilitiesQuery {
     CardToken& target;
-    std::vector<std::shared_ptr<ActivatedAbility>> abilities;
+    std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> abilities;
 };
 // CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StateQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,

@@ -144,18 +144,18 @@ struct Environment {
 	int getToughness(std::shared_ptr<CardToken> target)  const;
 	bool goodTiming(xg::Guid target) const;
 	bool goodTiming(std::shared_ptr<CostedEffect> target) const;
-	std::set<CardSuperType> getSuperTypes(xg::Guid target)  const;
-	std::set<CardSuperType> getSuperTypes(std::shared_ptr<CardToken> target)  const;
-	std::set<CardType> getTypes(xg::Guid target) const;
-	std::set<CardType> getTypes(std::shared_ptr<CardToken> target) const;
-	std::set<CardSubType> getSubTypes(xg::Guid target)  const;
-	std::set<CardSubType> getSubTypes(std::shared_ptr<CardToken> target)  const;
+	std::shared_ptr<std::set<CardSuperType>> getSuperTypes(xg::Guid target)  const;
+	std::shared_ptr<std::set<CardSuperType>> getSuperTypes(std::shared_ptr<CardToken> target)  const;
+	std::shared_ptr<std::set<CardType>> getTypes(xg::Guid target) const;
+	std::shared_ptr<std::set<CardType>> getTypes(std::shared_ptr<CardToken> target) const;
+	std::shared_ptr<std::set<CardSubType>> getSubTypes(xg::Guid target)  const;
+	std::shared_ptr<std::set<CardSubType>> getSubTypes(std::shared_ptr<CardToken> target)  const;
 	std::set<Color> getColors(xg::Guid target)  const;
 	std::set<Color> getColors(std::shared_ptr<CardToken> target)  const;
 	xg::Guid getController(xg::Guid target) const;
 	xg::Guid getController(std::shared_ptr<Targetable> target) const;
-	std::vector<std::shared_ptr<ActivatedAbility>> getActivatedAbilities(xg::Guid target) const;
-	std::vector<std::shared_ptr<ActivatedAbility>> getActivatedAbilities(std::shared_ptr<CardToken> target) const;
+	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
+	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<CardToken> target) const;
 
 private:
 	StateQuery& executeStateQuery(StateQuery&& query) const;

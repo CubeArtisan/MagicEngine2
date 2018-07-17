@@ -2,15 +2,13 @@
 #include "../environment.h"
 #include "../targeting.h"
 
-Card Divination = Card(std::set<CardSuperType>{}, std::set<CardType>{SORCERY}, std::set<CardSubType>{}, 0, 0, 0,
-                       "Divination", 3, std::set<Color>{BLUE}, std::vector<std::shared_ptr<ActivatedAbility>>{},
-                       std::shared_ptr<TargetingRestriction>(new NoTargets()),
-					   std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{
-							[](Changeset& changeset, const Environment& env, xg::Guid) -> Changeset& {
-								return changeset += Changeset::drawCards(env.players[0]->id, 2, env);
-							}},
-                       std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new ManaCost(Mana(2, std::multiset<Color>{BLUE})))},
-                       std::vector<std::shared_ptr<Cost>>{});
+Card Divination = newCard("Divination", 3, std::set<CardSuperType>{}, std::set<CardType>{SORCERY}, std::set<CardSubType>{}, 0, 0, 0,
+                          std::set<Color>{BLUE}, std::shared_ptr<TargetingRestriction>(new NoTargets()),  
+                          Mana(2, std::multiset<Color>{BLUE}), std::vector<std::shared_ptr<Cost>>{},
+						  std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{
+						  [](Changeset& changeset, const Environment& env, xg::Guid) -> Changeset& {
+						  	return changeset += Changeset::drawCards(env.players[0]->id, 2, env);
+						  }});
 
 class DManager : public LetterManager {
 public:

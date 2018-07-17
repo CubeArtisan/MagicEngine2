@@ -76,8 +76,8 @@ bool Environment::goodTiming(xg::Guid target) const {
 bool Environment::goodTiming(std::shared_ptr<CostedEffect> target) const {
 	bool value = false;
 	if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(target)) {
-		std::set<CardType> types = this->getTypes(std::dynamic_pointer_cast<CardToken>(card));
-		if (types.find(INSTANT) != types.end()) value = true;
+		std::shared_ptr<std::set<CardType>> types = this->getTypes(std::dynamic_pointer_cast<CardToken>(card));
+		if (types->find(INSTANT) != types->end()) value = true;
 		else value = (this->currentPhase == PRECOMBATMAIN || this->currentPhase == POSTCOMBATMAIN)
 			&& this->stack->objects.empty()
 			&& this->players[this->turnPlayer]->id == card->owner;
@@ -88,50 +88,61 @@ bool Environment::goodTiming(std::shared_ptr<CostedEffect> target) const {
 	return std::get<TimingQuery>(executeStateQuery(query)).timing;
 }
 
-std::set<CardSuperType> Environment::getSuperTypes(xg::Guid target)  const {
+std::shared_ptr<std::set<CardSuperType>> Environment::getSuperTypes(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
 	return this->getSuperTypes(card);
 }
 
-std::set<CardSuperType> Environment::getSuperTypes(std::shared_ptr<CardToken> target)  const {
+std::shared_ptr<std::set<CardSuperType>> Environment::getSuperTypes(std::shared_ptr<CardToken> target)  const {
 	SuperTypesQuery query{ *target, target->baseSuperTypes };
 	return std::get<SuperTypesQuery>(executeStateQuery(query)).superTypes;
 }
 
-std::set<CardType> Environment::getTypes(xg::Guid target) const {
+std::shared_ptr<std::set<CardType>> Environment::getTypes(xg::Guid target) const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
 	return this->getTypes(card);
 }
 
-std::set<CardType> Environment::getTypes(std::shared_ptr<CardToken> target) const {
+std::shared_ptr<std::set<CardType>> Environment::getTypes(std::shared_ptr<CardToken> target) const {
 	TypesQuery query{ *target, target->baseTypes };
 	return std::get<TypesQuery>(executeStateQuery(query)).types;
 }
 
-std::set<CardSubType> Environment::getSubTypes(xg::Guid target)  const {
+std::shared_ptr<std::set<CardSubType>> Environment::getSubTypes(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	SubTypesQuery query{ *card, card->baseSubTypes };
+	return this->getSubTypes(card);
+}
+
+std::shared_ptr<std::set<CardSubType>> Environment::getSubTypes(std::shared_ptr<CardToken> target)  const {
+	SubTypesQuery query{ *target, target->baseSubTypes };
 	return std::get<SubTypesQuery>(executeStateQuery(query)).subTypes;
 }
 
 std::set<Color> Environment::getColors(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	ColorsQuery query{ *card, card->baseColors };
+	return this->getColors(card);
+}
+std::set<Color> Environment::getColors(std::shared_ptr<CardToken> target)  const {
+	ColorsQuery query{ *target, target->baseColors };
 	return std::get<ColorsQuery>(executeStateQuery(query)).colors;
 }
 
 xg::Guid Environment::getController(xg::Guid target) const {
 	std::shared_ptr<Targetable> card = gameObjects.at(target);
-	ControllerQuery query{ *card, card->owner };
+	return this->getController(card);
+}
+
+xg::Guid Environment::getController(std::shared_ptr<Targetable> target) const {
+	ControllerQuery query{ *target, target->owner };
 	return std::get<ControllerQuery>(executeStateQuery(query)).controller;
 }
 
-std::vector<std::shared_ptr<ActivatedAbility>> Environment::getActivatedAbilities(xg::Guid target) const {
+std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> Environment::getActivatedAbilities(xg::Guid target) const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
 	return this->getActivatedAbilities(card);
 }
 
-std::vector<std::shared_ptr<ActivatedAbility>> Environment::getActivatedAbilities(std::shared_ptr<CardToken> target) const {
+std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> Environment::getActivatedAbilities(std::shared_ptr<CardToken> target) const {
 	ActivatedAbilitiesQuery query{ *target, target->activatableAbilities };
 	return std::get<ActivatedAbilitiesQuery>(executeStateQuery(query)).abilities;
 }

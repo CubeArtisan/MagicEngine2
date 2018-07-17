@@ -51,8 +51,8 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
         if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&cardWrapper)) {
             std::shared_ptr<Card> card = *pCard;
             if(std::shared_ptr<Cost> pCost = card->canPlay(player, env)) {
-				std::set<CardType> types = env.getTypes(card);
-                if(types.find(LAND) != types.end()) {
+				std::shared_ptr<std::set<CardType>> types = env.getTypes(card);
+                if(types->find(LAND) != types->end()) {
                     possibilities.push_back(PlayLand{card->id});
                 }
                 else {
@@ -78,7 +78,7 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
 
     for(auto& cardWrapper : env.battlefield->objects){
         std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(cardWrapper);
-        for(std::shared_ptr<ActivatedAbility> pAbility : env.getActivatedAbilities(card)) {
+        for(std::shared_ptr<ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
 			pAbility->source = cardWrapper;
             if(std::shared_ptr<Cost> pCost = pAbility->canPlay(player, env)) {
                 possibilities.push_back(ActivateAnAbility{cardWrapper, pAbility, std::vector<xg::Guid>(), *pCost, 0});

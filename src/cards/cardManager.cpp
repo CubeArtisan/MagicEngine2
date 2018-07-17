@@ -49,3 +49,24 @@ Card CardManager::getCard(int mvid){
 Card CardManager::getCard(std::string name) {
     return this->cards.at(name);
 }
+
+Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTypes, std::set<CardType> types,
+			 std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
+			 std::shared_ptr<TargetingRestriction> targeting,
+			 Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts,
+			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
+			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities) {
+	return newCard(name, cmc, superTypes, types, subTypes, power, toughness, loyalty, colors, targeting, std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new ManaCost(cost))},
+				   additionalCosts, applyAbilities, activatedAbilities);
+}
+
+Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTypes, std::set<CardType> types,
+	std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
+	std::shared_ptr<TargetingRestriction> targeting,
+	std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
+	std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
+	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities) {
+	return Card(std::make_shared<std::set<CardSuperType>>(superTypes), std::make_shared<std::set<CardType>>(types), std::make_shared<std::set<CardSubType>>(subTypes),
+				power, toughness, loyalty, name, cmc, colors, std::make_shared<std::vector<std::shared_ptr<ActivatedAbility>>>(activatedAbilities), targeting, applyAbilities,
+				costs, additionalCosts);
+}
