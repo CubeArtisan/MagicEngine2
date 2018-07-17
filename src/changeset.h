@@ -78,7 +78,7 @@ struct AddPlayerCounter {
 };
 
 struct AddPermanentCounter {
-    xg::Guid player;
+    xg::Guid target;
     PermanentCounterType counterType;
     int amount;
 };

@@ -1,29 +1,105 @@
+#include "card.h"
 #include "changeset.h"
 #include "player.h"
 #include "runner.h"
 #include "gameAction.h"
+#include "targeting.h"
 
 std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
-	bool lost = false;
-	Changeset loseTheGame;
-	for (std::shared_ptr<Player>& player : this->env.players) {
-		if (this->env.lifeTotals[player->id] <= 0) {
-			lost = true;
-			loseTheGame.loseTheGame.push_back(player->id);
-		}
-	}
-	if (lost) return loseTheGame;
-
 	bool apply = false;
 	Changeset stateBasedAction;
+	for (std::shared_ptr<Player>& player : this->env.players) {
+		// 704.5a. If a player has 0 or less life, that player loses the game.
+		if (this->env.lifeTotals[player->id] <= 0) {
+			apply = true;
+			stateBasedAction.loseTheGame.push_back(player->id);
+		}
+		// 704.5c. If a player has ten or more poison counters, that player loses the game. 
+		else if (this->env.playerCounters[player->id][POISONCOUNTER] >= 10) {
+			apply = true;
+			stateBasedAction.loseTheGame.push_back(player->id);
+		}
+	}
+
+	// CodeReview: Technically milling out should happen here not in the draw function
+
+	// 704.5d If a token is in a zone other than the battlefield, it ceases to exist
+	// 704.5e. If a copy of a spell is in a zone other than the stack, it ceases to exist. If a copy of a card is in any zone other than the stack or the battlefield, it ceases to exist.
+	// Ignores the stack since Tokens on the stack are assumed to be spell copies
+	for (auto& pair : this->env.hands) for (auto& variant : pair.second->objects)
+		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
+			apply = true;
+		}
+	for (auto& pair : this->env.libraries) for (auto& variant : pair.second->objects)
+		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
+			apply = true;
+		}
+	for (auto& pair : this->env.graveyards) for (auto& variant : pair.second->objects)
+		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)){
+			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
+			apply = true;
+		}
+	for (auto& variant : this->env.battlefield->objects)
+		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)){
+			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.battlefield->id });
+			apply = true;
+		}
+	for (auto& variant : this->env.exile->objects)
+		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.exile->id });
+			apply = true;
+		}
+
 	for (auto& variant : this->env.battlefield->objects) {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
 		std::shared_ptr<std::set<CardType>> types = this->env.getTypes(card);
+		std::shared_ptr<std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
 		if(types->find(CREATURE) != types->end()) {
-			if (this->env.getToughness(card) <= this->env.damage[card->id]) {
+			int toughness = this->env.getToughness(card);
+			// 704.5f. If a creature has toughness 0 or less, it's put into its owner's graveyard. Regeneration can't replace this event.
+			if (toughness <= 0) {
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
 				apply = true;
 			}
+			// 704.5g.If a creature has toughness greater than 0, and the total damage marked on it is greater than or equal to its toughness, that creature has been dealt lethal damage and is destroyed.Regeneration can replace this event.	
+			else if (toughness <= this->env.damage[card->id]) {
+				// CodeReview: Make a destroy change
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+				apply = true;
+			}
+			// CodeReview: Deal with deathtouch
+		}
+		if (types->find(PLANESWALKER) != types->end()) {
+			// 704.5i. If a planeswalker has loyalty 0, it's put into its owner's graveyard.
+			if (this->env.permanentCounters[card->id][LOYALTY] == 0) {
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+				apply = true;
+			}
+		}
+		// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
+		if (subtypes->find(AURA) != subtypes->end()) {
+			if (!card->targeting->validTargets(this->env.targets[card->id], this->env)) {
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+				apply = true;
+			}
+		}
+		// CodeReview: Handle equipment being attached illegally
+		// CodeReview: Handle removing things that aren't Aura's, Equipment, Fortifications that are attached or are creatures
+		// CodeReview: Handle the Rasputin ability(704.5r)
+		// CodeReview: Handle Sagas
+	}
+	// CodeReview: Handle legends rule
+	// CodeReview: Handle world cards
+
+	for (auto& pair : this->env.permanentCounters) {
+		// 704.5q. If a permanent has both a +1/+1 counter and a -1/-1 counter on it, N +1/+1 and N -1/-1 counters are removed from it, where N is the smaller of the number of +1/+1 and -1/-1 counters on it.
+		if (pair.second[PLUSONEPLUSONECOUNTER] > 0 && pair.second[MINUSONEMINUSONECOUNTER] > 0) {
+			int amount = (int)std::min(pair.second[PLUSONEPLUSONECOUNTER], pair.second[MINUSONEMINUSONECOUNTER]);
+			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, PLUSONEPLUSONECOUNTER, -amount });
+			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, MINUSONEMINUSONECOUNTER, -amount });
+			apply = true;
 		}
 	}
 
@@ -213,10 +289,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         this->env.playerCounters[apc.player][apc.counterType] += apc.amount;
     }
     for(AddPermanentCounter& apc : changeset.permanentCounters) {
-        if(apc.amount < 0 && this->env.permanentCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
-            apc.amount = -(int)this->env.permanentCounters[apc.player][apc.counterType];
+        if(apc.amount < 0 && this->env.permanentCounters[apc.target][apc.counterType] < (unsigned int)-apc.amount){
+            apc.amount = -(int)this->env.permanentCounters[apc.target][apc.counterType];
         }
-        this->env.permanentCounters[apc.player][apc.counterType] += apc.amount;
+        this->env.permanentCounters[apc.target][apc.counterType] += apc.amount;
     }
     for(ObjectCreation& oc : changeset.create){
         std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);

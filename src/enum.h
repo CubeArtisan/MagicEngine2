@@ -29,7 +29,9 @@ enum PlayerCounterType : unsigned int {
 };
 
 enum PermanentCounterType : unsigned int {
-    PLUSONEPLUSONECOUNTER
+    PLUSONEPLUSONECOUNTER,
+	MINUSONEMINUSONECOUNTER,
+	LOYALTY
 };
 
 enum CardSuperType : unsigned int {
