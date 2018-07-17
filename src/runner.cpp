@@ -18,15 +18,12 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	Changeset stateBasedAction;
 	for (auto& variant : this->env.battlefield.objects) {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
-		std::set<CardType> types = this->env.getTypes(card->id);
+		std::set<CardType> types = this->env.getTypes(card);
 		if(types.find(CREATURE) != types.end()){
 			int toughness = this->env.getToughness(card->id);
 			int damage = this->env.damage[card->id];
-#ifdef DEBUG
-			std::cout << card->name << " " << card->id << " has " << damage << " marked on it with " << toughness << " toughness" << std::endl;
-#endif
 			if (this->env.getToughness(card->id) <= this->env.damage[card->id]) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield.id, this->env.graveyard.id });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield.id, this->env.graveyards[card->owner].id });
 				apply = true;
 			}
 		}
@@ -121,7 +118,7 @@ void Runner::runGame(){
                     if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
 						std::shared_ptr<Card> card = *pCard;
                         bool isPermanent = false;
-                        for(CardType type : this->env.getTypes(card->id)){
+                        for(CardType type : this->env.getTypes(card)){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
                                 resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.battlefield.id});
                                 isPermanent = true;
@@ -129,7 +126,7 @@ void Runner::runGame(){
                             }
                         }
                         if(!isPermanent){
-                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.graveyard.id});
+                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack.id, this->env.graveyards[card->owner].id});
                         }
                     }
                     else {
@@ -149,7 +146,7 @@ void Runner::runGame(){
 
 void Runner::applyChangeset(Changeset& changeset) {
 #ifdef DEBUG
-    std::cout << changeset;
+//    std::cout << changeset;
 #endif
     // CodeReview: Reevaluate the Replacement effect system for recursion
 	// CodeReview: Allow strategy to specify order to evaluate in
@@ -270,15 +267,13 @@ void Runner::applyChangeset(Changeset& changeset) {
 		else if(this->env.currentPhase == CLEANUP) {
 			// CodeReview: Get next player from Environment
             unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
-#ifdef DEBUG
-			std::cout << "Starting player " << nextPlayer << "'s turn" << std::endl;
-#endif
 			this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer].id;
 			
 			Changeset untap;
+			untap.tap.reserve(this->env.battlefield.objects.size());
 			for (auto& object : this->env.battlefield.objects) {
 				std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(object);
 				if (this->env.getController(card->id) == turnPlayerId && card->is_tapped) {
@@ -357,6 +352,4 @@ Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> pl
     }
     this->applyChangeset(startDraw);
 	// CodeReview: Handle mulligans
-
-    this->runGame();
 }

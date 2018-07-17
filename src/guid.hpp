@@ -118,8 +118,12 @@ namespace std
 
 		result_type operator()(argument_type const &guid) const
 		{
-			std::hash<std::string> hasher;
-			return static_cast<result_type>(hasher(guid.str()));
+			std::hash<unsigned char> hasher;
+			result_type result = 0;
+			for (const unsigned char& b : guid.bytes()) {
+				result ^= hasher(b) + 0x9e3779b9 + (result << 6) + (result >> 2);
+			}
+			return result;
 		}
 	};
 }

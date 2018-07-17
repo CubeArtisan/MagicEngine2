@@ -85,8 +85,12 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 		if(tap.tap) os << "Tapping Target: " << tap.target << std::endl;
 		else os << "Untapping Target: " << tap.target << std::endl;
     }
-	// CreateObject
-	// RemoveObject
+	for (ObjectCreation& create : changeset.create) {
+		os << "Creating object: " << create.created->id << " in " << create.zone << std::endl;
+	}
+	for (RemoveObject& remove : changeset.remove) {
+		os << "Removing object: " << remove.object << " from " << remove.zone << std::endl;
+	}
 	for (CreateTargets& target : changeset.target) {
 		os << "Creating targets for " << target.object << " with targets";
 		for(xg::Guid& t : target.targets) {

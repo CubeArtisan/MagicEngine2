@@ -7,6 +7,7 @@
 #include <set>
 #include <typeinfo>
 #include <typeindex>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -101,12 +102,11 @@ template<typename... Args>
 using PrivateZones = std::map<xg::Guid, Zone<Args...>>;
 
 struct Environment {
-    std::map<xg::Guid, std::shared_ptr<Targetable>> gameObjects;
+    std::unordered_map<xg::Guid, std::shared_ptr<Targetable>> gameObjects;
 
     PrivateZones<Card, Token> hands;
     PrivateZones<Card, Token> libraries;
-    // CodeReview: Make PrivateZone
-	Zone<Card, Token> graveyard;
+    PrivateZones<Card, Token> graveyards;
     Zone<Card, Token> battlefield;
     Zone<Card, Token, Ability> stack;
     Zone<Card, Token> exile;
@@ -139,17 +139,26 @@ struct Environment {
     Environment(std::vector<Player>& players, std::vector<std::vector<Card>>& libraries);
 
 	int getPower(xg::Guid target)  const;
+	int getPower(std::shared_ptr<CardToken> target) const;
 	int getToughness(xg::Guid target)  const;
+	int getToughness(std::shared_ptr<CardToken> target)  const;
 	bool goodTiming(xg::Guid target) const;
+	bool goodTiming(std::shared_ptr<CostedEffect> target) const;
 	std::set<CardSuperType> getSuperTypes(xg::Guid target)  const;
+	std::set<CardSuperType> getSuperTypes(std::shared_ptr<CardToken> target)  const;
 	std::set<CardType> getTypes(xg::Guid target) const;
+	std::set<CardType> getTypes(std::shared_ptr<CardToken> target) const;
 	std::set<CardSubType> getSubTypes(xg::Guid target)  const;
+	std::set<CardSubType> getSubTypes(std::shared_ptr<CardToken> target)  const;
 	std::set<Color> getColors(xg::Guid target)  const;
+	std::set<Color> getColors(std::shared_ptr<CardToken> target)  const;
 	xg::Guid getController(xg::Guid target) const;
+	xg::Guid getController(std::shared_ptr<Targetable> target) const;
 	std::vector<std::shared_ptr<ActivatedAbility>> getActivatedAbilities(xg::Guid target) const;
+	std::vector<std::shared_ptr<ActivatedAbility>> getActivatedAbilities(std::shared_ptr<CardToken> target) const;
 
 private:
-	StateQuery executeStateQuery(StateQuery query) const;
+	StateQuery& executeStateQuery(StateQuery&& query) const;
 };
 
 #endif

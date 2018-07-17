@@ -4,11 +4,10 @@
 #include "environment.h"
 
 Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::vector<Card>>& libraries)
-: players(prelimPlayers), graveyard(GRAVEYARD), battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND),
+: players(prelimPlayers), battlefield(BATTLEFIELD), stack(STACK), exile(EXILE), command(COMMAND),
   currentPhase(UPKEEP), currentPlayer(0), turnPlayer(0)
 {
 	// CodeReview: Holding pointers to class members causes crashes on destruction
-	this->gameObjects[graveyard.id] = std::shared_ptr<Targetable>(&graveyard);
 	this->gameObjects[battlefield.id] = std::shared_ptr<Targetable>(&battlefield);
 	this->gameObjects[stack.id] = std::shared_ptr<Targetable>(&stack);
 	this->gameObjects[exile.id] = std::shared_ptr<Targetable>(&exile);
@@ -19,13 +18,15 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
 		this->gameObjects[this->hands[players[i].id].id] = std::shared_ptr<Targetable>(&this->hands[players[i].id]);
         this->libraries[players[i].id] = Zone<Card, Token>(LIBRARY);
 		this->gameObjects[this->libraries[players[i].id].id] = std::shared_ptr<Targetable>(&this->libraries[players[i].id]);
+		this->graveyards[players[i].id] = Zone<Card, Token>(GRAVEYARD);
+		this->gameObjects[this->graveyards[players[i].id].id] = std::shared_ptr<Targetable>(&this->graveyards[players[i].id]);
 
 		// CodeReview: Handle Land play incrementing/decrementing
 		// CodeReview: Handle land plays with two counts for available/played
 		this->landPlays[players[i].id] = 1;
 		this->lifeTotals[players[i].id] = 20;
 		this->manaPools[players[i].id] = Mana();
-        for(Card card : libraries[i]) {
+        for(const Card& card : libraries[i]) {
 			std::shared_ptr<Targetable> copy(new Card(card));
 			copy->owner = players[i].id;
 			copy->id = xg::newGuid();
@@ -40,23 +41,37 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
 	// Create StateQueryHandler for +1/+1 and -1/-1 counters
 }
 
+
+
 int Environment::getPower(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	PowerQuery query{ *card, card->basePower };
+	return this->getPower(card);
+}
+
+int Environment::getPower(std::shared_ptr<CardToken> target) const{
+	PowerQuery query{ *target, target->basePower };
 	return std::get<PowerQuery>(executeStateQuery(query)).currentValue;
 }
 
 int Environment::getToughness(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	ToughnessQuery query{ *card, card->baseToughness };
+	return this->getToughness(card);
+}
+
+int Environment::getToughness(std::shared_ptr<CardToken> target) const {
+	ToughnessQuery query{ *target, target->baseToughness };
 	return std::get<ToughnessQuery>(executeStateQuery(query)).currentValue;
 }
 
 bool Environment::goodTiming(xg::Guid target) const {
 	std::shared_ptr<CostedEffect> effect = std::dynamic_pointer_cast<CostedEffect>(gameObjects.at(target));
+	return this->goodTiming(effect);
+}
+
+bool Environment::goodTiming(std::shared_ptr<CostedEffect> target) const {
 	bool value = false;
-	if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(effect)) {
-		std::set<CardType> types = this->getTypes(target);
+	if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(target)) {
+		std::set<CardType> types = this->getTypes(std::dynamic_pointer_cast<CardToken>(card));
 		if (types.find(INSTANT) != types.end()) value = true;
 		else value = (this->currentPhase == PRECOMBATMAIN || this->currentPhase == POSTCOMBATMAIN)
 			&& this->stack.objects.empty()
@@ -64,19 +79,27 @@ bool Environment::goodTiming(xg::Guid target) const {
 	}
 	// CodeReview: Handle abilities that are sorcery speed only
 	else value = true;
-	TimingQuery query{ *effect, value };
+	TimingQuery query{ *target, value };
 	return std::get<TimingQuery>(executeStateQuery(query)).timing;
 }
 
 std::set<CardSuperType> Environment::getSuperTypes(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	SuperTypesQuery query{ *card, card->baseSuperTypes };
+	return this->getSuperTypes(card);
+}
+
+std::set<CardSuperType> Environment::getSuperTypes(std::shared_ptr<CardToken> target)  const {
+	SuperTypesQuery query{ *target, target->baseSuperTypes };
 	return std::get<SuperTypesQuery>(executeStateQuery(query)).superTypes;
 }
 
 std::set<CardType> Environment::getTypes(xg::Guid target) const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	TypesQuery query{ *card, card->baseTypes };
+	return this->getTypes(card);
+}
+
+std::set<CardType> Environment::getTypes(std::shared_ptr<CardToken> target) const {
+	TypesQuery query{ *target, target->baseTypes };
 	return std::get<TypesQuery>(executeStateQuery(query)).types;
 }
 
@@ -100,11 +123,15 @@ xg::Guid Environment::getController(xg::Guid target) const {
 
 std::vector<std::shared_ptr<ActivatedAbility>> Environment::getActivatedAbilities(xg::Guid target) const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	ActivatedAbilitiesQuery query{ *card, card->activatableAbilities };
+	return this->getActivatedAbilities(card);
+}
+
+std::vector<std::shared_ptr<ActivatedAbility>> Environment::getActivatedAbilities(std::shared_ptr<CardToken> target) const {
+	ActivatedAbilitiesQuery query{ *target, target->activatableAbilities };
 	return std::get<ActivatedAbilitiesQuery>(executeStateQuery(query)).abilities;
 }
 
-StateQuery Environment::executeStateQuery(StateQuery query) const {
+StateQuery& Environment::executeStateQuery(StateQuery&& query) const {
 	for (std::shared_ptr<StateQueryHandler> sqh : this->stateQueryHandlers) {
 		sqh->handleEvent(query, *this);
 	}
