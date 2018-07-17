@@ -56,19 +56,8 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
                     possibilities.push_back(PlayLand{card->id});
                 }
                 else {
-					std::vector<xg::Guid> targets;
-					if (card->targeting->maxTargets > 0) {
-						for (int i = 0; i < card->targeting->maxTargets; i++) {
-							for (const auto& object : env.gameObjects) {
-								targets.push_back(object.first);
-								if (card->targeting->validFirstN(targets, env)) {
-									break;
-								}
-								targets.pop_back();
-							}
-								
-						}
-					}
+					std::vector<xg::Guid> targets = this->chooseTargets(card, player, env);
+					if (targets.size() < card->targeting->minTargets) continue;
                     possibilities.push_back(CastSpell{card->id, targets, *pCost,
                                             std::vector<std::shared_ptr<Cost>>(), 0});
                 }
@@ -89,4 +78,25 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
     if(possibilities.empty()) possibilities.push_back(PassPriority());
 
     return select_randomly(possibilities);
+}
+
+std::vector<xg::Guid> RandomStrategy::chooseTargets(std::shared_ptr<HasEffect> effect, Player& player, const Environment& env) {
+	std::vector<xg::Guid> targets;
+	if (effect->targeting->maxTargets > 0) {
+		for (int i = 0; i < effect->targeting->maxTargets; i++) {
+			for (const auto& object : env.gameObjects) {
+				targets.push_back(object.first);
+				if (effect->targeting->validFirstN(targets, env)) {
+					break;
+				}
+				targets.pop_back();
+			}
+		}
+	}
+	// CodeReview: Handle this case
+	if (targets.size() < effect->targeting->minTargets) {
+		throw "Can't choose targets";
+	}
+
+	return targets;
 }

@@ -12,6 +12,7 @@
 #include "mana.h"
 #include "stateQuery.h"
 
+struct Ability;
 struct Changeset;
 struct Environment;
 
@@ -37,6 +38,18 @@ public:
     bool operator==(StateQueryHandler& other) {
         return this->id == other.id;
     }
+};
+
+struct QueueTrigger {
+	xg::Guid player;
+	std::shared_ptr<Ability> ability;
+};
+
+class TriggerHandler : public EventHandler {
+public:
+	virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&);
+private:
+	virtual std::variant<std::monostate, QueueTrigger> createTrigger(Changeset&, const Environment&);
 };
 
 template<typename T, typename Variant>
@@ -123,9 +136,11 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
-	// CodeReview: Add ReplacementEffectToAdd/Remove
-    std::vector<std::shared_ptr<EventHandler>> eventsToAdd;
-    std::vector<std::shared_ptr<EventHandler>> eventsToRemove;
+    std::vector<std::shared_ptr<EventHandler>> effectsToAdd;
+	// CodeReview: Should these be xg::Guid for removal?
+    std::vector<std::shared_ptr<EventHandler>> effectsToRemove;
+	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd;
+	std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove;
     std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd;
     std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove;
     std::vector<xg::Guid> loseTheGame;
@@ -134,6 +149,7 @@ struct Changeset {
     std::vector<DamageToTarget> damage;
     std::vector<TapTarget> tap;
 	std::vector<CreateTargets> target;
+	std::vector<QueueTrigger> trigger;
     StepOrPhaseChange phaseChange;
 	// CodeReview: Add Destroy
 

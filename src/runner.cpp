@@ -19,7 +19,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	for (auto& variant : this->env.battlefield->objects) {
 		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
 		std::shared_ptr<std::set<CardType>> types = this->env.getTypes(card);
-		if(types->find(CREATURE) != types->end()){
+		if(types->find(CREATURE) != types->end()) {
 			if (this->env.getToughness(card) <= this->env.damage[card->id]) {
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
 				apply = true;
@@ -35,6 +35,25 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
 	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
 		return *sba;
+	}
+
+	if (!this->env.triggers.empty()) {
+		// CodeReview: APNAP order and choices to be made here
+		Changeset applyTriggers;
+		for (QueueTrigger& trigger : this->env.triggers) {
+			std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(this->env.gameObjects[trigger.player]);
+			std::shared_ptr<Ability> ability = trigger.ability->clone();
+			ability->id = xg::newGuid();
+			ability->owner = player->id;
+			// CodeReview: Do we need to set source?
+			applyTriggers.create.push_back(ObjectCreation{ this->env.stack->id, trigger.ability });
+			std::vector<xg::Guid> targets = player->strategy->chooseTargets(ability, *player, env);
+			if (!targets.empty()) {
+				applyTriggers.target.push_back(CreateTargets{ ability->id, targets });
+			}
+		}
+		this->env.triggers.clear();
+		return applyTriggers;
 	}
 
 	Player& active = *this->env.players[this->env.currentPlayer];
@@ -217,14 +236,20 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
-    for(std::shared_ptr<EventHandler> eh : changeset.eventsToAdd){
-        // CodeReview: Handle triggers/replacement effects differences
+	for (std::shared_ptr<EventHandler> eh : changeset.effectsToAdd) {
+		this->env.replacementEffects.push_back(eh);
+	}
+	for (std::shared_ptr<EventHandler> eh : changeset.effectsToRemove) {
+		std::vector<std::shared_ptr<EventHandler>>& list = this->env.replacementEffects;
+		list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
+			bool { return *e == *eh; }), list.end());
+	}
+    for(std::shared_ptr<TriggerHandler> eh : changeset.triggersToAdd){
         this->env.triggerHandlers.push_back(eh);
     }
-    for(std::shared_ptr<EventHandler> eh : changeset.eventsToRemove){
-        // CodeReview: Handle triggers/replacement effects differences
-        std::vector<std::shared_ptr<EventHandler>>& list = this->env.triggerHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
+    for(std::shared_ptr<TriggerHandler> eh : changeset.triggersToRemove){
+        std::vector<std::shared_ptr<TriggerHandler>>& list = this->env.triggerHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<TriggerHandler> e) ->
                                                             bool { return *e == *eh; }), list.end());
     }
     for(std::shared_ptr<StateQueryHandler> sqh : changeset.propertiesToAdd){
@@ -312,6 +337,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			this->applyChangeset(drawCard);
 		}
     }
+	for (QueueTrigger& qt : changeset.trigger) {
+		this->env.triggers.push_back(qt);
+	}
     for(ObjectMovement& om : changeset.moves) {
         ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
         ZoneInterface& dest = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.destinationZone));

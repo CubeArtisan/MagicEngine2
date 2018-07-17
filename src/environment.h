@@ -126,9 +126,10 @@ struct Environment {
 
 	std::map<xg::Guid, std::vector<xg::Guid>> targets;
 
-    std::vector<std::shared_ptr<EventHandler>> triggerHandlers;
+    std::vector<std::shared_ptr<TriggerHandler>> triggerHandlers;
     std::vector<std::shared_ptr<EventHandler>> replacementEffects;
     std::vector<std::shared_ptr<StateQueryHandler>> stateQueryHandlers;
+	std::vector<QueueTrigger> triggers;
 
     std::vector<Changeset> changes;
 

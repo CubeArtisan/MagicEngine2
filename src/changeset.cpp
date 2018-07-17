@@ -18,11 +18,15 @@ Changeset Changeset::operator+(Changeset& other){
     remove.insert(remove.end(), other.remove.begin(), other.remove.end());
     std::vector<LifeTotalChange> lifeTotalChanges = this->lifeTotalChanges;
     lifeTotalChanges.insert(lifeTotalChanges.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
-    std::vector<std::shared_ptr<EventHandler>> eventsToAdd = this->eventsToAdd;
-    eventsToAdd.insert(eventsToAdd.end(), other.eventsToAdd.begin(), other.eventsToAdd.end());
-    std::vector<std::shared_ptr<EventHandler>> eventsToRemove = this->eventsToRemove;
-    eventsToRemove.insert(eventsToRemove.end(), other.eventsToRemove.begin(), other.eventsToRemove.end());
-    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
+	std::vector<std::shared_ptr<EventHandler>> effectsToAdd = this->effectsToAdd;
+	effectsToAdd.insert(effectsToAdd.end(), other.effectsToAdd.begin(), other.effectsToAdd.end());
+	std::vector<std::shared_ptr<EventHandler>> effectsToRemove = this->effectsToRemove;
+	effectsToRemove.insert(effectsToRemove.end(), other.effectsToRemove.begin(), other.effectsToRemove.end());
+	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd = this->triggersToAdd;
+    triggersToAdd.insert(triggersToAdd.end(), other.triggersToAdd.begin(), other.triggersToAdd.end());
+    std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove = this->triggersToRemove;
+    triggersToRemove.insert(triggersToRemove.end(), other.triggersToRemove.begin(), other.triggersToRemove.end());
+	std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
     propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
     std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove = this->propertiesToRemove;
     propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
@@ -38,14 +42,16 @@ Changeset Changeset::operator+(Changeset& other){
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
 	std::vector<CreateTargets> target = this->target;
 	target.insert(target.end(), other.target.begin(), other.target.end());
+	std::vector<QueueTrigger> trigger = this->trigger;
+	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
 
-    return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, eventsToAdd,
-                     eventsToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, phaseChange};
+    return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
+					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
+                     target, trigger, phaseChange};
 }
 
 Changeset& Changeset::operator+=(Changeset other){
@@ -55,8 +61,10 @@ Changeset& Changeset::operator+=(Changeset other){
     create.insert(create.end(), other.create.begin(), other.create.end());
     remove.insert(remove.end(), other.remove.begin(), other.remove.end());
     lifeTotalChanges.insert(lifeTotalChanges.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
-    eventsToAdd.insert(eventsToAdd.end(), other.eventsToAdd.begin(), other.eventsToAdd.end());
-    eventsToRemove.insert(eventsToRemove.end(), other.eventsToRemove.begin(), other.eventsToRemove.end());
+	effectsToAdd.insert(effectsToAdd.end(), other.effectsToAdd.begin(), other.effectsToAdd.end());
+	effectsToRemove.insert(effectsToRemove.end(), other.effectsToRemove.begin(), other.effectsToRemove.end());
+	triggersToAdd.insert(triggersToAdd.end(), other.triggersToAdd.begin(), other.triggersToAdd.end());
+    triggersToRemove.insert(triggersToRemove.end(), other.triggersToRemove.begin(), other.triggersToRemove.end());
     propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
     propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
@@ -65,6 +73,7 @@ Changeset& Changeset::operator+=(Changeset other){
     damage.insert(damage.end(), other.damage.begin(), other.damage.end());
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
 	target.insert(target.end(), other.target.begin(), other.target.end());
+	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
