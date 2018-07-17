@@ -20,6 +20,7 @@ struct CastSpell {
     unsigned int x;
 };
 
+// CodeReview: Support playing lands from other zones
 struct PlayLand {
     xg::Guid land;
 };

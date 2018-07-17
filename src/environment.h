@@ -157,6 +157,7 @@ struct Environment {
 	xg::Guid getController(std::shared_ptr<Targetable> target) const;
 	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
 	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<CardToken> target) const;
+	unsigned int getLandPlays(xg::Guid player) const;
 
 private:
 	StateQuery& executeStateQuery(StateQuery&& query) const;

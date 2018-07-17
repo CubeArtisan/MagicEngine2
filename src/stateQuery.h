@@ -54,8 +54,14 @@ struct ActivatedAbilitiesQuery {
     CardToken& target;
     std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> abilities;
 };
+
+struct LandPlaysQuery {
+	xg::Guid player;
+	unsigned int amount;
+};
+
 // CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StateQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
-                                ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery>;
+                                ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery>;
 
 #endif

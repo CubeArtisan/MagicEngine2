@@ -129,6 +129,12 @@ struct CreateTargets {
 	std::vector<xg::Guid> targets;
 };
 
+struct LandPlay {
+	xg::Guid land;
+	xg::Guid player;
+	xg::Guid zone;
+};
+
 struct Changeset {
     std::vector<ObjectMovement> moves;
     std::vector<AddPlayerCounter> playerCounters;
@@ -150,6 +156,7 @@ struct Changeset {
     std::vector<TapTarget> tap;
 	std::vector<CreateTargets> target;
 	std::vector<QueueTrigger> trigger;
+	std::vector<LandPlay> land;
     StepOrPhaseChange phaseChange;
 	// CodeReview: Add Destroy
 

@@ -44,6 +44,8 @@ Changeset Changeset::operator+(Changeset& other){
 	target.insert(target.end(), other.target.begin(), other.target.end());
 	std::vector<QueueTrigger> trigger = this->trigger;
 	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
+	std::vector<LandPlay> land = this->land;
+	land.insert(land.end(), other.land.begin(), other.land.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
@@ -51,7 +53,7 @@ Changeset Changeset::operator+(Changeset& other){
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
 					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, trigger, phaseChange};
+                     target, trigger, land, phaseChange};
 }
 
 Changeset& Changeset::operator+=(Changeset other){
@@ -74,6 +76,7 @@ Changeset& Changeset::operator+=(Changeset other){
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
 	target.insert(target.end(), other.target.begin(), other.target.end());
 	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
+	land.insert(land.end(), other.land.begin(), other.land.end());
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
@@ -115,6 +118,9 @@ std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
 	}
 	if (changeset.phaseChange.changed) {
 		os << "Leaving step " << changeset.phaseChange.starting << std::endl;
+	}
+	for (LandPlay& land : changeset.land) {
+		os << "Playing a land: " << land.land << " by " << land.player << " from " << land.zone << std::endl;
 	}
 	for (ObjectMovement& move : changeset.moves) {
 		os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone

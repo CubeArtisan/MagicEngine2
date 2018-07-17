@@ -14,6 +14,7 @@ CostedEffect::CostedEffect(std::vector<std::shared_ptr<Cost>> costs, std::vector
 
 std::shared_ptr<Cost> CostedEffect::canPlay(Player& player, Environment& env) {
     // CodeReview: Can choose targets if *this is a HasEffect
+	// CodeReview: Check are in a valid zone to be played from
 	// Might not be neccesary
 	if (Card* self = dynamic_cast<Card*>(this)) {
 		if (!env.goodTiming(self->id)) return std::shared_ptr<Cost>();

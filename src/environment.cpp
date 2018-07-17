@@ -25,9 +25,7 @@ Environment::Environment(std::vector<Player>& prelimPlayers, std::vector<std::ve
 		this->graveyards[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(GRAVEYARD));
 		this->gameObjects[this->graveyards[players[i]->id]->id] = std::dynamic_pointer_cast<Targetable>(this->graveyards[players[i]->id]);
 
-		// CodeReview: Handle Land play incrementing/decrementing
-		// CodeReview: Handle land plays with two counts for available/played
-		this->landPlays[players[i]->id] = 1;
+		this->landPlays[players[i]->id] = 0;
 		this->lifeTotals[players[i]->id] = 20;
 		this->manaPools[players[i]->id] = Mana();
         for(const Card& card : libraries[i]) {
@@ -145,6 +143,10 @@ std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> Environment::get
 std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> Environment::getActivatedAbilities(std::shared_ptr<CardToken> target) const {
 	ActivatedAbilitiesQuery query{ *target, target->activatableAbilities };
 	return std::get<ActivatedAbilitiesQuery>(executeStateQuery(query)).abilities;
+}
+unsigned int Environment::getLandPlays(xg::Guid player) const {
+	LandPlaysQuery query{ player, 1 };
+	return std::get<LandPlaysQuery>(this->executeStateQuery(query)).amount;
 }
 
 StateQuery& Environment::executeStateQuery(StateQuery&& query) const {

@@ -157,7 +157,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
         std::vector<Changeset> results;
         Changeset playLand;
         std::shared_ptr<Zone<Card, Token>> hand = this->env.hands.at(active.id);
-        playLand.moves.push_back(ObjectMovement{pPlayLand->land, hand->id, this->env.battlefield->id});
+		playLand.land.push_back(LandPlay{ pPlayLand->land, active.id, hand->id });
         // CodeReview: Use land play for the turn
         return playLand;
     }
@@ -262,7 +262,7 @@ bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> ap
 
 void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 #ifdef DEBUG
-//	std::cout << changeset;
+	std::cout << changeset;
 #endif
 	// CodeReview: Reevaluate the Replacement effect system for recursion
 	// CodeReview: Allow strategy to specify order to evaluate in
@@ -392,6 +392,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
+			this->env.landPlays[turnPlayerId] = 0;
 			
 			Changeset untap;
 			untap.tap.reserve(this->env.battlefield->objects.size());
@@ -415,6 +416,12 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
     }
 	for (QueueTrigger& qt : changeset.trigger) {
 		this->env.triggers.push_back(qt);
+	}
+	for (LandPlay& pl : changeset.land) {
+		env.landPlays[pl.player] += 1;
+		Changeset moveLand;
+		moveLand.moves.push_back(ObjectMovement{ pl.land, pl.zone, this->env.battlefield->id });
+		this->applyChangeset(moveLand);
 	}
     for(ObjectMovement& om : changeset.moves) {
         ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));

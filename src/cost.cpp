@@ -17,7 +17,7 @@ Changeset ManaCost::payCost(Player& player, Environment&, SourceType) {
 }
 
 bool LandPlayCost::canPay(Player& player, Environment& env, SourceType) {
-    return env.landPlays[player.id] > 0;
+    return env.landPlays[player.id] < env.getLandPlays(player.id);
 }
 
 Changeset LandPlayCost::payCost(Player&, Environment&, SourceType) {
