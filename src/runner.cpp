@@ -32,7 +32,6 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 }
 
 std::variant<Changeset, PassPriority> Runner::executeStep() {
-    // CodeReview: Check state based actions
 	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
 	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
 		return *sba;
@@ -92,6 +91,14 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 }
 
 void Runner::runGame(){
+	this->env = Environment(players, libraries);
+	Changeset startDraw;
+	for (std::shared_ptr<Player> player : this->env.players) {
+		startDraw += Changeset::drawCards(player->id, 7, this->env);
+	}
+	this->applyChangeset(startDraw);
+	// CodeReview: Handle mulligans
+
     int firstPlayerToPass = -1;
     while(this->env.players.size() > 1) {
         std::variant<Changeset, PassPriority> step = this->executeStep();
@@ -142,31 +149,43 @@ void Runner::runGame(){
     }
 }
 
-void Runner::applyChangeset(Changeset& changeset) {
+bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied) {
+	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
+		if (applied.find(eh->id) != applied.end()) continue;
+		auto result = eh->handleEvent(changeset, this->env);
+		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&result)) {
+			std::vector<Changeset>& changes = *pChangeset;
+			applied.insert(eh->id);
+			for (Changeset& change : changes) {
+				if (!this->applyReplacementEffects(change, applied)) this->applyChangeset(change, false);
+			}
+			return true;
+		}
+	}
+	return false;
+}
+
+void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 #ifdef DEBUG
-    std::cout << changeset;
+//	std::cout << changeset;
 #endif
-    // CodeReview: Reevaluate the Replacement effect system for recursion
+	// CodeReview: Reevaluate the Replacement effect system for recursion
 	// CodeReview: Allow strategy to specify order to evaluate in
 	// CodeReview: Replacement effect for less than 0 damage to not happen
-	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
-		std::vector<Changeset> changes = eh->handleEvent(changeset, this->env);
-		if (changes.empty()) return;
-		Changeset newChange;
-		for (Changeset& change : changes) {
-			newChange += change;
-		}
-		changeset = newChange;
-	}
+	if (replacementEffects && this->applyReplacementEffects(changeset)) return;
+
 	for (std::shared_ptr<EventHandler> eh : this->env.triggerHandlers) {
-		std::vector<Changeset> changes = eh->handleEvent(changeset, this->env);
-		// This should only happen with replacement effects
-		if (changes.empty()) return;
-		Changeset newChange;
-		for (Changeset& change : changes) {
-			newChange += change;
+		auto changePrelim = eh->handleEvent(changeset, this->env);
+		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&changePrelim)) {
+			std::vector<Changeset>& changes = *pChangeset;
+			// This should only happen with replacement effects
+			if (changes.empty()) return;
+			Changeset newChange;
+			for (Changeset& change : changes) {
+				newChange += change;
+			}
+			changeset = newChange;
 		}
-		changeset = newChange;
 	}
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
@@ -184,6 +203,9 @@ void Runner::applyChangeset(Changeset& changeset) {
         std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
         xg::Guid id = oc.created->id;
         zone->addObject(oc.created, id);
+		if (!oc.created) {
+			std::cout << "Creating a null object" << std::endl;
+		}
         this->env.gameObjects[id] = oc.created;
     }
     for(RemoveObject& ro : changeset.remove) {
@@ -297,6 +319,9 @@ void Runner::applyChangeset(Changeset& changeset) {
         std::shared_ptr<Targetable> object = source.removeObject(om.object);
         om.newObject = dest.addObject(object, om.newObject);
 		this->env.gameObjects.erase(om.object);
+		if (!object) {
+			std::cout << "Got a null move" << std::endl;
+		}
 		this->env.gameObjects[om.newObject] = object;
     }
 	// CodeReview: Handle losing the game
@@ -335,7 +360,7 @@ void Runner::applyChangeset(Changeset& changeset) {
 }
 
 Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> players)
- : env(players, libraries)
+ : libraries(libraries), players(players), env(players, libraries)
 {
     if(players.size() != libraries.size()) {
 #ifdef DEBUG
@@ -343,11 +368,4 @@ Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> pl
 #endif
         throw "Not equal players and libraries";
     }
-
-    Changeset startDraw;
-    for(std::shared_ptr<Player> player : this->env.players) {
-        startDraw += Changeset::drawCards(player->id, 7, this->env);
-    }
-    this->applyChangeset(startDraw);
-	// CodeReview: Handle mulligans
 }

@@ -60,7 +60,6 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
 					if (card->targeting->maxTargets > 0) {
 						for (int i = 0; i < card->targeting->maxTargets; i++) {
 							for (const auto& object : env.gameObjects) {
-								if (object.first != object.second->id) continue;
 								targets.push_back(object.first);
 								if (card->targeting->validFirstN(targets, env)) {
 									break;

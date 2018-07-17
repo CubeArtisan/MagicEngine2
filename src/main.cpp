@@ -16,6 +16,9 @@ int main(int argc, char* argv[]){
     std::vector<Player> players{Player(std::shared_ptr<Strategy>(new RandomStrategy())),
                                 Player(std::shared_ptr<Strategy>(new RandomStrategy()))};
     Runner runner(libraries, players);
-    runner.runGame();
+	for (int i = 0; i < 10'000; i++) {
+		runner.runGame();
+		std::cout << i << std::endl;
+	}
     return argc * 0 * name[0];
 }

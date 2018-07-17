@@ -1,10 +1,14 @@
 #ifndef _GAMEACTION_H_
 #define _GAMEACTION_H_
 
+#include <memory>
 #include <variant>
+#include <vector>
 
-#include "ability.h"
-#include "cost.h"
+struct Card;
+struct Cost;
+struct ActivatedAbility;
+struct Token;
 
 // CodeReview: Only handles casting from hand currently
 // CodeReview: Implement Modes

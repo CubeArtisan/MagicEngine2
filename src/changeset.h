@@ -8,6 +8,7 @@
 #include "guid.hpp"
 
 #include "enum.h"
+#include "gameAction.h"
 #include "mana.h"
 #include "stateQuery.h"
 
@@ -25,7 +26,7 @@ struct Targetable {
 
 class EventHandler : public Targetable {
 public:
-    virtual std::vector<Changeset> handleEvent(Changeset&, const Environment&) = 0;
+    virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) = 0;
     bool operator==(EventHandler& other) {
         return this->id == other.id;
     }

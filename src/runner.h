@@ -5,12 +5,16 @@
 
 class Runner {
 public:
-    std::variant<Changeset, PassPriority> executeStep();
-	std::variant<std::monostate, Changeset> checkStateBasedActions();
     void runGame();
-    void applyChangeset(Changeset& changeset);
     Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> players);
 
 private:
+	std::vector<std::vector<Card>> libraries;
+	std::vector<Player> players;
     Environment env;
+
+	std::variant<std::monostate, Changeset> checkStateBasedActions();
+	std::variant<Changeset, PassPriority> executeStep();
+	bool applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied = {});
+	void applyChangeset(Changeset& changeset, bool replacementEffects=true);
 };
