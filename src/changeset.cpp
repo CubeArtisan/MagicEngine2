@@ -5,6 +5,16 @@ Targetable::Targetable()
     : id(xg::newGuid())
 {}
 
+std::variant<std::vector<Changeset>, PassPriority> TriggerHandler::handleEvent(Changeset& changeset, const Environment& env) {
+	std::vector<Changeset> result{ changeset };
+	std::vector<QueueTrigger> queue = this->createTriggers(changeset, env);
+	if (queue.empty()) return PassPriority();
+	Changeset createTrigger;
+	for(QueueTrigger& q : queue) createTrigger.trigger.push_back(q);
+	result.push_back(createTrigger);
+	return result;
+}
+
 Changeset Changeset::operator+(const Changeset& other){
     std::vector<ObjectMovement> moves = this->moves;
     moves.insert(moves.end(), other.moves.begin(), other.moves.end());

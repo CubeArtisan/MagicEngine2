@@ -42,14 +42,21 @@ public:
 
 struct QueueTrigger {
 	xg::Guid player;
+	Changeset triggered;
 	std::shared_ptr<Ability> ability;
 };
 
 class TriggerHandler : public EventHandler {
 public:
 	virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&);
+
+	template<typename Condition, typename Trigger>
+	TriggerHandler(Condition doesTrigger,
+				   Trigger createTrigger)
+		: doesTrigger(doesTrigger), createTrigger(createTrigger)
+	{}
 private:
-	virtual std::variant<std::monostate, QueueTrigger> createTrigger(Changeset&, const Environment&);
+	std::function<std::vector<QueueTrigger>(const Changeset&, const Environment&)> createTriggers;
 };
 
 template<typename T, typename Variant>
