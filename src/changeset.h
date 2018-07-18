@@ -64,64 +64,67 @@ std::shared_ptr<T> getBaseClassPtr(Variant& variant){
     return std::visit(visitor, variant);
 }
 
+// These can't be const because that removes the copy assignment operator
+// which is needed to be stored in a vector
 struct ObjectMovement {
-    xg::Guid object;
-    xg::Guid sourceZone;
-    xg::Guid destinationZone;
+	xg::Guid object;
+	xg::Guid sourceZone;
+	xg::Guid destinationZone;
     xg::Guid newObject { xg::newGuid() };
 };
 
 struct AddPlayerCounter {
-    xg::Guid player;
-    PlayerCounterType counterType;
-    int amount;
+	xg::Guid player;
+	PlayerCounterType counterType;
+	int amount;
 };
 
 struct AddPermanentCounter {
-    xg::Guid target;
-    PermanentCounterType counterType;
-    int amount;
+	xg::Guid target;
+	PermanentCounterType counterType;
+	int amount;
 };
 
 struct AddMana {
-    xg::Guid player;
-    Mana amount;
+	xg::Guid player;
+	Mana amount;
 };
 
 struct RemoveMana {
-    xg::Guid player;
-    Mana amount;
+	xg::Guid player;
+	Mana amount;
 };
 
 struct ObjectCreation {
-    xg::Guid zone;
-    std::shared_ptr<Targetable> created;
+	xg::Guid zone;
+	std::shared_ptr<Targetable> created;
 };
 
 struct LifeTotalChange {
-    xg::Guid player;
-    int oldValue;
-    int newValue;
+	xg::Guid player;
+	int oldValue;
+	int newValue;
 };
 
 struct RemoveObject {
-    xg::Guid object;
-    xg::Guid zone;
+	xg::Guid object;
+	xg::Guid zone;
 };
 
+// CodeReview: Currently need the copy operator which requires members to be non-const
 struct StepOrPhaseChange {
 	bool changed{ false };
 	StepOrPhase starting{ UNTAP };
 };
 
 struct DamageToTarget {
-    xg::Guid target;
-    unsigned int amount;
+	xg::Guid target;
+	unsigned int amount;
 };
 
 struct TapTarget {
-    xg::Guid target;
-    bool tap;
+	xg::Guid target;
+	bool tap;
 };
 
 struct CreateTargets {
@@ -158,12 +161,13 @@ struct Changeset {
 	std::vector<QueueTrigger> trigger;
 	std::vector<LandPlay> land;
     StepOrPhaseChange phaseChange;
+	bool clearTriggers{ false };
 	// CodeReview: Add Destroy
 
-    Changeset operator+(Changeset& other);
-    Changeset& operator+=(Changeset other);
+    Changeset operator+(const Changeset& other);
+    Changeset& operator+=(const Changeset& other);
 
-    friend std::ostream& operator<<(std::ostream& os, Changeset& changeset);
+    friend std::ostream& operator<<(std::ostream& os, const Changeset& changeset);
 
     static Changeset drawCards(xg::Guid player, size_t amount, const Environment& env);
 };

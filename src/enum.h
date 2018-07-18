@@ -20,7 +20,7 @@ enum StepOrPhase : unsigned int {
     PHASECOUNT
 };
 
-std::ostream& operator<<(std::ostream& os, StepOrPhase& step);
+std::ostream& operator<<(std::ostream& os, const StepOrPhase& step);
 
 enum PlayerCounterType : unsigned int {
     POISONCOUNTER,

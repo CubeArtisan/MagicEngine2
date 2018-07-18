@@ -10,49 +10,49 @@ struct CostedEffect;
 struct Targetable;
 
 struct PowerQuery {
-    CardToken& target;
+    const CardToken& target;
     int currentValue;
 };
 
 struct ToughnessQuery {
-    CardToken& target;
+    const CardToken& target;
     int currentValue;
 };
 
 struct TimingQuery {
-	CostedEffect& effect;
+	const CostedEffect& effect;
     bool timing;
 };
 
 struct SuperTypesQuery {
-    CardToken& target;
-	std::shared_ptr<std::set<CardSuperType>> superTypes;
+    const CardToken& target;
+	std::shared_ptr<const std::set<CardSuperType>> superTypes;
 };
 
 struct TypesQuery {
-    CardToken& target;
-	std::shared_ptr<std::set<CardType>> types;
+    const CardToken& target;
+	std::shared_ptr<const std::set<CardType>> types;
 };
 
 struct SubTypesQuery {
-    CardToken& target;
-	std::shared_ptr<std::set<CardSubType>> subTypes;
+    const CardToken& target;
+	std::shared_ptr<const std::set<CardSubType>> subTypes;
 };
 
 struct ColorsQuery {
-    CardToken& target;
+	const CardToken& target;
     std::set<Color> colors;
 };
 
 struct ControllerQuery {
-    Targetable& target;
+	const Targetable& target;
     xg::Guid controller;
 };
 
 // CodeReview: How to handle losing static/continuous abilities
 struct ActivatedAbilitiesQuery {
-    CardToken& target;
-    std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> abilities;
+	const CardToken& target;
+    std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> abilities;
 };
 
 struct LandPlaysQuery {

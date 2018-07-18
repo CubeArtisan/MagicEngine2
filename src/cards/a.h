@@ -13,6 +13,6 @@ class AManager : public LetterManager {
 public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
-		cards[AncestralRecall.name] = AncestralRecall;
+		cards.insert(std::make_pair(AncestralRecall.name, AncestralRecall));
 	}
 };

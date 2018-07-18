@@ -18,7 +18,7 @@ Mana::Mana(unsigned int generic, std::multiset<Color> manaString)
 {
 }
 
-std::ostream& operator<<(std::ostream& os, Mana& mana)
+std::ostream& operator<<(std::ostream& os, const Mana& mana)
 {
     os << mana.generic;
     std::map<Color, char> mapping { {WHITE, 'W'}, {BLUE, 'U'}, {BLACK, 'B'}, {RED, 'R'}, {GREEN, 'G'}, {COLORLESS, 'C'}};
@@ -28,12 +28,12 @@ std::ostream& operator<<(std::ostream& os, Mana& mana)
     return os;
 }
 
-void Mana::add(Mana& other) {
+void Mana::add(const Mana& other) {
     this->manaString.insert(other.manaString.begin(), other.manaString.end());
     this->generic += other.generic;
 }
 
-bool Mana::contains(Mana& other) {
+bool Mana::contains(const Mana& other) const {
     std::multiset<Color> ourString = this->manaString;
     for(Color mana : other.manaString) {
         auto found = ourString.find(mana);
@@ -46,7 +46,7 @@ bool Mana::contains(Mana& other) {
     return ourString.size() >= other.generic - this->generic;
 }
 
-bool Mana::subtract(Mana& other) {
+bool Mana::subtract(const Mana& other) {
     std::multiset<Color> ourString = this->manaString;
     for(Color mana : other.manaString) {
         auto found = ourString.find(mana);
@@ -76,16 +76,16 @@ void Mana::clear() {
 	this->generic = 0;
 }
 
-size_t Mana::cmc() {
+size_t Mana::cmc() const{
 	return this->generic + this->manaString.size();
 }
 
-Mana& Mana::operator+=(Mana other){
+Mana& Mana::operator+=(const Mana& other){
     this->add(other);
     return *this;
 }
 
-Mana& Mana::operator-=(Mana other){
+Mana& Mana::operator-=(const Mana& other){
     this->subtract(other);
     return *this;
 }

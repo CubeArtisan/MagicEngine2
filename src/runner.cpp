@@ -5,17 +5,17 @@
 #include "gameAction.h"
 #include "targeting.h"
 
-std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
+std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	bool apply = false;
 	Changeset stateBasedAction;
-	for (std::shared_ptr<Player>& player : this->env.players) {
+	for (const std::shared_ptr<Player>& player : this->env.players) {
 		// 704.5a. If a player has 0 or less life, that player loses the game.
-		if (this->env.lifeTotals[player->id] <= 0) {
+		if (this->env.lifeTotals.at(player->id) <= 0) {
 			apply = true;
 			stateBasedAction.loseTheGame.push_back(player->id);
 		}
 		// 704.5c. If a player has ten or more poison counters, that player loses the game. 
-		else if (this->env.playerCounters[player->id][POISONCOUNTER] >= 10) {
+		else if (this->env.playerCounters.at(player->id).at(POISONCOUNTER) >= 10) {
 			apply = true;
 			stateBasedAction.loseTheGame.push_back(player->id);
 		}
@@ -27,61 +27,62 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	// 704.5e. If a copy of a spell is in a zone other than the stack, it ceases to exist. If a copy of a card is in any zone other than the stack or the battlefield, it ceases to exist.
 	// Ignores the stack since Tokens on the stack are assumed to be spell copies
 	for (auto& pair : this->env.hands) for (auto& variant : pair.second->objects)
-		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)) {
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
 			apply = true;
 		}
 	for (auto& pair : this->env.libraries) for (auto& variant : pair.second->objects)
-		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)) {
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
 			apply = true;
 		}
 	for (auto& pair : this->env.graveyards) for (auto& variant : pair.second->objects)
-		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)){
+		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)){
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
 			apply = true;
 		}
 	for (auto& variant : this->env.battlefield->objects)
-		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)){
+		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)){
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.battlefield->id });
 			apply = true;
 		}
 	for (auto& variant : this->env.exile->objects)
-		if (std::shared_ptr<Token>* token = std::get_if<std::shared_ptr<Token>>(&variant)) {
+		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)) {
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.exile->id });
 			apply = true;
 		}
 
 	for (auto& variant : this->env.battlefield->objects) {
-		std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(variant);
-		std::shared_ptr<std::set<CardType>> types = this->env.getTypes(card);
-		std::shared_ptr<std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
+		std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(variant);
+		std::shared_ptr<const std::set<CardType>> types = this->env.getTypes(card);
+		std::shared_ptr<const std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
 		if(types->find(CREATURE) != types->end()) {
 			int toughness = this->env.getToughness(card);
 			// 704.5f. If a creature has toughness 0 or less, it's put into its owner's graveyard. Regeneration can't replace this event.
 			if (toughness <= 0) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
 			}
 			// 704.5g.If a creature has toughness greater than 0, and the total damage marked on it is greater than or equal to its toughness, that creature has been dealt lethal damage and is destroyed.Regeneration can replace this event.	
-			else if (toughness <= this->env.damage[card->id]) {
+			else if (toughness <= this->env.damage.at(card->id)) {
 				// CodeReview: Make a destroy change
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
 			}
 			// CodeReview: Deal with deathtouch
 		}
 		if (types->find(PLANESWALKER) != types->end()) {
 			// 704.5i. If a planeswalker has loyalty 0, it's put into its owner's graveyard.
-			if (this->env.permanentCounters[card->id][LOYALTY] == 0) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+			// CodeReview: Assumes all planeswalkers will have an entry for loyalty counters in the map
+			if (this->env.permanentCounters.at(card->id).at(LOYALTY) == 0) {
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
 			}
 		}
 		// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
 		if (subtypes->find(AURA) != subtypes->end()) {
-			if (!card->targeting->validTargets(this->env.targets[card->id], this->env)) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards[card->owner]->id });
+			if (!card->targeting->validTargets(this->env.targets.at(card->id), this->env)) {
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
 			}
 		}
@@ -95,8 +96,9 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 
 	for (auto& pair : this->env.permanentCounters) {
 		// 704.5q. If a permanent has both a +1/+1 counter and a -1/-1 counter on it, N +1/+1 and N -1/-1 counters are removed from it, where N is the smaller of the number of +1/+1 and -1/-1 counters on it.
-		if (pair.second[PLUSONEPLUSONECOUNTER] > 0 && pair.second[MINUSONEMINUSONECOUNTER] > 0) {
-			int amount = (int)std::min(pair.second[PLUSONEPLUSONECOUNTER], pair.second[MINUSONEMINUSONECOUNTER]);
+		// CodeReview: Assumes every permanent with any counters will have entries for both in the map
+		if (pair.second.at(PLUSONEPLUSONECOUNTER) > 0 && pair.second.at(MINUSONEMINUSONECOUNTER) > 0) {
+			int amount = (int)std::min(pair.second.at(PLUSONEPLUSONECOUNTER), pair.second.at(MINUSONEMINUSONECOUNTER));
 			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, PLUSONEPLUSONECOUNTER, -amount });
 			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, MINUSONEMINUSONECOUNTER, -amount });
 			apply = true;
@@ -107,7 +109,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() {
 	return {};
 }
 
-std::variant<Changeset, PassPriority> Runner::executeStep() {
+std::variant<Changeset, PassPriority> Runner::executeStep() const {
 	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
 	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
 		return *sba;
@@ -116,8 +118,8 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 	if (!this->env.triggers.empty()) {
 		// CodeReview: APNAP order and choices to be made here
 		Changeset applyTriggers;
-		for (QueueTrigger& trigger : this->env.triggers) {
-			std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(this->env.gameObjects[trigger.player]);
+		for (const QueueTrigger& trigger : this->env.triggers) {
+			std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(this->env.gameObjects.at(trigger.player));
 			std::shared_ptr<Ability> ability = trigger.ability->clone();
 			ability->id = xg::newGuid();
 			ability->owner = player->id;
@@ -128,7 +130,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 				applyTriggers.target.push_back(CreateTargets{ ability->id, targets });
 			}
 		}
-		this->env.triggers.clear();
+		applyTriggers.clearTriggers = true;
 		return applyTriggers;
 	}
 
@@ -138,7 +140,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
         Changeset castSpell;
         std::shared_ptr<Zone<Card, Token>> hand = this->env.hands.at(active.id);
         castSpell.moves.push_back(ObjectMovement{pCastSpell->spell, hand->id, this->env.stack->id});
-		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects[pCastSpell->spell]);
+		std::shared_ptr<Card> spell = std::dynamic_pointer_cast<Card>(this->env.gameObjects.at(pCastSpell->spell));
 #ifdef DEBUG
 		std::cout << "Casting " << spell->name << std::endl;
 #endif
@@ -164,9 +166,8 @@ std::variant<Changeset, PassPriority> Runner::executeStep() {
 
     if(ActivateAnAbility* pActivateAnAbility = std::get_if<ActivateAnAbility>(&action)){
         Changeset activateAbility;
-        std::shared_ptr<ActivatedAbility> result =
-			std::dynamic_pointer_cast<ActivatedAbility>(pActivateAnAbility->ability->clone());
-        result->source = pActivateAnAbility->source;
+		std::shared_ptr<ActivatedAbility> result(pActivateAnAbility->ability);
+		result->source = pActivateAnAbility->source;
 		result->owner = active.id;
         result->id = xg::newGuid();
         activateAbility.create.push_back(ObjectCreation{this->env.stack->id, result});
@@ -212,11 +213,11 @@ void Runner::runGame(){
                     this->applyChangeset(passStep);
                 }
                 else{
-                    std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
-                                 std::shared_ptr<Ability>> top = this->env.stack->objects.back();
-                    Changeset resolveSpellAbility = getBaseClassPtr<HasEffect>(top)->applyEffect(this->env);
-                    if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&top)) {
-						std::shared_ptr<Card> card = *pCard;
+                    std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>,
+                                 std::shared_ptr<const Ability>> top = this->env.stack->objects.back();
+                    Changeset resolveSpellAbility = getBaseClassPtr<const HasEffect>(top)->applyEffect(this->env);
+                    if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&top)) {
+						std::shared_ptr<const Card> card = *pCard;
                         bool isPermanent = false;
                         for(CardType type : *this->env.getTypes(card)){
                             if(type < PERMANENTEND && type > PERMANENTBEGIN){
@@ -230,7 +231,7 @@ void Runner::runGame(){
                         }
                     }
                     else {
-                        xg::Guid id = getBaseClassPtr<Targetable>(top)->id;
+                        xg::Guid id = getBaseClassPtr<const Targetable>(top)->id;
                         resolveSpellAbility.remove.push_back(RemoveObject{id, stack->id});
                     }
                     applyChangeset(resolveSpellAbility);
@@ -297,7 +298,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
     for(ObjectCreation& oc : changeset.create){
         std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
         xg::Guid id = oc.created->id;
-        zone->addObject(oc.created, id);
+        zone->addObject(oc.created);
 		if (!oc.created) {
 			std::cout << "Creating a null object" << std::endl;
 		}
@@ -309,7 +310,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		this->env.gameObjects.erase(ro.object);
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
-        ltc.oldValue = this->env.lifeTotals[ltc.player];
+        // ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
 	for (std::shared_ptr<EventHandler> eh : changeset.effectsToAdd) {
@@ -397,7 +398,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			Changeset untap;
 			untap.tap.reserve(this->env.battlefield->objects.size());
 			for (auto& object : this->env.battlefield->objects) {
-				std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(object);
+				std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(object);
 				if (this->env.getController(card->id) == turnPlayerId && card->is_tapped) {
 					untap.tap.push_back(TapTarget{ card->id, false });
 				}
@@ -410,10 +411,14 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         }
 
 		if (this->env.currentPhase == DRAW) {
+			// CodeReview: Handle first turn don't draw
 			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer]->id, 1, env);
 			this->applyChangeset(drawCard);
 		}
     }
+	if (changeset.clearTriggers) {
+		this->env.triggers.clear();
+	}
 	for (QueueTrigger& qt : changeset.trigger) {
 		this->env.triggers.push_back(qt);
 	}
@@ -427,8 +432,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
         ZoneInterface& dest = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.destinationZone));
 
-        std::shared_ptr<Targetable> object = source.removeObject(om.object);
-        om.newObject = dest.addObject(object, om.newObject);
+        source.removeObject(om.object);
+		std::shared_ptr<Targetable> object = this->env.gameObjects[om.object];
+		object->id = om.newObject;
+		dest.addObject(object);
 		this->env.gameObjects.erase(om.object);
 		if (!object) {
 			std::cout << "Got a null move" << std::endl;
@@ -455,8 +462,8 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 				// This isn't working currently for an unknown reason
 				Changeset removeCards;
 				for (auto& card : this->env.battlefield->objects) {
-					if (getBaseClassPtr<Targetable>(card)->owner == ltg) {
-						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<Targetable>(card)->id, this->env.battlefield->id });
+					if (getBaseClassPtr<const Targetable>(card)->owner == ltg) {
+						removeCards.remove.push_back(RemoveObject{ getBaseClassPtr<const Targetable>(card)->id, this->env.battlefield->id });
 					}
 				}
 				applyChangeset(removeCards);

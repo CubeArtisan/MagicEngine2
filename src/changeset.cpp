@@ -5,7 +5,7 @@ Targetable::Targetable()
     : id(xg::newGuid())
 {}
 
-Changeset Changeset::operator+(Changeset& other){
+Changeset Changeset::operator+(const Changeset& other){
     std::vector<ObjectMovement> moves = this->moves;
     moves.insert(moves.end(), other.moves.begin(), other.moves.end());
     std::vector<AddPlayerCounter> playerCounters = this->playerCounters;
@@ -50,13 +50,14 @@ Changeset Changeset::operator+(Changeset& other){
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
+	bool clearTriggers = this->clearTriggers || other.clearTriggers;
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
 					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, trigger, land, phaseChange};
+                     target, trigger, land, phaseChange, clearTriggers};
 }
 
-Changeset& Changeset::operator+=(Changeset other){
+Changeset& Changeset::operator+=(const Changeset& other){
     moves.insert(moves.end(), other.moves.begin(), other.moves.end());
     playerCounters.insert(playerCounters.end(), other.playerCounters.begin(), other.playerCounters.end());
     permanentCounters.insert(permanentCounters.end(), other.permanentCounters.begin(), other.permanentCounters.end());
@@ -80,53 +81,54 @@ Changeset& Changeset::operator+=(Changeset other){
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
+	this->clearTriggers |= other.clearTriggers;
 
     return *this;
 }
 
-std::ostream& operator<<(std::ostream& os, Changeset& changeset) {
+std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
 	os << "Beginning Changeset" << std::endl;
 
-    for(AddMana& mana : changeset.addMana) {
+    for(const AddMana& mana : changeset.addMana) {
         os << "Add Mana: " << mana.player << " gets " << mana.amount << std::endl;
     }
-    for(RemoveMana& mana : changeset.removeMana) {
+    for(const RemoveMana& mana : changeset.removeMana) {
         os << "Remove Mana: " << mana.player << " uses " << mana.amount << std::endl;
     }
-    for(TapTarget& tap : changeset.tap) {
+    for(const TapTarget& tap : changeset.tap) {
 		if(tap.tap) os << "Tapping Target: " << tap.target << std::endl;
 		else os << "Untapping Target: " << tap.target << std::endl;
     }
-	for (ObjectCreation& create : changeset.create) {
+	for (const ObjectCreation& create : changeset.create) {
 		os << "Creating object: " << create.created->id << " in " << create.zone << std::endl;
 	}
-	for (RemoveObject& remove : changeset.remove) {
+	for (const RemoveObject& remove : changeset.remove) {
 		os << "Removing object: " << remove.object << " from " << remove.zone << std::endl;
 	}
-	for (CreateTargets& target : changeset.target) {
+	for (const CreateTargets& target : changeset.target) {
 		os << "Creating targets for " << target.object << " with targets";
-		for(xg::Guid& t : target.targets) {
+		for(const xg::Guid& t : target.targets) {
 			os << ' ' << t << std::endl;
 		}
 	}
-	for (LifeTotalChange& lifeTotalChange : changeset.lifeTotalChanges) {
+	for (const LifeTotalChange& lifeTotalChange : changeset.lifeTotalChanges) {
 		os << lifeTotalChange.player << " life total changing from " << lifeTotalChange.oldValue
 		   << " to " << lifeTotalChange.newValue << std::endl;
 	}
-	for (DamageToTarget& damage : changeset.damage) {
+	for (const DamageToTarget& damage : changeset.damage) {
 		os << damage.amount << " damage to  " << damage.target << std::endl;
 	}
 	if (changeset.phaseChange.changed) {
 		os << "Leaving step " << changeset.phaseChange.starting << std::endl;
 	}
-	for (LandPlay& land : changeset.land) {
+	for (const LandPlay& land : changeset.land) {
 		os << "Playing a land: " << land.land << " by " << land.player << " from " << land.zone << std::endl;
 	}
-	for (ObjectMovement& move : changeset.moves) {
+	for (const ObjectMovement& move : changeset.moves) {
 		os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone
 			<< " new GUID " << move.newObject << std::endl;
 	}
-	for (xg::Guid& player : changeset.loseTheGame) {
+	for (const xg::Guid& player : changeset.loseTheGame) {
 		os << player << " loses the game" << std::endl;
 	}
 	os << "Ending Changeset" << std::endl << std::endl;
@@ -144,7 +146,7 @@ Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment
     }
     auto card = library.begin() + (library.size() - amount);
     for(; card != library.end(); card++) {
-        std::shared_ptr<Targetable> c = getBaseClassPtr<Targetable>(*card);
+        std::shared_ptr<const Targetable> c = getBaseClassPtr<const Targetable>(*card);
         result.moves.push_back(ObjectMovement{c->id, libraryZone.id, handZone.id});
     }
     return result;

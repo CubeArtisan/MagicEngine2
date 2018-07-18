@@ -10,6 +10,6 @@ class BManager : public LetterManager {
 public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
-		cards[BronzeSable.name] = BronzeSable;
+		cards.insert(std::make_pair(BronzeSable.name, BronzeSable));
 	}
 };

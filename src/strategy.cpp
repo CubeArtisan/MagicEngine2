@@ -27,13 +27,13 @@ T select_randomly(Container<T, Alloc> cont) {
     return *select_randomly(cont.begin(), cont.end());
 }
 
-std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
-             std::shared_ptr<Emblem>> upShiftVariant(std::variant<std::shared_ptr<Card>,
-                                                                         std::shared_ptr<Token>> variant) {
-    if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&variant)) {
+std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>,
+             std::shared_ptr<const Emblem>> upShiftVariant(std::variant<std::shared_ptr<const Card>,
+                                                                        std::shared_ptr<const Token>> variant) {
+    if(std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&variant)) {
         return *pCard;
     }
-    if(std::shared_ptr<Token>* pToken = std::get_if<std::shared_ptr<Token>>(&variant)) {
+    if(std::shared_ptr<const Token>* pToken = std::get_if<std::shared_ptr<const Token>>(&variant)) {
         return *pToken;
     }
 #ifdef DEBUG
@@ -43,15 +43,15 @@ std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>,
 }
 
 
-GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env) 
+GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env) 
 {
 	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
     std::vector<GameAction> possibilities;
-    for(auto& cardWrapper : env.hands[player.id]->objects) {
-        if(std::shared_ptr<Card>* pCard = std::get_if<std::shared_ptr<Card>>(&cardWrapper)) {
-            std::shared_ptr<Card> card = *pCard;
-            if(std::shared_ptr<Cost> pCost = card->canPlay(player, env)) {
-				std::shared_ptr<std::set<CardType>> types = env.getTypes(card);
+    for(auto& cardWrapper : env.hands.at(player.id)->objects) {
+        if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&cardWrapper)) {
+            std::shared_ptr<const Card> card = *pCard;
+            if(std::shared_ptr<const Cost> pCost = card->canPlay(player, env)) {
+				std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
                 if(types->find(LAND) != types->end()) {
                     possibilities.push_back(PlayLand{card->id});
                 }
@@ -66,11 +66,12 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
     }
 
     for(auto& cardWrapper : env.battlefield->objects){
-        std::shared_ptr<CardToken> card = getBaseClassPtr<CardToken>(cardWrapper);
-        for(std::shared_ptr<ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
-			pAbility->source = cardWrapper;
-            if(std::shared_ptr<Cost> pCost = pAbility->canPlay(player, env)) {
-                possibilities.push_back(ActivateAnAbility{cardWrapper, pAbility, std::vector<xg::Guid>(), *pCost, 0});
+        std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(cardWrapper);
+        for(std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
+			std::shared_ptr<ActivatedAbility> ability = std::dynamic_pointer_cast<ActivatedAbility>(pAbility->clone());
+			ability->source = cardWrapper;
+            if(std::shared_ptr<const Cost> pCost = ability->canPlay(player, env)) {
+                possibilities.push_back(ActivateAnAbility{cardWrapper, ability, std::vector<xg::Guid>(), *pCost, 0});
             }
         }
     }
@@ -80,7 +81,7 @@ GameAction RandomStrategy::chooseGameAction(Player& player, Environment& env)
     return select_randomly(possibilities);
 }
 
-std::vector<xg::Guid> RandomStrategy::chooseTargets(std::shared_ptr<HasEffect> effect, Player& player, const Environment& env) {
+std::vector<xg::Guid> RandomStrategy::chooseTargets(const std::shared_ptr<const HasEffect> effect, const Player& player, const Environment& env) {
 	std::vector<xg::Guid> targets;
 	if (effect->targeting->maxTargets > 0) {
 		for (int i = 0; i < effect->targeting->maxTargets; i++) {

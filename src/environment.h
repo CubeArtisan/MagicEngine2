@@ -29,28 +29,24 @@ enum ZoneType {
 };
 
 struct ZoneInterface {
-    xg::Guid addObject(std::shared_ptr<Targetable> object) {
-        return addObject(object, xg::newGuid());
-    }
-    virtual xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) = 0;
-    virtual std::shared_ptr<Targetable> removeObject(xg::Guid object) = 0;
-	virtual std::shared_ptr<Targetable> findObject(xg::Guid object) const = 0;
+    virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object) = 0;
+    virtual std::shared_ptr<const Targetable> removeObject(xg::Guid object) = 0;
+	virtual std::shared_ptr<const Targetable> findObject(xg::Guid object) const = 0;
 };
 
 template<typename... Args>
 struct Zone : public Targetable, public ZoneInterface {
     ZoneType type;
-    std::vector<std::variant<std::shared_ptr<Args>...>> objects;
+    std::vector<std::variant<std::shared_ptr<const Args>...>> objects;
     
-    xg::Guid addObject(std::shared_ptr<Targetable>& object, xg::Guid newGuid) {
-        object->id = newGuid;
+    xg::Guid addObject(const std::shared_ptr<const Targetable>& object) {
         this->addObjectInternal<Args...>(object);
-        return newGuid;
-    }
+		return object->id;
+	}
 
-    std::shared_ptr<Targetable> removeObject(xg::Guid object){
+    std::shared_ptr<const Targetable> removeObject(xg::Guid object){
         for(auto iter=objects.rbegin(); iter != objects.rend(); iter++) {
-            std::shared_ptr<Targetable> val = getBaseClassPtr<Targetable>(*iter);
+            std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(*iter);
             if(val->id == object){
                 std::advance(iter, 1);
                 this->objects.erase(iter.base());
@@ -62,9 +58,9 @@ struct Zone : public Targetable, public ZoneInterface {
 #endif
         throw "Failed to find object for removal";
     }
-	std::shared_ptr<Targetable> findObject(xg::Guid object) const {
+	std::shared_ptr<const Targetable> findObject(xg::Guid object) const {
 		for (auto iter = objects.rbegin(); iter != objects.rend(); iter++) {
-			std::shared_ptr<Targetable> val = getBaseClassPtr<Targetable>(*iter);
+			std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(*iter);
 			if (val->id == object) {
 				return val;
 			}
@@ -80,8 +76,8 @@ struct Zone : public Targetable, public ZoneInterface {
 
 private:
     template<typename T, typename... Extra>
-    void addObjectInternal(std::shared_ptr<Targetable>& object){
-        if(std::shared_ptr<T> result = std::dynamic_pointer_cast<T>(object)){
+    void addObjectInternal(const std::shared_ptr<const Targetable>& object){
+        if(std::shared_ptr<const T> result = std::dynamic_pointer_cast<const T>(object)){
             this->objects.push_back(result);
         }
         else {
@@ -137,26 +133,26 @@ struct Environment {
     unsigned int currentPlayer;
     unsigned int turnPlayer;
 
-    Environment(std::vector<Player>& players, std::vector<std::vector<Card>>& libraries);
+    Environment(const std::vector<Player>& players, const std::vector<std::vector<Card>>& libraries);
 
 	int getPower(xg::Guid target)  const;
-	int getPower(std::shared_ptr<CardToken> target) const;
+	int getPower(std::shared_ptr<const CardToken> target) const;
 	int getToughness(xg::Guid target)  const;
-	int getToughness(std::shared_ptr<CardToken> target)  const;
+	int getToughness(std::shared_ptr<const CardToken> target)  const;
 	bool goodTiming(xg::Guid target) const;
-	bool goodTiming(std::shared_ptr<CostedEffect> target) const;
-	std::shared_ptr<std::set<CardSuperType>> getSuperTypes(xg::Guid target)  const;
-	std::shared_ptr<std::set<CardSuperType>> getSuperTypes(std::shared_ptr<CardToken> target)  const;
-	std::shared_ptr<std::set<CardType>> getTypes(xg::Guid target) const;
-	std::shared_ptr<std::set<CardType>> getTypes(std::shared_ptr<CardToken> target) const;
-	std::shared_ptr<std::set<CardSubType>> getSubTypes(xg::Guid target)  const;
-	std::shared_ptr<std::set<CardSubType>> getSubTypes(std::shared_ptr<CardToken> target)  const;
+	bool goodTiming(std::shared_ptr<const CostedEffect> target) const;
+	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(xg::Guid target)  const;
+	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(std::shared_ptr<const CardToken> target)  const;
+	std::shared_ptr<const std::set<CardType>> getTypes(xg::Guid target) const;
+	std::shared_ptr<const std::set<CardType>> getTypes(std::shared_ptr<const CardToken> target) const;
+	std::shared_ptr<const std::set<CardSubType>> getSubTypes(xg::Guid target)  const;
+	std::shared_ptr<const std::set<CardSubType>> getSubTypes(std::shared_ptr<const CardToken> target)  const;
 	std::set<Color> getColors(xg::Guid target)  const;
-	std::set<Color> getColors(std::shared_ptr<CardToken> target)  const;
+	std::set<Color> getColors(std::shared_ptr<const CardToken> target)  const;
 	xg::Guid getController(xg::Guid target) const;
-	xg::Guid getController(std::shared_ptr<Targetable> target) const;
-	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
-	std::shared_ptr<std::vector<std::shared_ptr<ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<CardToken> target) const;
+	xg::Guid getController(std::shared_ptr<const Targetable> target) const;
+	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
+	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<const CardToken> target) const;
 	unsigned int getLandPlays(xg::Guid player) const;
 
 private:

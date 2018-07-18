@@ -22,8 +22,8 @@ bool isUnique(const std::vector<T>& x) {
 
 class TargetingRestriction {
 public:
-	virtual bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) = 0;
-	virtual bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) = 0;
+	virtual bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const = 0;
+	virtual bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const = 0;
 
 	const int minTargets;
 	const int maxTargets;
@@ -35,11 +35,11 @@ public:
 
 class NoTargets : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment&) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment&) const {
 		return targets.size() == 0;
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment&) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment&) const {
 		return targets.size() == 0;
 	}
 
@@ -51,7 +51,7 @@ public:
 template<int n, typename TargetType>
 class UpToNTargets : TargetingRestriction{
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		if (targets.size() > n || !isUnique(targets)) return false;
 
 		for (xg::Guid target : targets) {
@@ -61,7 +61,7 @@ public:
 			return false;
 		}
 	}
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		return targets.size() <= n && this->validFirstN(targets, env);
 	}
 
@@ -76,7 +76,7 @@ private:
 template<int n, typename TargetType>
 class ExactlyNTargets : TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		if (targets.size() > n || !isUnique(targets)) return false;
 
 		for (xg::Guid target : targets) {
@@ -86,7 +86,7 @@ public:
 			return false;
 		}
 	}
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		return targets.size() == n && this->validFirstN(targets, env);
 	}
 
@@ -100,7 +100,7 @@ private:
 
 class AnyTarget : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		if (targets.size() > 1) return false;
 		if (targets.size() == 0) return true;
 
@@ -111,7 +111,7 @@ public:
 		}
 		else if (std::shared_ptr<Card> card = std::dynamic_pointer_cast<Card>(object)) {
 			if (!env.battlefield->findObject(target)) return false;
-			std::shared_ptr<std::set<CardType>> types = env.getTypes(card);
+			std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 			if (types->find(CREATURE) != types->end()
 				|| types->find(PLANESWALKER) != types->end()) {
 				return true;
@@ -120,7 +120,7 @@ public:
 		return false;
 	}
 	
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		return targets.size() == 1 && this->validFirstN(targets, env);
 	}
 
@@ -131,7 +131,7 @@ public:
 
 class TargetPlayer : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		if (targets.size() > 1) return false;
 		if (targets.size() == 0) return true;
 
@@ -143,7 +143,7 @@ public:
 		return false;
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) {
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		return targets.size() == 1 && this->validFirstN(targets, env);
 	}
 

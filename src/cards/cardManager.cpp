@@ -66,7 +66,15 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 	std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
 	std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities) {
+	std::vector<std::shared_ptr<const Cost>> costs2(costs.begin(), costs.end());
+	std::vector<std::shared_ptr<const Cost>> additionalCosts2(additionalCosts.begin(), additionalCosts.end());
+	std::vector<std::shared_ptr<const ActivatedAbility>> activatedAbilities2(activatedAbilities.begin(), activatedAbilities.end());
+
 	return Card(std::make_shared<std::set<CardSuperType>>(superTypes), std::make_shared<std::set<CardType>>(types), std::make_shared<std::set<CardSubType>>(subTypes),
-				power, toughness, loyalty, name, cmc, colors, std::make_shared<std::vector<std::shared_ptr<ActivatedAbility>>>(activatedAbilities), targeting, applyAbilities,
-				costs, additionalCosts);
+				power, toughness, loyalty, name, cmc, colors, std::make_shared<std::vector<std::shared_ptr<const ActivatedAbility>>>(activatedAbilities2), targeting, applyAbilities,
+				costs2, additionalCosts2);
+}
+
+void insertCard(std::map<std::string, Card>& cards, Card card) {
+	cards.insert(std::make_pair(card.name, card));
 }

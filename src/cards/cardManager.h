@@ -35,4 +35,6 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 			 std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts = {},
 			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities = {},
 			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities = {});
+
+void insertCard(std::map<std::string, Card>& cards, Card card);
 #endif

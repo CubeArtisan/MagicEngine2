@@ -10,15 +10,15 @@ struct CardToken;
 struct Token;
 struct Card;
 
-using SourceType = std::variant<std::shared_ptr<Card>, std::shared_ptr<Token>>;
+using SourceType = std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>>;
 struct Cost {
-    virtual bool canPay(Player& player, Environment& env, SourceType source) = 0;
-    virtual Changeset payCost(Player& player, Environment& env, SourceType source) = 0;
+    virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const = 0;
+    virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const = 0;
 };
 
 struct ManaCost : public Cost {
-    virtual bool canPay(Player& player, Environment& env, SourceType source);
-    virtual Changeset payCost(Player& player, Environment& env, SourceType source);
+    virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+    virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 
     ManaCost(Mana mana);
 
@@ -27,13 +27,13 @@ private:
 };
 
 struct LandPlayCost : public Cost {
-    virtual bool canPay(Player& player, Environment& env, SourceType source);
-    virtual Changeset payCost(Player& player, Environment& env, SourceType source);
+    virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+    virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 };
 
 struct TapCost : public Cost {
-    bool canPay(Player& player, Environment& env, SourceType source);
-    Changeset payCost(Player& player, Environment& env, SourceType source);
+    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 private:
 };
 

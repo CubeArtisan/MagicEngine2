@@ -10,12 +10,12 @@ Card Mountain = newCard("Mountain", 0, std::set<CardSuperType>{BASIC}, std::set<
 					std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{},
 					std::vector<std::shared_ptr<ActivatedAbility>>{
 						std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{RED}), 
-																		  std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new TapCost())}))});
+																		  std::vector<std::shared_ptr<const Cost>>{std::shared_ptr<const Cost>(new TapCost())}))});
 
 class MManager : public LetterManager {
 public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
-		cards[Mountain.name] = Mountain;
+		cards.insert(std::make_pair(Mountain.name, Mountain));
 	}
 };

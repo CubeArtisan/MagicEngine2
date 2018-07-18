@@ -14,6 +14,6 @@ class DManager : public LetterManager {
 public:
     void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
     {
-        cards[Divination.name] = Divination;
+        cards.insert(std::make_pair(Divination.name, Divination));
     }
 };

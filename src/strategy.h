@@ -9,14 +9,14 @@ struct HasEffect;
 
 class Strategy {
 public:
-    virtual GameAction chooseGameAction(Player& player, Environment& env) = 0;
-	virtual std::vector<xg::Guid> chooseTargets(std::shared_ptr<HasEffect> effect, Player& player, const Environment& env) = 0;
+    virtual GameAction chooseGameAction(const Player& player, const Environment& env) = 0;
+	virtual std::vector<xg::Guid> chooseTargets(std::shared_ptr<const HasEffect> effect, const Player& player, const Environment& env) = 0;
 };
 
 class RandomStrategy : public Strategy {
 public:
-    GameAction chooseGameAction(Player& player, Environment& env);
-	std::vector<xg::Guid> chooseTargets(std::shared_ptr<HasEffect> effect, Player& player, const Environment& env);
+    GameAction chooseGameAction(const Player& player, const Environment& env);
+	std::vector<xg::Guid> chooseTargets(std::shared_ptr<const HasEffect> effect, const Player& player, const Environment& env);
 };
 
 #endif

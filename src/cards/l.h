@@ -18,6 +18,6 @@ class LManager : public LetterManager {
 public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
-		cards[LightningBolt.name] = LightningBolt;
+		cards.insert(std::make_pair(LightningBolt.name, LightningBolt));
 	}
 };

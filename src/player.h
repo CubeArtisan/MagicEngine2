@@ -6,7 +6,7 @@
 
 struct Player : public Targetable {
 public:
-    std::shared_ptr<Strategy> strategy;
+	const std::shared_ptr<Strategy> strategy;
 
     Player(std::shared_ptr<Strategy> strategy)
         : strategy(strategy)
