@@ -2,7 +2,16 @@
 #include "../card.h"
 #include "../environment.h"
 
+#include "../abilities/damageAbility.h"
+#include "../triggers/etb.h"
+
 #include "cardManager.h"
+
+
+Card ImpactTremors = newCard("Impact Tremors", 2u, {}, { ENCHANTMENT }, {}, 0, 0, 0,
+							 { RED }, std::shared_ptr<TargetingRestriction>(new NoTargets()), Mana(1, { RED }), {},
+							 {}, {}, {}, { std::shared_ptr<TriggerHandler>(new TriggerHandler(EtbTrigger([](std::shared_ptr<CardToken>, std::optional<xg::Guid>) -> std::shared_ptr<Ability> { return std::shared_ptr<Ability>(new EqualDamageEachOpponentAbility(1)); }),
+																							  {},{ BATTLEFIELD })) });
 
 Card Island = newCard("Island", 0, std::set<CardSuperType>{BASIC}, std::set<CardType>{LAND}, std::set<CardSubType>{ISLAND}, 0, 0, 0,
 				      std::set<Color>{}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
@@ -16,6 +25,7 @@ class IManager : public LetterManager {
 public:
     void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
     {
+		insertCard(cards, ImpactTremors);
         cards.insert(std::make_pair(Island.name, Island));
     }
 };

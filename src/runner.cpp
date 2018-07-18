@@ -4,6 +4,7 @@
 #include "runner.h"
 #include "gameAction.h"
 #include "targeting.h"
+#include "util.h"
 
 std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	bool apply = false;
@@ -41,11 +42,6 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, pair.second->id });
 			apply = true;
 		}
-	for (auto& variant : this->env.battlefield->objects)
-		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)){
-			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.battlefield->id });
-			apply = true;
-		}
 	for (auto& variant : this->env.exile->objects)
 		if (std::shared_ptr<const Token>* token = std::get_if<std::shared_ptr<const Token>>(&variant)) {
 			stateBasedAction.remove.push_back(RemoveObject{ (*token)->id, this->env.exile->id });
@@ -64,7 +60,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 				apply = true;
 			}
 			// 704.5g.If a creature has toughness greater than 0, and the total damage marked on it is greater than or equal to its toughness, that creature has been dealt lethal damage and is destroyed.Regeneration can replace this event.	
-			else if (toughness <= this->env.damage.at(card->id)) {
+			else if (toughness <= tryAtMap(this->env.damage, card->id, 0)) {
 				// CodeReview: Make a destroy change
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
@@ -97,7 +93,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	for (auto& pair : this->env.permanentCounters) {
 		// 704.5q. If a permanent has both a +1/+1 counter and a -1/-1 counter on it, N +1/+1 and N -1/-1 counters are removed from it, where N is the smaller of the number of +1/+1 and -1/-1 counters on it.
 		// CodeReview: Assumes every permanent with any counters will have entries for both in the map
-		if (pair.second.at(PLUSONEPLUSONECOUNTER) > 0 && pair.second.at(MINUSONEMINUSONECOUNTER) > 0) {
+		if (tryAtMap(pair.second, PLUSONEPLUSONECOUNTER, 0u) > 0 && tryAtMap(pair.second, MINUSONEMINUSONECOUNTER, 0u) > 0) {
 			int amount = (int)std::min(pair.second.at(PLUSONEPLUSONECOUNTER), pair.second.at(MINUSONEMINUSONECOUNTER));
 			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, PLUSONEPLUSONECOUNTER, -amount });
 			stateBasedAction.permanentCounters.push_back(AddPermanentCounter{ pair.first, MINUSONEMINUSONECOUNTER, -amount });
@@ -245,7 +241,52 @@ void Runner::runGame(){
     }
 }
 
+void Runner::applyMoveRules(Changeset& changeset) {
+	std::vector<std::tuple<std::shared_ptr<HasAbilities>, ZoneType, std::optional<ZoneType>>> objects;
+	for (auto& move : changeset.moves) {
+		if (std::shared_ptr<HasAbilities> object = std::dynamic_pointer_cast<HasAbilities>(env.gameObjects.at(move.object))) {
+			std::shared_ptr<ZoneInterface> source = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(move.sourceZone));
+			std::shared_ptr<ZoneInterface> destination = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(move.destinationZone));
+			objects.push_back(std::make_tuple(object, destination->type, source->type));
+		}
+	}
+	for (auto& create : changeset.create) {
+		if (std::shared_ptr<HasAbilities> object = std::dynamic_pointer_cast<HasAbilities>(create.created)) {
+			std::shared_ptr<ZoneInterface> destination = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(create.zone));
+			objects.push_back(std::make_tuple(object, destination->type, std::nullopt));
+		}
+	}
+	std::vector<Changeset> result;
+	bool apply = false;
+	Changeset addStatic;
+	for (auto& object : objects) {
+		std::vector<std::shared_ptr<StateQueryHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
+		if (!handlers.empty()) {
+			for (const auto& h : handlers) addStatic.propertiesToAdd.push_back(h);
+			apply = true;
+		}
+	}
+	if (apply) this->applyChangeset(addStatic);
+	apply = false;
+	// 614.12. Some replacement effects modify how a permanent enters the battlefield. (See rules 614.1c-d.) Such effects may come from the permanent itself if they
+	// affect only that permanent (as opposed to a general subset of permanents that includes it). They may also come from other sources. To determine which replacement
+	// effects apply and how they apply, check the characteristics of the permanent as it would exist on the battlefield, taking into account replacement effects that
+	// have already modified how it enters the battlefield (see rule 616.1), continuous effects from the permanent's own static abilities that would apply to it once it's
+	// on the battlefield, and continuous effects that already exist and would apply to the permanent.
+	Changeset addReplacement;
+	for (auto& object : objects) {
+		if (std::get<1>(object) != BATTLEFIELD) continue;
+		std::vector<std::shared_ptr<EventHandler>> handlers = env.getSelfReplacementEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
+		if (!handlers.empty()) {
+			for (auto& h : handlers) addReplacement.effectsToAdd.push_back(h);
+			apply = true;
+		}
+	}
+	if (apply) this->applyChangeset(addReplacement);
+}
+
 bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied) {
+	// CodeReview: Allow strategy to specify order to evaluate in
 	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
 		if (applied.find(eh->id) != applied.end()) continue;
 		auto result = eh->handleEvent(changeset, this->env);
@@ -265,24 +306,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 #ifdef DEBUG
 	std::cout << changeset;
 #endif
-	// CodeReview: Reevaluate the Replacement effect system for recursion
-	// CodeReview: Allow strategy to specify order to evaluate in
-	// CodeReview: Replacement effect for less than 0 damage to not happen
+	this->applyMoveRules(changeset);
 	if (replacementEffects && this->applyReplacementEffects(changeset)) return;
 
-	for (std::shared_ptr<EventHandler> eh : this->env.triggerHandlers) {
-		auto changePrelim = eh->handleEvent(changeset, this->env);
-		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&changePrelim)) {
-			std::vector<Changeset>& changes = *pChangeset;
-			// This should only happen with replacement effects
-			if (changes.empty()) return;
-			Changeset newChange;
-			for (Changeset& change : changes) {
-				newChange += change;
-			}
-			changeset = newChange;
-		}
-	}
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
             apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
@@ -297,20 +323,31 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
     }
     for(ObjectCreation& oc : changeset.create){
         std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
-        xg::Guid id = oc.created->id;
+		xg::Guid id = oc.created->id;
         zone->addObject(oc.created);
 		if (!oc.created) {
 			std::cout << "Creating a null object" << std::endl;
 		}
         this->env.gameObjects[id] = oc.created;
+		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(oc.created)) {
+			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
+			for (auto& r : replacement) r->owner = oc.created->id;
+			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacement.begin(), replacement.end());
+			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->env.getTriggerEffects(abilities, zone->type);
+			for (auto& t : trigger) t->owner = oc.created->id;
+			this->env.triggerHandlers.insert(this->env.triggerHandlers.end(), trigger.begin(), trigger.end());
+		}
     }
     for(RemoveObject& ro : changeset.remove) {
 		std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[ro.zone]);
 		zone->removeObject(ro.object);
 		this->env.gameObjects.erase(ro.object);
+		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
+		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
+		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StateQueryHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
-        // ltc.oldValue = this->env.lifeTotals[ltc.player];
+        ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
 	for (std::shared_ptr<EventHandler> eh : changeset.effectsToAdd) {
@@ -429,8 +466,12 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		this->applyChangeset(moveLand);
 	}
     for(ObjectMovement& om : changeset.moves) {
-        ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
+		ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
         ZoneInterface& dest = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.destinationZone));
+
+		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == om.object; }), this->env.triggerHandlers.end());
+		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == om.object; }), this->env.replacementEffects.end());
+		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StateQueryHandler>& a) -> bool { return a->owner == om.object; }), this->env.stateQueryHandlers.end());
 
         source.removeObject(om.object);
 		std::shared_ptr<Targetable> object = this->env.gameObjects[om.object];
@@ -441,8 +482,15 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			std::cout << "Got a null move" << std::endl;
 		}
 		this->env.gameObjects[om.newObject] = object;
-    }
-	// CodeReview: Handle losing the game
+		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(object)) {
+			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, dest.type, source.type);
+			for (auto& r : replacement) r->owner = object->id;
+			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacement.begin(), replacement.end());
+			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->env.getTriggerEffects(abilities, dest.type, source.type);
+			for (auto& t : trigger) t->owner = object->id;
+			this->env.triggerHandlers.insert(this->env.triggerHandlers.end(), trigger.begin(), trigger.end());
+		}
+	}
 	for (xg::Guid& ltg : changeset.loseTheGame) {
 		unsigned int index = 0;
 		for (auto iter = this->env.players.begin(); iter != this->env.players.end(); iter++) {
@@ -473,6 +521,20 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			index++;
 		}
 	}
+
+	bool apply = false;
+	Changeset triggers;
+	for (std::shared_ptr<TriggerHandler> eh : this->env.triggerHandlers) {
+		auto changePrelim = eh->handleEvent(changeset, this->env);
+		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&changePrelim)) {
+			std::vector<Changeset>& changes = *pChangeset;
+			for (Changeset& change : changes) {
+				triggers += change;
+			}
+			apply = true;
+		}
+	}
+	if (apply) this->applyChangeset(triggers);
 
     this->env.changes.push_back(changeset);
 }

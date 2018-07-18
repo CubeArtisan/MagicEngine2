@@ -2,6 +2,7 @@
 #include <random>
 
 #include "environment.h"
+#include "effects/rulesEffects.h"
 
 Environment::Environment(const std::vector<Player>& prelimPlayers, const std::vector<std::vector<Card>>& libraries)
 : battlefield(new Zone<Card, Token>(BATTLEFIELD)), stack(new Zone<Card, Token, Ability>(STACK)),
@@ -36,16 +37,30 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 			std::dynamic_pointer_cast<Card>(copy)->source = std::dynamic_pointer_cast<Card>(copy);
 			this->libraries[players[i]->id]->addObject(copy);
             this->gameObjects[copy->id] = copy;
+			std::vector<std::shared_ptr<EventHandler>> replacement = this->getReplacementEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
+			this->replacementEffects.insert(this->replacementEffects.end(), replacement.begin(), replacement.end());
+			for (auto& r : replacement) r->owner = copy->id;
+			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->getTriggerEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
+			this->triggerHandlers.insert(this->triggerHandlers.end(), trigger.begin(), trigger.end());
+			for (auto& t : trigger) t->owner = copy->id;
+			std::vector<std::shared_ptr<StateQueryHandler>> state = this->getStaticEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
+			this->stateQueryHandlers.insert(this->stateQueryHandlers.end(), state.begin(), state.end());
+			for (auto& s : state) s->owner = copy->id;
         }
         
 		std::random_device rd;
 		std::mt19937 g(rd());
 		std::shuffle(this->libraries[players[i]->id]->objects.begin(), this->libraries[players[i]->id]->objects.end(), g);
 	}
-	// Create StateQueryHandler for +1/+1 and -1/-1 counters
+	this->createRulesEffects();
+	// CodeReview: Ask all cards in all zones to register their handlers that would apply from that zone
 }
 
-
+void Environment::createRulesEffects() {
+	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new TokenMovementEffect()));
+	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new ZeroDamageEffect()));
+	this->stateQueryHandlers.push_back(std::shared_ptr<StateQueryHandler>(new CounterPowerToughnessEffect()));
+}
 
 int Environment::getPower(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
@@ -148,6 +163,51 @@ std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> Envi
 unsigned int Environment::getLandPlays(xg::Guid player) const {
 	LandPlaysQuery query{ player, 1 };
 	return std::get<LandPlaysQuery>(this->executeStateQuery(query)).amount;
+}
+
+std::vector<std::shared_ptr<EventHandler>> Environment::getReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+	std::vector<std::shared_ptr<EventHandler>> handlers;
+	for (const auto& h : target->replacementEffects) {
+		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
+				|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
+			handlers.push_back(h);
+	}
+	ReplacementEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
+	return std::get<ReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
+std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+	std::vector<std::shared_ptr<TriggerHandler>> handlers;
+	for (const auto& h : target->triggerEffects) {
+		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
+			|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
+			handlers.push_back(h);
+	}
+	TriggerEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
+	return std::get<TriggerEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
+std::vector<std::shared_ptr<StateQueryHandler>> Environment::getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+	std::vector<std::shared_ptr<StateQueryHandler>> handlers;
+	for (const auto& h : target->staticEffects) {
+		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
+			|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
+			handlers.push_back(h);
+	}
+	StaticEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
+	return std::get<StaticEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
+std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+	std::vector<std::shared_ptr<EventHandler>> handlers;
+	for (const size_t& i : target->thisOnlyReplacementIndexes) {
+		const auto& h = target->replacementEffects[i];
+		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
+			|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
+			handlers.push_back(h);
+	}
+	SelfReplacementEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
+	return std::get<SelfReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
 StateQuery& Environment::executeStateQuery(StateQuery&& query) const {

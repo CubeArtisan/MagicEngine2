@@ -55,9 +55,11 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 			 std::shared_ptr<TargetingRestriction> targeting,
 			 Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts,
 			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
-			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities) {
+			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
+			 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+			 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	return newCard(name, cmc, superTypes, types, subTypes, power, toughness, loyalty, colors, targeting, std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new ManaCost(cost))},
-				   additionalCosts, applyAbilities, activatedAbilities);
+				   additionalCosts, applyAbilities, activatedAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes);
 }
 
 Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTypes, std::set<CardType> types,
@@ -65,14 +67,16 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 	std::shared_ptr<TargetingRestriction> targeting,
 	std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts,
 	std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
-	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities) {
+	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
+	std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+	std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	std::vector<std::shared_ptr<const Cost>> costs2(costs.begin(), costs.end());
 	std::vector<std::shared_ptr<const Cost>> additionalCosts2(additionalCosts.begin(), additionalCosts.end());
 	std::vector<std::shared_ptr<const ActivatedAbility>> activatedAbilities2(activatedAbilities.begin(), activatedAbilities.end());
 
 	return Card(std::make_shared<std::set<CardSuperType>>(superTypes), std::make_shared<std::set<CardType>>(types), std::make_shared<std::set<CardSubType>>(subTypes),
 				power, toughness, loyalty, name, cmc, colors, std::make_shared<std::vector<std::shared_ptr<const ActivatedAbility>>>(activatedAbilities2), targeting, applyAbilities,
-				costs2, additionalCosts2);
+				replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes, costs2, additionalCosts2);
 }
 
 void insertCard(std::map<std::string, Card>& cards, Card card) {

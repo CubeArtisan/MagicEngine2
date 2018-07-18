@@ -14,6 +14,7 @@ struct Ability : public Targetable, public HasEffect {
 
 	Ability(std::shared_ptr<const TargetingRestriction> targeting);
 	
+	Changeset operator()(const Environment& env) const;
 	virtual std::shared_ptr<Ability> clone() const = 0;
 };
 

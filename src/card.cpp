@@ -32,13 +32,20 @@ Changeset CardToken::applyEffect(const Environment& env) const {
     return change;
 }
 
+HasAbilities::HasAbilities(std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+						   std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
+	: replacementEffects(replacementEffects), triggerEffects(triggerEffects), staticEffects(staticEffects), thisOnlyReplacementIndexes(thisOnlyReplacementIndexes)
+{}
+
 CardToken::CardToken()
 	: CardToken(std::shared_ptr<std::set<CardSuperType>>(new std::set<CardSuperType>{}), std::shared_ptr<std::set<CardType>>(new std::set<CardType>{}),
 		std::shared_ptr<std::set<CardSubType>>(new std::set<CardSubType>{}), 0,
 		0, 0, "Unnamed", 0, std::set<Color>{},
 		std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>>(new std::vector<std::shared_ptr<const ActivatedAbility>>{}),
 		std::shared_ptr<TargetingRestriction>(new NoTargets()),
-		std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{})
+		std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{},
+		std::vector<std::shared_ptr<EventHandler>>{}, std::vector<std::shared_ptr<TriggerHandler>>{},
+		std::vector<std::shared_ptr<StateQueryHandler>>{}, std::vector<size_t>{})
 {}
 
 CardToken::CardToken(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
@@ -46,10 +53,12 @@ CardToken::CardToken(std::shared_ptr<const std::set<CardSuperType>> superTypes, 
                      int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 					 std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
                      std::shared_ptr<const TargetingRestriction> targeting,
-					 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyEffects)
-    : HasEffect(targeting), baseSuperTypes(superTypes), baseTypes(types), baseSubTypes(subTypes), basePower(power),
-	  baseToughness(toughness), startingLoyalty(loyalty), name(name), cmc(cmc), baseColors(colors),
-	  activatableAbilities(activatedAbilities), applyEffects(applyEffects)
+					 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyEffects,
+					 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+					 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
+    : HasEffect(targeting), HasAbilities(replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes), baseSuperTypes(superTypes),
+	  baseTypes(types), baseSubTypes(subTypes), basePower(power), baseToughness(toughness), startingLoyalty(loyalty), name(name), cmc(cmc),
+	  baseColors(colors), activatableAbilities(activatedAbilities), applyEffects(applyEffects)
     {}
 
 Card::Card() {}
@@ -60,9 +69,12 @@ Card::Card(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::share
 		   std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
 		   std::shared_ptr<const TargetingRestriction> targeting,
            std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
+		   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+		   std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
            std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                targeting, applyAbilities), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
+                targeting, applyAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes),
+	  CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
     {}
 
 Token::Token(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
@@ -70,7 +82,14 @@ Token::Token(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::sha
              int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 			 std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
 		     std::shared_ptr<const TargetingRestriction> targeting,
-             std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities)
+             std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
+			 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+			 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                targeting, applyAbilities)
+                targeting, applyAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes)
     {}
+
+Emblem::Emblem(std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+			   std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
+	: HasAbilities(replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes)
+{}

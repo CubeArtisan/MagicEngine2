@@ -18,25 +18,19 @@
 #include "card.h"
 #include "ability.h"
 
-enum ZoneType {
-    HAND,
-    GRAVEYARD,
-    LIBRARY,
-    BATTLEFIELD,
-    STACK,
-    EXILE,
-    COMMAND
-};
-
 struct ZoneInterface {
     virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object) = 0;
     virtual std::shared_ptr<const Targetable> removeObject(xg::Guid object) = 0;
 	virtual std::shared_ptr<const Targetable> findObject(xg::Guid object) const = 0;
+	const ZoneType type;
+
+	ZoneInterface(ZoneType type)
+		: type(type)
+	{}
 };
 
 template<typename... Args>
 struct Zone : public Targetable, public ZoneInterface {
-    ZoneType type;
     std::vector<std::variant<std::shared_ptr<const Args>...>> objects;
     
     xg::Guid addObject(const std::shared_ptr<const Targetable>& object) {
@@ -68,10 +62,8 @@ struct Zone : public Targetable, public ZoneInterface {
 		return std::shared_ptr<Targetable>();
 	}
 
-	Zone()
-	{}
 	Zone(ZoneType type)
-		: type(type)
+		: ZoneInterface(type)
 	{}
 
 private:
@@ -154,9 +146,15 @@ struct Environment {
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<const CardToken> target) const;
 	unsigned int getLandPlays(xg::Guid player) const;
+	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<StateQueryHandler>> getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 
 private:
 	StateQuery& executeStateQuery(StateQuery&& query) const;
+
+	void createRulesEffects();
 };
 
 #endif

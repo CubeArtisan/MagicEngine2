@@ -138,6 +138,7 @@
     <ClCompile Include="src\strategy.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\abilities\damageAbility.h" />
     <ClInclude Include="src\ability.h" />
     <ClInclude Include="src\card.h" />
     <ClInclude Include="src\cards\a.h" />
@@ -169,6 +170,7 @@
     <ClInclude Include="src\cards\z.h" />
     <ClInclude Include="src\changeset.h" />
     <ClInclude Include="src\cost.h" />
+    <ClInclude Include="src\effects\rulesEffects.h" />
     <ClInclude Include="src\enum.h" />
     <ClInclude Include="src\environment.h" />
     <ClInclude Include="src\gameAction.h" />
@@ -179,6 +181,8 @@
     <ClInclude Include="src\stateQuery.h" />
     <ClInclude Include="src\strategy.h" />
     <ClInclude Include="src\targeting.h" />
+    <ClInclude Include="src\triggers\etb.h" />
+    <ClInclude Include="src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

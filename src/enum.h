@@ -98,4 +98,14 @@ enum CardSubType : unsigned int {
     LASTINSTANTTYPE = LASTSORCERYTYPE
 };
 
+enum ZoneType {
+	HAND,
+	GRAVEYARD,
+	LIBRARY,
+	BATTLEFIELD,
+	STACK,
+	EXILE,
+	COMMAND
+};
+
 #endif

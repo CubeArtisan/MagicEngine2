@@ -23,39 +23,53 @@ struct Targetable {
 
     Targetable();
 	virtual ~Targetable() {}
+	
+	// CodeReview: Implement
+	// virtual std::shared_ptr<Targetable> clone();
 };
 
-class EventHandler : public Targetable {
+class Handler : public Targetable {
 public:
-    virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) = 0;
-    bool operator==(EventHandler& other) {
-        return this->id == other.id;
-    }
-};
-class StateQueryHandler : public Targetable {
-public:
-    virtual StateQuery& handleEvent(StateQuery&, const Environment&) = 0;
-    bool operator==(StateQueryHandler& other) {
-        return this->id == other.id;
-    }
+	const std::set<ZoneType> activeSourceZones;
+	const std::set<ZoneType> activeDestinationZones;
+	bool operator==(Handler& other) const {
+		return this->id == other.id;
+	}
+
+	Handler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: activeSourceZones(activeSourceZones), activeDestinationZones(activeDestinationZones)
+	{}
 };
 
-struct QueueTrigger {
-	xg::Guid player;
-	Changeset triggered;
-	std::shared_ptr<Ability> ability;
+class EventHandler : public Handler {
+public:
+    virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const = 0;
+	EventHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: Handler(activeSourceZones, activeDestinationZones)
+	{}
 };
+
+class StateQueryHandler : public Handler {
+public:
+    virtual StateQuery& handleEvent(StateQuery&, const Environment&) const = 0;
+	StateQueryHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: Handler(activeSourceZones, activeDestinationZones)
+	{}
+};
+
+struct QueueTrigger;
 
 class TriggerHandler : public EventHandler {
 public:
-	virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&);
+	// CodeReview: Need to know who owns the trigger
+	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const;
 
-	template<typename Condition, typename Trigger>
-	TriggerHandler(Condition doesTrigger,
-				   Trigger createTrigger)
-		: doesTrigger(doesTrigger), createTrigger(createTrigger)
+	template<typename Trigger>
+	TriggerHandler(Trigger createTrigger, std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: EventHandler(activeSourceZones, activeDestinationZones), createTriggers(createTrigger)
 	{}
-private:
+
+protected:
 	std::function<std::vector<QueueTrigger>(const Changeset&, const Environment&)> createTriggers;
 };
 
@@ -126,7 +140,7 @@ struct StepOrPhaseChange {
 
 struct DamageToTarget {
 	xg::Guid target;
-	unsigned int amount;
+	int amount;
 };
 
 struct TapTarget {
@@ -153,7 +167,6 @@ struct Changeset {
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
     std::vector<std::shared_ptr<EventHandler>> effectsToAdd;
-	// CodeReview: Should these be xg::Guid for removal?
     std::vector<std::shared_ptr<EventHandler>> effectsToRemove;
 	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd;
 	std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove;
@@ -170,12 +183,22 @@ struct Changeset {
     StepOrPhaseChange phaseChange;
 	bool clearTriggers{ false };
 	// CodeReview: Add Destroy
+	// CodeReview: Add Cast
 
     Changeset operator+(const Changeset& other);
     Changeset& operator+=(const Changeset& other);
 
+	// CodeReview: implement then use to filter out empty Changesets
+	// bool empty();
+
     friend std::ostream& operator<<(std::ostream& os, const Changeset& changeset);
 
     static Changeset drawCards(xg::Guid player, size_t amount, const Environment& env);
+};
+
+struct QueueTrigger {
+	xg::Guid player;
+	Changeset triggered;
+	std::shared_ptr<Ability> ability;
 };
 #endif
