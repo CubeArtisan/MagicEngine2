@@ -1,6 +1,8 @@
 #include <memory>
 
 #include "../card.h"
+#include "../tokens/tokenManager.h"
+
 #include "cardManager.h"
 
 #include "a.h"
@@ -35,6 +37,7 @@ CardManager::CardManager(){
 	BManager().getCards(this->cards, this->mvids);
     DManager().getCards(this->cards, this->mvids);
 	FManager().getCards(this->cards, this->mvids);
+	GManager().getCards(this->cards, this->mvids);
     IManager().getCards(this->cards, this->mvids);
 	LManager().getCards(this->cards, this->mvids);
 	MManager().getCards(this->cards, this->mvids);
@@ -82,3 +85,5 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 void insertCard(std::map<std::string, Card>& cards, Card card) {
 	cards.insert(std::make_pair(card.name, card));
 }
+
+TokenManager tokenManager = TokenManager();

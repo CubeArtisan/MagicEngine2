@@ -136,8 +136,10 @@
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\runner.cpp" />
     <ClCompile Include="src\strategy.cpp" />
+    <ClCompile Include="src\tokens\tokenManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\abilities\createToken.h" />
     <ClInclude Include="src\abilities\damageAbility.h" />
     <ClInclude Include="src\ability.h" />
     <ClInclude Include="src\card.h" />
@@ -181,6 +183,8 @@
     <ClInclude Include="src\stateQuery.h" />
     <ClInclude Include="src\strategy.h" />
     <ClInclude Include="src\targeting.h" />
+    <ClInclude Include="src\tokens\g.h" />
+    <ClInclude Include="src\tokens\tokenManager.h" />
     <ClInclude Include="src\triggers\etb.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>

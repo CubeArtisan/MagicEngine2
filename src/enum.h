@@ -58,6 +58,7 @@ enum CardSubType : unsigned int {
     FIRSTCREATURETYPE,
     DJINN,
 	FUNGUS,
+	GOBLIN,
     HUMAN,
 	PIRATE,
 	SABLE,

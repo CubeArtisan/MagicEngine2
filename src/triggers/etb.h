@@ -14,6 +14,7 @@ public:
 		for (const ObjectMovement& move : changes.moves) {
 			if (move.destinationZone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(move.newObject))) {
+					if (selfOnly && card->id != this->owner) continue;
 					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
 					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
@@ -28,6 +29,7 @@ public:
 		for (const ObjectCreation& create : changes.create) {
 			if (create.zone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create.created)) {
+					if (selfOnly && card->id != this->owner) continue;
 					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
 					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
@@ -43,8 +45,8 @@ public:
 	}
 
 	template<typename Trigger>
-	EtbTriggerHandler(Trigger func)
-		: TriggerHandler(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), createAbility(func)
+	EtbTriggerHandler(Trigger func, bool selfOnly=false)
+		: TriggerHandler(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), selfOnly(selfOnly), createAbility(func)
 	{}
 
 	template<typename Trigger>
@@ -60,6 +62,7 @@ protected:
 private:
 	const std::set<CardType> watchFor;
 	const bool controlled;
+	const bool selfOnly;
 	const std::function<std::shared_ptr<Ability>(std::shared_ptr<CardToken>, std::optional<xg::Guid>)> createAbility;
 };
 
