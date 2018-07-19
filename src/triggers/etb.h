@@ -7,13 +7,14 @@
 #include "../environment.h"
 #include "../util.h"
 
-class EtbTrigger {
+class EtbTriggerHandler : public TriggerHandler {
 public:
 	std::vector<QueueTrigger> operator()(const Changeset& changes, const Environment& env) const {
 		std::vector<QueueTrigger> result;
 		for (const ObjectMovement& move : changes.moves) {
 			if (move.destinationZone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(move.newObject))) {
+					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
 					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
 						Changeset triggered;
@@ -28,6 +29,7 @@ public:
 			if (create.zone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create.created)) {
 					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
+					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
 					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
 						Changeset triggered;
 						triggered.create.push_back(create);
@@ -40,17 +42,24 @@ public:
 		return result;
 	}
 
-	EtbTrigger(std::function<std::shared_ptr<Ability>(std::shared_ptr<CardToken>, std::optional<xg::Guid>)> func)
-		: watchFor{ CREATURE }, createAbility(func)
+	template<typename Trigger>
+	EtbTriggerHandler(Trigger func)
+		: TriggerHandler(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), createAbility(func)
 	{}
 
 	template<typename Trigger>
-	EtbTrigger(std::set<CardType> watchFor, Trigger func)
-		: watchFor(watchFor), createAbility(func)
+	EtbTriggerHandler(std::set<CardType> watchFor, bool controlled, Trigger func, std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: TriggerHandler(activeSourceZones, activeDestinationZones), watchFor(watchFor), controlled(controlled), createAbility(func)
 	{}
+
+protected:
+	std::vector<QueueTrigger> createTriggers(const Changeset& changes, const Environment& env) const {
+		return this->operator()(changes, env);
+	}
 
 private:
 	const std::set<CardType> watchFor;
+	const bool controlled;
 	const std::function<std::shared_ptr<Ability>(std::shared_ptr<CardToken>, std::optional<xg::Guid>)> createAbility;
 };
 

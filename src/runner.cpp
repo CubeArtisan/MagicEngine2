@@ -120,7 +120,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 			ability->id = xg::newGuid();
 			ability->owner = player->id;
 			// CodeReview: Do we need to set source?
-			applyTriggers.create.push_back(ObjectCreation{ this->env.stack->id, trigger.ability });
+			applyTriggers.create.push_back(ObjectCreation{ this->env.stack->id, ability });
 			std::vector<xg::Guid> targets = player->strategy->chooseTargets(ability, *player, env);
 			if (!targets.empty()) {
 				applyTriggers.target.push_back(CreateTargets{ ability->id, targets });
@@ -232,11 +232,14 @@ void Runner::runGame(){
                     }
                     applyChangeset(resolveSpellAbility);
                 }
+				this->env.currentPlayer = this->env.turnPlayer;
             }
-            else if(firstPlayerToPass == -1) {
-                firstPlayerToPass = this->env.currentPlayer;
-            }
-			this->env.currentPlayer = nextPlayer;
+            else {
+				if (firstPlayerToPass == -1) {
+					firstPlayerToPass = this->env.currentPlayer;
+				}
+				this->env.currentPlayer = nextPlayer;
+			}
         }
     }
 }
@@ -445,6 +448,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         }
         else{
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
+			this->env.currentPlayer = this->env.turnPlayer;
         }
 
 		if (this->env.currentPhase == DRAW) {

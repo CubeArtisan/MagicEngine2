@@ -67,7 +67,8 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
 
     for(auto& cardWrapper : env.battlefield->objects){
         std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(cardWrapper);
-        for(std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
+		if (player.id != card->owner) continue;
+		for(std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
 			std::shared_ptr<ActivatedAbility> ability = std::dynamic_pointer_cast<ActivatedAbility>(pAbility->clone());
 			ability->source = cardWrapper;
             if(std::shared_ptr<const Cost> pCost = ability->canPlay(player, env)) {

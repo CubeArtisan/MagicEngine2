@@ -64,13 +64,12 @@ public:
 	// CodeReview: Need to know who owns the trigger
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const;
 
-	template<typename Trigger>
-	TriggerHandler(Trigger createTrigger, std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
-		: EventHandler(activeSourceZones, activeDestinationZones), createTriggers(createTrigger)
+	TriggerHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+		: EventHandler(activeSourceZones, activeDestinationZones)
 	{}
 
 protected:
-	std::function<std::vector<QueueTrigger>(const Changeset&, const Environment&)> createTriggers;
+	virtual std::vector<QueueTrigger> createTriggers(const Changeset&, const Environment&) const = 0;
 };
 
 template<typename T, typename Variant>
