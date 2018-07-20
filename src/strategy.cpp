@@ -1,7 +1,9 @@
+#include <numeric>
 #include <random>
 #include <vector>
 
 #include "card.h"
+#include "changeset.h"
 #include "environment.h"
 #include "gameAction.h"
 #include "player.h"
@@ -101,4 +103,15 @@ std::vector<xg::Guid> RandomStrategy::chooseTargets(const std::shared_ptr<const 
 	}
 
 	return targets;
+}
+
+std::vector<xg::Guid> RandomStrategy::chooseDiscards(size_t amount, const Player& player, const Environment& env) {
+	auto handObjects = env.hands.at(player.id)->objects;
+	std::vector<size_t> indices(handObjects.size());
+	std::iota(indices.begin(), indices.end(), 0);
+	std::shuffle(indices.begin(), indices.end(), std::mt19937{ std::random_device{}() });
+	std::vector<xg::Guid> result;
+	result.reserve(amount);
+	for (int i = 0; i < amount; i++) result.push_back(getBaseClassPtr<const Targetable>(handObjects.at(indices[i]))->id);
+	return result;
 }

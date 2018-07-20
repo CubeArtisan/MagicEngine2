@@ -146,7 +146,7 @@ std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
 }
 
 Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment& env){
-    Changeset result = Changeset();
+    Changeset result;
     const Zone<Card, Token>& libraryZone = *env.libraries.at(player);
     auto library = libraryZone.objects;
     const Zone<Card, Token>& handZone = *env.hands.at(player);
@@ -160,4 +160,13 @@ Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment
         result.moves.push_back(ObjectMovement{c->id, libraryZone.id, handZone.id});
     }
     return result;
+}
+
+
+Changeset Changeset::discardCards(xg::Guid playerId, size_t amount, const Environment& env) {
+	Changeset result;
+	const Player& player = *std::dynamic_pointer_cast<Player>(env.gameObjects.at(playerId));
+	std::vector<xg::Guid> cards = player.strategy->chooseDiscards(amount, player, env);
+	for (xg::Guid& guid : cards) result.moves.push_back(ObjectMovement{ guid, env.hands.at(playerId)->id, env.graveyards.at(playerId)->id });
+	return result;
 }

@@ -416,13 +416,38 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		if (this->env.currentPhase == END) {
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			this->env.currentPhase = CLEANUP;
-			// CodeReview: Do this with Hand Size from StateQuery
-			if (this->env.hands.at(turnPlayerId)->objects.size() > 7) {
-				// CodeReview: Implement discarding
+			auto handObjects = this->env.hands.at(turnPlayerId)->objects;
+			// CodeReview: Do this with Hand Size from StateQuer
+			// 514.1. First, if the active player's hand contains more cards than their maximum hand size (normally seven), they discard enough cards to reduce their hand size to that number. This turn-based action doesn't use the stack.
+			if (handObjects.size() > 7) {
+				Changeset discard = Changeset::discardCards(turnPlayerId, handObjects.size() - 7, env);
+				this->applyChangeset(discard);
 			}
+			// 514.2. Second, the following actions happen simultaneously : all damage marked on permanents(including
+			// phased - out permanents) is removed and all "until end of turn" and "this turn" effects end.This turn
+			// - based action doesn't use the stack.
+			// CodeReview: Send an end turn event through the system to get end of turn abilities to cleanup and any
+			// relevant triggers
+			// Should also move this into that changeset
 			this->env.damage.clear();
+
+			// 514.3a. At this point, the game checks to see if any state-based actions would be performed and/or any
+			// triggered abilities are waiting to be put onto the stack (including those that trigger "at the beginning
+			// of the next cleanup step"). If so, those state-based actions are performed, then those triggered abilities
+			// are put on the stack, then the active player gets priority. Players may cast spells and activate abilities.
+			// Once the stack is empty and all players pass in succession, another cleanup step begins.
+			bool repeat = false;
+			std::variant<std::monostate, Changeset> sba = this->checkStateBasedActions();
+			while (Changeset* pChangeset = std::get_if<Changeset>(&sba)) {
+				repeat = true;
+				this->applyChangeset(*pChangeset);
+				sba = this->checkStateBasedActions();
+			}
+			// CodeReview: If triggers are queued empty the queue and mark repeat = true
+			if (repeat) {
+				// CodeReview: Queue up another cleanup step
+			}
 			Changeset cleanup;
-			// CodeReview: Only do if nothing is on the stack
 			cleanup.phaseChange = StepOrPhaseChange{ true, CLEANUP };
 			this->applyChangeset(cleanup);
 		}

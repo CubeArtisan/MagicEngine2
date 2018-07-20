@@ -193,6 +193,7 @@ struct Changeset {
     friend std::ostream& operator<<(std::ostream& os, const Changeset& changeset);
 
     static Changeset drawCards(xg::Guid player, size_t amount, const Environment& env);
+	static Changeset discardCards(xg::Guid player, size_t amount, const Environment& env);
 };
 
 struct QueueTrigger {

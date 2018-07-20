@@ -7,7 +7,7 @@ int main(){
     CardManager cardManager;
 	libraries[0].reserve(60);
 	libraries[1].reserve(60);
-    for(int i=0; i < 40; i++) libraries[0].push_back(cardManager.getCard("Bronze Sable"));
+    for(int i=0; i < 40; i++) libraries[0].push_back(cardManager.getCard("Ancestral Recall"));
     for(int i=0; i < 20; i++) libraries[0].push_back(cardManager.getCard("Island"));
     for(int i=0; i < 20; i++) libraries[1].push_back(cardManager.getCard("Goblin Instigator"));
 	for(int i=0; i < 10; i++) libraries[1].push_back(cardManager.getCard("Impact Tremors"));
