@@ -54,6 +54,16 @@ Card CardManager::getCard(std::string name) {
 }
 
 Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTypes, std::set<CardType> types,
+	std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
+	Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts,
+	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
+	std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
+	std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
+	return newCard(name, cmc, superTypes, types, subTypes, power, toughness, loyalty, colors, std::shared_ptr<TargetingRestriction>(new NoTargets()), cost,
+		additionalCosts, {}, activatedAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes);
+}
+
+Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTypes, std::set<CardType> types,
 			 std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
 			 std::shared_ptr<TargetingRestriction> targeting,
 			 Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts,

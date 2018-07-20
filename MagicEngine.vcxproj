@@ -172,6 +172,7 @@
     <ClInclude Include="src\cards\z.h" />
     <ClInclude Include="src\changeset.h" />
     <ClInclude Include="src\cost.h" />
+    <ClInclude Include="src\effects\panharmoniconEffect.h" />
     <ClInclude Include="src\effects\rulesEffects.h" />
     <ClInclude Include="src\enum.h" />
     <ClInclude Include="src\environment.h" />

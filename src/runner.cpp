@@ -306,11 +306,11 @@ bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> ap
 }
 
 void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
+	this->applyMoveRules(changeset);
+	if (replacementEffects && this->applyReplacementEffects(changeset)) return;
 #ifdef DEBUG
 	std::cout << changeset;
 #endif
-	this->applyMoveRules(changeset);
-	if (replacementEffects && this->applyReplacementEffects(changeset)) return;
 
     for(AddPlayerCounter& apc : changeset.playerCounters) {
         if(apc.amount < 0 && this->env.playerCounters[apc.player][apc.counterType] < (unsigned int)-apc.amount){
