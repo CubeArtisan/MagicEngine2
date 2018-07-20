@@ -56,6 +56,8 @@ Changeset Changeset::operator+(const Changeset& other){
 	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
 	std::vector<LandPlay> land = this->land;
 	land.insert(land.end(), other.land.begin(), other.land.end());
+	std::vector<std::shared_ptr<ManaAbility>> manaAbility = this->manaAbility;
+	manaAbility.insert(manaAbility.end(), other.manaAbility.begin(), other.manaAbility.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
@@ -64,7 +66,7 @@ Changeset Changeset::operator+(const Changeset& other){
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
 					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, trigger, land, phaseChange, clearTriggers};
+                     target, trigger, land, manaAbility, phaseChange, clearTriggers};
 }
 
 Changeset& Changeset::operator+=(const Changeset& other){
@@ -88,7 +90,8 @@ Changeset& Changeset::operator+=(const Changeset& other){
 	target.insert(target.end(), other.target.begin(), other.target.end());
 	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
 	land.insert(land.end(), other.land.begin(), other.land.end());
-    if(!phaseChange.changed && other.phaseChange.changed){
+	manaAbility.insert(manaAbility.end(), other.manaAbility.begin(), other.manaAbility.end());
+	if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
 	this->clearTriggers |= other.clearTriggers;
@@ -133,6 +136,9 @@ std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
 	}
 	for (const LandPlay& land : changeset.land) {
 		os << "Playing a land: " << land.land << " by " << land.player << " from " << land.zone << std::endl;
+	}
+	for (const std::shared_ptr<ManaAbility>& manaAbility : changeset.manaAbility) {
+		os << "Activating a mana ability: " << manaAbility->id << std::endl;
 	}
 	for (const ObjectMovement& move : changeset.moves) {
 		os << "Movement: " << move.object << " from " << move.sourceZone << " to " << move.destinationZone

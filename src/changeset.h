@@ -15,6 +15,7 @@
 struct Ability;
 struct Changeset;
 struct Environment;
+struct ManaAbility;
 
 struct Targetable {
     // This is mutable state
@@ -179,6 +180,7 @@ struct Changeset {
 	std::vector<CreateTargets> target;
 	std::vector<QueueTrigger> trigger;
 	std::vector<LandPlay> land;
+	std::vector<std::shared_ptr<ManaAbility>> manaAbility;
     StepOrPhaseChange phaseChange;
 	bool clearTriggers{ false };
 	// CodeReview: Add Destroy

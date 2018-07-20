@@ -166,7 +166,12 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 		result->source = pActivateAnAbility->source;
 		result->owner = active.id;
         result->id = xg::newGuid();
-        activateAbility.create.push_back(ObjectCreation{this->env.stack->id, result});
+		if (std::shared_ptr<ManaAbility> manaAbility = std::dynamic_pointer_cast<ManaAbility>(result)) {
+			activateAbility.manaAbility.push_back(manaAbility);
+		}
+		else {
+			activateAbility.create.push_back(ObjectCreation{ this->env.stack->id, result });
+		}
 		if (pActivateAnAbility->targets.size() > 0) {
 			activateAbility.target.push_back(CreateTargets{ result->id, pActivateAnAbility->targets });
 		}
@@ -493,6 +498,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		Changeset moveLand;
 		moveLand.moves.push_back(ObjectMovement{ pl.land, pl.zone, this->env.battlefield->id });
 		this->applyChangeset(moveLand);
+	}
+	for (std::shared_ptr<ManaAbility> ma : changeset.manaAbility) {
+		Changeset apply = ma->applyEffect(env);
+		this->applyChangeset(apply);
 	}
     for(ObjectMovement& om : changeset.moves) {
 		ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
