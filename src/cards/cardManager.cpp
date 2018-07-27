@@ -58,7 +58,7 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 	Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts,
 	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
 	std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-	std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
+	std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	return newCard(name, cmc, superTypes, types, subTypes, power, toughness, loyalty, colors, std::shared_ptr<TargetingRestriction>(new NoTargets()), cost,
 		additionalCosts, {}, activatedAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes);
 }
@@ -70,7 +70,7 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
 			 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-			 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
+			 std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	return newCard(name, cmc, superTypes, types, subTypes, power, toughness, loyalty, colors, targeting, std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new ManaCost(cost))},
 				   additionalCosts, applyAbilities, activatedAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes);
 }
@@ -82,7 +82,7 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 	std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 	std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
 	std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-	std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
+	std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	std::vector<std::shared_ptr<const Cost>> costs2(costs.begin(), costs.end());
 	std::vector<std::shared_ptr<const Cost>> additionalCosts2(additionalCosts.begin(), additionalCosts.end());
 	std::vector<std::shared_ptr<const ActivatedAbility>> activatedAbilities2(activatedAbilities.begin(), activatedAbilities.end());

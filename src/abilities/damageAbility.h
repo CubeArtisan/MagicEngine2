@@ -54,7 +54,7 @@ protected:
 		std::vector<xg::Guid> result;
 		result.reserve(env.players.size() - 1);
 		for (const std::shared_ptr<const Player>& player : env.players) {
-			if (player->id != this->owner) result.push_back(player->id);
+			if (player->id != env.getController(this->owner)) result.push_back(player->id);
 		}
 		return result;
 	}

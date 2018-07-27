@@ -12,7 +12,7 @@ struct Targetable;
 struct HasAbilities;
 class EventHandler;
 class TriggerHandler;
-class StateQueryHandler;
+class StaticEffectHandler;
 
 struct PowerQuery {
     const CardToken& target;
@@ -61,41 +61,51 @@ struct ActivatedAbilitiesQuery {
 };
 
 struct LandPlaysQuery {
-	xg::Guid player;
+	const xg::Guid player;
 	unsigned int amount;
 };
 
 struct ReplacementEffectsQuery {
 	const HasAbilities& target;
-	ZoneType destinationZone;
-	std::optional<ZoneType> originZone;
+	const ZoneType destinationZone;
+	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<EventHandler>> effects;
 };
 
 struct TriggerEffectsQuery {
 	const HasAbilities& target;
-	ZoneType destinationZone;
-	std::optional<ZoneType> originZone;
+	const ZoneType destinationZone;
+	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<TriggerHandler>> effects;
 };
 
 struct StaticEffectsQuery {
 	const HasAbilities& target;
-	ZoneType destinationZone;
-	std::optional<ZoneType> originZone;
-	std::vector<std::shared_ptr<StateQueryHandler>> effects;
+	const ZoneType destinationZone;
+	const std::optional<ZoneType> originZone;
+	std::vector<std::shared_ptr<StaticEffectHandler>> effects;
 };
 
 struct SelfReplacementEffectsQuery {
 	const HasAbilities& target;
-	ZoneType destinationZone;
-	std::optional<ZoneType> originZone;
+	const ZoneType destinationZone;
+	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<EventHandler>> effects;
 };
 
-// CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
-using StateQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
-                                ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery, ReplacementEffectsQuery,
-								TriggerEffectsQuery, StaticEffectsQuery, SelfReplacementEffectsQuery>;
+struct CanAttackQuery {
+	const CardToken& target;
+	bool canAttack;
+};
 
+struct CanBlockQuery {
+	const CardToken& target;
+	bool canBlock;
+};
+
+// CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
+using StaticEffectQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
+                                       ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery, ReplacementEffectsQuery,
+								       TriggerEffectsQuery, StaticEffectsQuery, SelfReplacementEffectsQuery, CanAttackQuery,
+									   CanBlockQuery>;
 #endif

@@ -25,7 +25,7 @@ Changeset LandPlayCost::payCost(const Player&, const Environment&, const SourceT
 }
 
 bool TapCost::canPay(const Player&, const Environment&, const SourceType& source)  const {
-    return !getBaseClassPtr<const CardToken>(source)->is_tapped;
+    return !getBaseClassPtr<const CardToken>(source)->isTapped;
 }
 
 Changeset TapCost::payCost(const Player&, const Environment&, const SourceType& source)  const {

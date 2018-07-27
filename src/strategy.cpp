@@ -115,3 +115,32 @@ std::vector<xg::Guid> RandomStrategy::chooseDiscards(size_t amount, const Player
 	for (int i = 0; i < amount; i++) result.push_back(getBaseClassPtr<const Targetable>(handObjects.at(indices[i]))->id);
 	return result;
 }
+
+
+std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::chooseAttacker(std::vector<std::shared_ptr<CardToken>>& possibleAttackers,
+																							  std::map<xg::Guid, std::set<xg::Guid>>& possibleAttacks,
+																							  std::map<xg::Guid, std::multiset<xg::Guid>>& requiredAttacks,
+																							  std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks) {
+	std::vector<std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>>> possibilities;
+	for (auto& possibleAttacker : possibleAttackers) {
+		for (auto& possibleDefender : possibleAttacks[possibleAttacker->id]) {
+			possibilities.push_back(make_pair(possibleAttacker, possibleDefender));
+		}
+	}
+	possibilities.push_back(std::nullopt);
+	return select_randomly(possibilities);
+}
+
+std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::chooseBlocker(std::vector<std::shared_ptr<CardToken>>& possibleBlockers,
+																							 std::map<xg::Guid, std::set<xg::Guid>>& possibleBlocks,
+																							 std::map<xg::Guid, std::multiset<xg::Guid>>& requiredBlocks,
+																							 std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks) {
+	std::vector<std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>>> possibilities;
+	for (auto& possibleBlocker : possibleBlockers) {
+		for (auto& possibleAttacker : possibleBlocks[possibleBlocker->id]) {
+			possibilities.push_back(make_pair(possibleBlocker, possibleAttacker));
+		}
+	}
+	possibilities.push_back(std::nullopt);
+	return select_randomly(possibilities);
+}

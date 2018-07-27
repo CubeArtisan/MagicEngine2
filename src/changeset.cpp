@@ -36,9 +36,9 @@ Changeset Changeset::operator+(const Changeset& other){
     triggersToAdd.insert(triggersToAdd.end(), other.triggersToAdd.begin(), other.triggersToAdd.end());
     std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove = this->triggersToRemove;
     triggersToRemove.insert(triggersToRemove.end(), other.triggersToRemove.begin(), other.triggersToRemove.end());
-	std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd = this->propertiesToAdd;
+	std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToAdd = this->propertiesToAdd;
     propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
-    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove = this->propertiesToRemove;
+    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToRemove = this->propertiesToRemove;
     propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
     std::vector<xg::Guid> loseTheGame = this->loseTheGame;
     loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
@@ -157,6 +157,7 @@ Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment
     auto library = libraryZone.objects;
     const Zone<Card, Token>& handZone = *env.hands.at(player);
     if(amount > library.size()){
+		// CodeReview: Should wait to lose until next time state based actions are checked
 		result.loseTheGame.push_back(player);
         amount = library.size();
     }

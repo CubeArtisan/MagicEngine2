@@ -27,7 +27,7 @@ Token newToken(std::string name, unsigned int cmc, std::set<CardSuperType> super
 			   std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 			   std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities,
 			   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-			   std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
+			   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes) {
 	std::cout << "Creating new token named " << name << std::endl;
 	std::vector<std::shared_ptr<const ActivatedAbility>> activatedAbilities2(activatedAbilities.begin(), activatedAbilities.end());
 	return Token(std::make_shared<std::set<CardSuperType>>(superTypes), std::make_shared<std::set<CardType>>(types), std::make_shared<std::set<CardSubType>>(subTypes),

@@ -50,10 +50,10 @@ public:
 	{}
 };
 
-class StateQueryHandler : public Handler {
+class StaticEffectHandler : public Handler {
 public:
-    virtual StateQuery& handleEvent(StateQuery&, const Environment&) const = 0;
-	StateQueryHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
+    virtual StaticEffectQuery& handleEvent(StaticEffectQuery&, const Environment&) const = 0;
+	StaticEffectHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
 		: Handler(activeSourceZones, activeDestinationZones)
 	{}
 };
@@ -170,8 +170,8 @@ struct Changeset {
     std::vector<std::shared_ptr<EventHandler>> effectsToRemove;
 	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd;
 	std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove;
-    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToAdd;
-    std::vector<std::shared_ptr<StateQueryHandler>> propertiesToRemove;
+    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToAdd;
+    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToRemove;
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;

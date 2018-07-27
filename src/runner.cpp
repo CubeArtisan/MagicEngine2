@@ -106,6 +106,11 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 }
 
 std::variant<Changeset, PassPriority> Runner::executeStep() const {
+	// 116.5. Each time a player would get priority, the game first performs all applicable state-based actions as a
+	// single event (see rule 704, "State-Based Actions"), then repeats this process until no state-based actions are
+	// performed. Then triggered abilities are put on the stack (see rule 603, "Handling Triggered Abilities"). These
+	// steps repeat in order until no further state-based actions are performed and no abilities trigger. Then the
+	// player who would have received priority does so.
 	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
 	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
 		return *sba;
@@ -208,6 +213,10 @@ void Runner::runGame(){
             int nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
             if(firstPlayerToPass == nextPlayer){
                 auto stack = this->env.stack;
+				// 500.2. A phase or step in which players receive priority ends when the stack is empty and all players
+				// pass in succession.Simply having the stack become empty doesn't cause such a phase or step to end;
+				// all players have to pass in succession with the stack empty. Because of this, each player gets a chance
+				// to add new things to the stack before that phase or step ends.
                 if(stack->objects.empty()) {
                     Changeset passStep;
                     passStep.phaseChange = StepOrPhaseChange{true, this->env.currentPhase};
@@ -216,12 +225,16 @@ void Runner::runGame(){
                 else{
                     std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>,
                                  std::shared_ptr<const Ability>> top = this->env.stack->objects.back();
+
+					// CodeReview: Call getNextApplyEffect if not nullopt applyChangeset
+					// Then repeat till nullopt
+					// Then move ability/card to correct zone
                     Changeset resolveSpellAbility = getBaseClassPtr<const HasEffect>(top)->applyEffect(this->env);
                     if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&top)) {
 						std::shared_ptr<const Card> card = *pCard;
                         bool isPermanent = false;
                         for(CardType type : *this->env.getTypes(card)){
-                            if(type < PERMANENTEND && type > PERMANENTBEGIN){
+                            if(PERMANENTBEGIN < type && type < PERMANENTEND) {
                                 resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.battlefield->id});
                                 isPermanent = true;
 								break;
@@ -268,7 +281,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 	bool apply = false;
 	Changeset addStatic;
 	for (auto& object : objects) {
-		std::vector<std::shared_ptr<StateQueryHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
+		std::vector<std::shared_ptr<StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
 		if (!handlers.empty()) {
 			for (const auto& h : handlers) addStatic.propertiesToAdd.push_back(h);
 			apply = true;
@@ -352,7 +365,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		this->env.gameObjects.erase(ro.object);
 		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
 		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
-		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StateQueryHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
+		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StaticEffectHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
         ltc.oldValue = this->env.lifeTotals[ltc.player];
@@ -366,20 +379,24 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
 			bool { return *e == *eh; }), list.end());
 	}
-    for(std::shared_ptr<TriggerHandler> eh : changeset.triggersToAdd){
-        this->env.triggerHandlers.push_back(eh);
+    for(std::shared_ptr<TriggerHandler> th : changeset.triggersToAdd){
+        this->env.triggerHandlers.push_back(th);
     }
-    for(std::shared_ptr<TriggerHandler> eh : changeset.triggersToRemove){
+    for(std::shared_ptr<TriggerHandler> th : changeset.triggersToRemove){
         std::vector<std::shared_ptr<TriggerHandler>>& list = this->env.triggerHandlers;
         list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<TriggerHandler> e) ->
-                                                            bool { return *e == *eh; }), list.end());
+                                                            bool { return *e == *th; }), list.end());
     }
-    for(std::shared_ptr<StateQueryHandler> sqh : changeset.propertiesToAdd){
+    for(std::shared_ptr<StaticEffectHandler> sqh : changeset.propertiesToAdd){
+		// CodeReview: if sqh is a ControlChangeHandler check if the target is not under the new controller's
+		// control if so fire control change event for the target
         this->env.stateQueryHandlers.push_back(sqh);
     }
-    for(std::shared_ptr<StateQueryHandler> sqh : changeset.propertiesToRemove){
-        std::vector<std::shared_ptr<StateQueryHandler>>& list = this->env.stateQueryHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<StateQueryHandler> e) ->
+    for(std::shared_ptr<StaticEffectHandler> sqh : changeset.propertiesToRemove){
+		// CodeReview: if sqh is a ControlChangeHandler get the current controller with that handler
+		// Then after removing the handler check again if the controllers are different fire a control change event
+        std::vector<std::shared_ptr<StaticEffectHandler>>& list = this->env.stateQueryHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<StaticEffectHandler> e) ->
                                                             bool { return *e == *sqh; }), list.end());
     }
     for(AddMana& am : changeset.addMana) {
@@ -406,7 +423,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	for (TapTarget& tt : changeset.tap) {
 		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
 		std::shared_ptr<CardToken> pObject = std::dynamic_pointer_cast<CardToken>(object);
-		pObject->is_tapped = tt.tap;
+		pObject->isTapped = tt.tap;
 	}
 	for (CreateTargets& ct : changeset.target) {
 		this->env.targets[ct.object] = ct.targets;
@@ -415,19 +432,267 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		changeset.phaseChange.starting = this->env.currentPhase;
 		// CodeReview: How to handle extra steps?
 		// CodeReview: Handle mana that doesn't empty
+		// 500.4. When a step or phase ends, any unused mana left in a player's mana pool empties. This turn-based
+		// action doesn't use the stack.
 		for (auto& manaPool : this->env.manaPools) {
 			manaPool.second.clear();
 		}
-		if (this->env.currentPhase == END) {
+		
+		// CodeReview: For now have this happen here, not generally safe since multiple cleanup steps can happen
+		// Eventually should get moved to happen after moving into an Untap step
+		if(this->env.currentPhase == CLEANUP) {
+			// CodeReview: Implement Phasing
+			// 502.1. First, all phased-in permanents with phasing that the active player controls phase out, and all
+			// phased-out permanents that the active player controlled when they phased out phase in. This all happens
+			// simultaneously. This turn-based action doesn't use the stack.
+			// CodeReview: Get next player from Environment
+            unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
+			this->env.currentPlayer = nextPlayer;
+            this->env.turnPlayer = nextPlayer;
+            this->env.currentPhase = UNTAP;
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
+			this->env.landPlays[turnPlayerId] = 0;
+			
+			// 502.2. Second, the active player determines which permanents they control will untap. Then they untap
+			// them all simultaneously. This turn-based action doesn't use the stack. Normally, all of a player's
+			// permanents untap, but effects can keep one or more of a player's permanents from untapping.
+
+			// CodeReview: Implemented restricted untap system
+			// Get a set of filters/restrictions(card -> vector<card> -> bool) that says whether it can untap given all the other things that are untapping
+			// Get the set of all remaining cards that could untap given what's already untapping
+			// Have the strategy pick one to untap
+			// Repeat until remaining cards to untap is empty
+			Changeset untap;
+			untap.tap.reserve(this->env.battlefield->objects.size());
+			for (auto& object : this->env.battlefield->objects) {
+				std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(object);
+				if (this->env.getController(card->id) == turnPlayerId && card->isTapped) {
+					untap.tap.push_back(TapTarget{ card->id, false });
+				}
+			}
+
+			// 502.3.No player receives priority during the untap step, so no spells can be cast or resolve and no
+			// abilities can be activated or resolve.Any ability that triggers during this step will be held until
+			// the next time a player would receive priority, which is usually during the upkeep step.
+			untap.phaseChange = StepOrPhaseChange{ true, UNTAP };
+			this->applyChangeset(untap);
+        }
+		else if (this->env.currentPhase == ENDCOMBAT) {
+			this->env.currentPhase = POSTCOMBATMAIN;
+			// 511.3. As soon as the end of combat step ends, all creatures and planeswalkers are removed from combat.
+			// After the end of combat step ends, the combat phase is over and the postcombat main phase begins.
+			// CodeReview: Remove all permanents from combat
+		}
+        else{
+            this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
+			this->env.currentPlayer = this->env.turnPlayer;
+        }
+
+		if (this->env.currentPhase == DRAW) {
+			// 504.1. First, the active player draws a card. This turn-based action doesn't use the stack.
+			// CodeReview: Handle first turn don't draw
+			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer]->id, 1, env);
+			this->applyChangeset(drawCard);
+		}
+		else if (this->env.currentPhase == PRECOMBATMAIN) {
+			// CodeReview: If archenemy do a scheme
+			// 505.3. First, but only if the players are playing an Archenemy game (see rule 904), the active player is
+			// the archenemy, and it's the active player's precombat main phase, the active player sets the top card of
+			// their scheme deck in motion (see rule 701.24). This turn-based action doesn't use the stack.
+			// CodeReview: Implement Saga's turn based action
+			// 505.4. Second, if the active player controls one or more Saga enchantments and it's the active player's
+			// precombat main phase, the active player puts a lore counter on each Saga they control. (See rule 714, "Saga Cards.")
+			// This turn-based action doesn't use the stack.
+		}
+		else if (this->env.currentPhase == BEGINCOMBAT) {
+			// 507.1. First, if the game being played is a multiplayer game in which the active player's opponents don't
+			// all automatically become defending players, the active player chooses one of their opponents. That player
+			// becomes the defending player. This turn-based action doesn't use the stack.
+			// CodeReview: Appoint defending. Should always be automatic
+		}
+		else if (this->env.currentPhase == DECLAREATTACKERS) {
+			std::set<xg::Guid> opponentsAndPlaneswalkers;
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
+			Player& player = *this->env.players[this->env.turnPlayer];
+			for (auto& player : this->env.players) {
+				if (player->id != turnPlayerId) opponentsAndPlaneswalkers.insert(player->id);
+				for (auto& card : this->env.battlefield->objects) {
+					std::shared_ptr<const CardToken> c = getBaseClassPtr<const CardToken>(card);
+					if (env.getController(c) == turnPlayerId) continue;
+					std::shared_ptr<const std::set<CardType>> types = this->env.getTypes(c);
+					if (types->find(PLANESWALKER) != types->end()) opponentsAndPlaneswalkers.insert(c->id);
+				}
+			}
+			std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredAttacks;
+			std::set<xg::Guid> declaredAttackers;
+			do {
+				std::vector<std::shared_ptr<CardToken>> possibleAttackers;
+				std::map<xg::Guid, std::set<xg::Guid>> possibleAttacks;
+				std::map<xg::Guid, std::multiset<xg::Guid>> requiredAttacks;
+				for (auto& card : this->env.battlefield->objects) {
+					std::shared_ptr<CardToken> c = std::dynamic_pointer_cast<CardToken>(this->env.gameObjects[getBaseClassPtr<const Targetable>(card)->id]);
+					if (declaredAttackers.find(c->id) != declaredAttackers.end()) continue;
+					if (env.getController(c) != turnPlayerId) continue;
+					if (!env.canAttack(c)) continue;
+					// possibleAttacks[c->id] = opponentsAndPlaneswalkers;
+					// // We ignore cost based restrictions for now. Up in the air how to decide them.
+					// auto restrictions = this->env.getAttackRestrictions(c);
+					// // If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
+					// for(auto& restrictions : restrictions) {
+					//     possibleAttacks[c->id] = restriction.canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
+					// }
+					// if(possibleAttacks[c->id].empty()) continue;
+					// requiredAttacks[c->id] = {};
+					// auto requirements = this->env.getAttackRequirements(c);
+					// for(auto& requirement : requirements) {
+					//     auto attacks = requirement.getRequiredAttacks(c, possibleAttacks, declaredAttacks, env);
+					//     requiredAttacks[c->id].insert(attacks.begin(), attacks.end());
+					// }
+					// if(!requiredAttacks[c->id].empty()) {
+					//     std::set<std::pair<size_t, xg::Guid>> opponentRequirements;
+					//     for(xg::Guid& guid : possibleAttacks[c->id]) {
+					//         opponentRequirements.insert(make_pair(guid, requiredAttacks[c->id].count(guid)));
+					//     }
+					//     std::set<xg::Guid> validAttacks;
+					//     int max = opponentRequirements->rbegin()->first;
+					//     for(auto& iter=opponentRequirements.rbegin(); iter != opponentRequirement.rend(); iter++) {
+					//         if(iter->first != max) break;
+					//         validAttacks.insert(iter->second);
+					//     }
+					//     possibleAttacks[c->id] = validAttacks;
+					// }
+					possibleAttackers.push_back(c);
+				}
+				// CodeReview: Need to figure out how to deal with costs to attack
+				std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> attacker = player.strategy->chooseAttacker(possibleAttackers, possibleAttacks, requiredAttacks, declaredAttacks);
+				if (attacker) {
+					declaredAttacks.push_back(attacker.value());
+					declaredAttackers.insert(attacker.value().first->id);
+				}
+				else break;
+			} while (true);
+			// CodeReview: Have the attacking player organize attackers into bands.
+			for (auto& p : declaredAttacks) {
+				// CodeReview: Use the StateQuery system to determine whether this is appropriate
+				p.first->isTapped = true;
+			}
+			// CodeReview: Implement costs to attack
+			// If there are optional cost associated with attacking "pay as attacks" strategy chooses whether to pay those
+			// For each creature determine the total cost to attack. Sum these costs(can put into vector).
+			// If these costs contain mana abilities allow the player to activate mana abilities
+			// The active player pays all possible costs, if they cannot pay restart the process
+
+			this->env.declaredAttacks = declaredAttacks;
+			// CodeReview: Queue an event for declaring attackers
+			// CodeReview: If there are no attackers skip to end of combat
+		}
+		else if (this->env.currentPhase == DECLAREBLOCKERS) {
+			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
+			for (auto& player : this->env.players) {
+				if (player->id == turnPlayerId) continue;
+				std::set<std::shared_ptr<const CardToken>> attackers;
+				for (auto& attacker : this->env.declaredAttacks) {
+					if (attacker.second == player->id || this->env.getController(attacker.second) == player->id)
+						attackers.insert(attacker.first);
+				}
+				std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredBlocks;
+				std::set<xg::Guid> declaredBlockers;
+				do {
+					std::vector<std::shared_ptr<CardToken>> possibleBlockers;
+					std::map<xg::Guid, std::set<xg::Guid>> possibleBlocks;
+					std::map<xg::Guid, std::multiset<xg::Guid>> requiredBlocks;
+					for (auto& card : this->env.battlefield->objects) {
+						std::shared_ptr<CardToken> c = std::dynamic_pointer_cast<CardToken>(this->env.gameObjects[getBaseClassPtr<const Targetable>(card)->id]);
+						// CodeReview: Handle multiBlocking
+						if (declaredBlockers.find(c->id) != declaredBlockers.end()) continue;
+						if (env.getController(c) != turnPlayerId) continue;
+						if (!env.canBlock(c)) continue;
+						// possibleBlocks[c->id] = attackers;
+						// // We ignore cost based restrictions for now. Up in the air how to decide them.
+						// auto restrictions = this->env.getBlockRestrictions(c);
+						// // If any restriction is CantBlockAloneRestriction and there is another creature that has the same restriction make an entry for both 
+						// for(auto& restrictions : restrictions) {
+						//     possibleBlocks[c->id] = restriction.canBlock(c, possibleBlocks[c->id], declaredBlocks, env);
+						// }
+						// if(possibleBlocks[c->id].empty()) continue;
+						// requiredBlocks[c->id] = {};
+						// auto requirements = this->env.getBlockRequirements(c);
+						// for(auto& requirement : requirements) {
+						//     auto blocks = requirement.getRequiredAttacks(c, possibleBlocks, declaredBlocks, env);
+						//     requiredBlocks[c->id].insert(blocks.begin(), blocks.end());
+						// }
+						// if(!requiredBlocks[c->id].empty()) {
+						//     std::set<std::pair<size_t, xg::Guid>> attackerRequirements;
+						//     for(xg::Guid& guid : possibleBlocks[c->id]) {
+						//         attackerRequirements.insert(make_pair(guid, requiredBlocks[c->id].count(guid)));
+						//     }
+						//     std::set<xg::Guid> validBlocks;
+						//     int max = attackersRequirements->rbegin()->first;
+						//     for(auto& iter=attackerRequirements.rbegin(); iter != attackerRequirement.rend(); iter++) {
+						//         if(iter->first != max) break;
+						//         validBlocks.insert(iter->second);
+						//     }
+						//     possibleBlocks[c->id] = validBlocks;
+						// }
+						possibleBlockers.push_back(c);
+					}
+					// CodeReview: Need to figure out how to deal with costs to attack
+					std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> blocker = player->strategy->chooseBlocker(possibleBlockers, possibleBlocks, requiredBlocks, declaredBlocks);
+					if (blocker) {
+						declaredBlocks.push_back(blocker.value());
+						declaredBlockers.insert(blocker.value().first->id);
+					}
+					else break;
+				} while (true);
+				// CodeReview: Have the defending player organize defenders into bands.
+
+				// CodeReview: Implement costs to block
+				// If there are optional cost associated with blocking "pay as blocks" strategy chooses whether to pay those
+				// For each creature determine the total cost to block. Sum these costs(can put into vector).
+				// If these costs contain mana abilities allow the player to activate mana abilities
+				// The chosen player pays all possible costs, if they cannot pay restart the process
+
+				this->env.declaredBlocks.insert(this->env.declaredBlocks.end(), declaredBlocks.begin(), declaredBlocks.end());
+				// CodeReview: Queue an event for declaring blockers
+				// CodeReview: Tell the environment that creatures which have a blocker assigned to them are blocked
+			}
+			// CodeReview: Damage ordering
+			// For each blocked creature the attacking player chooses damage assigment order if multiple blockers
+			// For each blocking creature its controller chooses damage assignment order if multiple blockees
+			// CodeReview: If any attacking or blocking creatures have first or double strike create a FirstStrikeDamageStep
+		}
+		else if (this->env.currentPhase == FIRSTSTRIKEDAMAGE) {
+			// For this phase only consider creatures with first or double strike
+			// For each attacking creature its controller chooses how it will assign damage.
+			// To assign damage check that the attackee is still in combat and damage that would be dealt is at least 1 if not skip this attacker
+			// Then in damage assignment order allow the strategy to pick a number from 0 to remaining damage that would leave lethal damage on the creature
+			// If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
+			// Repeat this process for blockers
+			// Assign all combat damage simultaneously(same changeset)
+			// Mark all creatures that dealt damage as having dealt damage this combat
+		}
+		else if (this->env.currentPhase == COMBATDAMAGE) {
+			// For this phase do not consider creatures with first strike that dealt damage already this combat
+			// For each attacking creature its controller chooses how it will assign damage.
+			// To assign damage check that the attackee is still in combat and damage that would be dealt is at least 1 if not skip this attacker
+			// Then in damage assignment order allow the strategy to pick a number from 0 to remaining damage that would leave lethal damage on the creature
+			// If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
+			// Repeat this process for blockers
+			// Assign all combat damage simultaneously(same changeset)
+		}
+		else if (this->env.currentPhase == CLEANUP) {
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			this->env.currentPhase = CLEANUP;
 			auto handObjects = this->env.hands.at(turnPlayerId)->objects;
-			// CodeReview: Do this with Hand Size from StateQuer
-			// 514.1. First, if the active player's hand contains more cards than their maximum hand size (normally seven), they discard enough cards to reduce their hand size to that number. This turn-based action doesn't use the stack.
+			// CodeReview: Do this with Hand Size from StateQuery
+			// 514.1. First, if the active player's hand contains more cards than their maximum hand size (normally
+			// seven), they discard enough cards to reduce their hand size to that number. This turn-based action doesn't
+			// use the stack.
 			if (handObjects.size() > 7) {
 				Changeset discard = Changeset::discardCards(turnPlayerId, handObjects.size() - 7, env);
 				this->applyChangeset(discard);
 			}
+
 			// 514.2. Second, the following actions happen simultaneously : all damage marked on permanents(including
 			// phased - out permanents) is removed and all "until end of turn" and "this turn" effects end.This turn
 			// - based action doesn't use the stack.
@@ -448,43 +713,18 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 				this->applyChangeset(*pChangeset);
 				sba = this->checkStateBasedActions();
 			}
-			// CodeReview: If triggers are queued empty the queue and mark repeat = true
+			if (!env.triggers.empty()) {
+				repeat = true;
+				// CodeReview: If triggers are queued empty the queue and mark repeat = true
+			}
 			if (repeat) {
 				// CodeReview: Queue up another cleanup step
 			}
+			// else {
 			Changeset cleanup;
 			cleanup.phaseChange = StepOrPhaseChange{ true, CLEANUP };
 			this->applyChangeset(cleanup);
-		}
-		else if(this->env.currentPhase == CLEANUP) {
-			// CodeReview: Get next player from Environment
-            unsigned int nextPlayer = ( this->env.turnPlayer + 1 ) % this->env.players.size();
-			this->env.currentPlayer = nextPlayer;
-            this->env.turnPlayer = nextPlayer;
-            this->env.currentPhase = UNTAP;
-			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
-			this->env.landPlays[turnPlayerId] = 0;
-			
-			Changeset untap;
-			untap.tap.reserve(this->env.battlefield->objects.size());
-			for (auto& object : this->env.battlefield->objects) {
-				std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(object);
-				if (this->env.getController(card->id) == turnPlayerId && card->is_tapped) {
-					untap.tap.push_back(TapTarget{ card->id, false });
-				}
-			}
-			untap.phaseChange = StepOrPhaseChange{ true, UNTAP };
-			this->applyChangeset(untap);
-        }
-        else{
-            this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
-			this->env.currentPlayer = this->env.turnPlayer;
-        }
-
-		if (this->env.currentPhase == DRAW) {
-			// CodeReview: Handle first turn don't draw
-			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer]->id, 1, env);
-			this->applyChangeset(drawCard);
+			// }
 		}
     }
 	if (changeset.clearTriggers) {
@@ -509,7 +749,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 
 		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == om.object; }), this->env.triggerHandlers.end());
 		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == om.object; }), this->env.replacementEffects.end());
-		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StateQueryHandler>& a) -> bool { return a->owner == om.object; }), this->env.stateQueryHandlers.end());
+		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StaticEffectHandler>& a) -> bool { return a->owner == om.object; }), this->env.stateQueryHandlers.end());
 
         source.removeObject(om.object);
 		std::shared_ptr<Targetable> object = this->env.gameObjects[om.object];

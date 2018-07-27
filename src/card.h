@@ -45,15 +45,16 @@ struct CostedEffect {
 struct HasAbilities {
 	const std::vector<std::shared_ptr<EventHandler>> replacementEffects;
 	const std::vector<std::shared_ptr<TriggerHandler>> triggerEffects;
-	const std::vector<std::shared_ptr<StateQueryHandler>> staticEffects;
+	const std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects;
 	const std::vector<size_t> thisOnlyReplacementIndexes;
 
 	HasAbilities(std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-				 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
+				 std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 
 struct CardToken : public Targetable, public HasEffect, public HasAbilities {
-    bool is_tapped;
+    bool isTapped;
+	bool isSummoningSick;
 	// Implement phased out
 
     const std::shared_ptr<const std::set<CardSuperType>> baseSuperTypes;
@@ -79,7 +80,7 @@ struct CardToken : public Targetable, public HasEffect, public HasAbilities {
 			  std::shared_ptr<const TargetingRestriction> targeting,
               std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 			  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-			  std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
+			  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 
 struct Card : public CardToken, public CostedEffect {
@@ -91,7 +92,7 @@ struct Card : public CardToken, public CostedEffect {
 		 std::shared_ptr<const TargetingRestriction> targeting,
          std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 		 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-		 std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
+		 std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
          std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts);
 
 	// std::shared_ptr<Token> createTokenCopy();
@@ -105,11 +106,11 @@ struct Token : public CardToken {
 		  std::shared_ptr<const TargetingRestriction> targeting,
           std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 		  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-		  std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
+		  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 
 struct Emblem : public Targetable, public HasAbilities {
 	Emblem(std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
-		   std::vector<std::shared_ptr<StateQueryHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
+		   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 #endif

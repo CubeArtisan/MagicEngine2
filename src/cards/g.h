@@ -4,7 +4,7 @@
 #include "../abilities/createToken.h"
 #include "../triggers/etb.h"
 
-Card GoblinInstigator = newCard("Goblin Instigator", 2, std::set<CardSuperType>{}, { CREATURE }, { GOBLIN }, 0, 0, 0,
+Card GoblinInstigator = newCard("Goblin Instigator", 2, std::set<CardSuperType>{}, { CREATURE }, { GOBLIN }, 1, 1, 0,
 	{RED}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
 	Mana(1, { RED }), {}, {}, {}, {}, { std::shared_ptr<TriggerHandler>(new EtbTriggerHandler(
 		[](std::shared_ptr<CardToken>, std::optional<xg::Guid>)->

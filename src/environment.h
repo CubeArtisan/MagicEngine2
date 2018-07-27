@@ -116,7 +116,7 @@ struct Environment {
 
     std::vector<std::shared_ptr<TriggerHandler>> triggerHandlers;
     std::vector<std::shared_ptr<EventHandler>> replacementEffects;
-    std::vector<std::shared_ptr<StateQueryHandler>> stateQueryHandlers;
+    std::vector<std::shared_ptr<StaticEffectHandler>> stateQueryHandlers;
 	std::vector<QueueTrigger> triggers;
 
     std::vector<Changeset> changes;
@@ -124,6 +124,9 @@ struct Environment {
     StepOrPhase currentPhase;
     unsigned int currentPlayer;
     unsigned int turnPlayer;
+
+	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredAttacks;
+	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredBlocks;
 
     Environment(const std::vector<Player>& players, const std::vector<std::vector<Card>>& libraries);
 
@@ -148,11 +151,15 @@ struct Environment {
 	unsigned int getLandPlays(xg::Guid player) const;
 	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
-	std::vector<std::shared_ptr<StateQueryHandler>> getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<StaticEffectHandler>> getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	bool canAttack(xg::Guid target) const;
+	bool canAttack(std::shared_ptr<const CardToken> target) const;
+	bool canBlock(xg::Guid target) const;
+	bool canBlock(std::shared_ptr<const CardToken> target) const;
 
 private:
-	StateQuery& executeStateQuery(StateQuery&& query) const;
+	StaticEffectQuery& executeStateQuery(StaticEffectQuery&& query) const;
 
 	void createRulesEffects();
 };

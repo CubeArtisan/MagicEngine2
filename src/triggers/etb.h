@@ -21,7 +21,7 @@ public:
 						Changeset triggered;
 						triggered.moves.push_back(move);
 						// CodeReview: Have trigger controlled by correct player
-						result.push_back(QueueTrigger{ env.getController(card), triggered, this->createAbility(card, move.sourceZone) });
+						result.push_back(QueueTrigger{ env.getController(this->owner), triggered, this->createAbility(card, move.sourceZone) });
 					}
 				}
 			}

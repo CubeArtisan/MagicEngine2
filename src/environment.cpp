@@ -43,7 +43,7 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->getTriggerEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
 			this->triggerHandlers.insert(this->triggerHandlers.end(), trigger.begin(), trigger.end());
 			for (auto& t : trigger) t->owner = copy->id;
-			std::vector<std::shared_ptr<StateQueryHandler>> state = this->getStaticEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
+			std::vector<std::shared_ptr<StaticEffectHandler>> state = this->getStaticEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
 			this->stateQueryHandlers.insert(this->stateQueryHandlers.end(), state.begin(), state.end());
 			for (auto& s : state) s->owner = copy->id;
         }
@@ -59,7 +59,7 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 void Environment::createRulesEffects() {
 	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new TokenMovementEffect()));
 	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new ZeroDamageEffect()));
-	this->stateQueryHandlers.push_back(std::shared_ptr<StateQueryHandler>(new CounterPowerToughnessEffect()));
+	this->stateQueryHandlers.push_back(std::shared_ptr<StaticEffectHandler>(new CounterPowerToughnessEffect()));
 }
 
 int Environment::getPower(xg::Guid target)  const {
@@ -187,8 +187,8 @@ std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(std:
 	return std::get<TriggerEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
-std::vector<std::shared_ptr<StateQueryHandler>> Environment::getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
-	std::vector<std::shared_ptr<StateQueryHandler>> handlers;
+std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+	std::vector<std::shared_ptr<StaticEffectHandler>> handlers;
 	for (const auto& h : target->staticEffects) {
 		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
 			|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
@@ -210,9 +210,33 @@ std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffect
 	return std::get<SelfReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
-StateQuery& Environment::executeStateQuery(StateQuery&& query) const {
-	for (std::shared_ptr<StateQueryHandler> sqh : this->stateQueryHandlers) {
+StaticEffectQuery& Environment::executeStateQuery(StaticEffectQuery&& query) const {
+	for (std::shared_ptr<StaticEffectHandler> sqh : this->stateQueryHandlers) {
 		sqh->handleEvent(query, *this);
 	}
 	return query;
+}
+
+bool Environment::canAttack(xg::Guid target)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
+	return this->canAttack(card);
+}
+
+bool Environment::canAttack(std::shared_ptr<const CardToken> target) const {
+	std::shared_ptr<const std::set<CardType>> types = this->getTypes(target);
+	if (types->find(CREATURE) == types->end()) return false;
+	CanAttackQuery query{ *target, !target->isSummoningSick };
+	return std::get<CanAttackQuery>(executeStateQuery(query)).canAttack;
+}
+
+bool Environment::canBlock(xg::Guid target)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
+	return this->getToughness(card);
+}
+
+bool Environment::canBlock(std::shared_ptr<const CardToken> target) const {
+	std::shared_ptr<const std::set<CardType>> types = this->getTypes(target);
+	if (types->find(CREATURE) == types->end()) return false;
+	CanBlockQuery query{ *target, !target->isTapped };
+	return std::get<CanBlockQuery>(executeStateQuery(query)).canBlock;
 }

@@ -53,9 +53,9 @@ public:
 };
 
 // CodeReview: Create StateQueryHandler for +1/+1 and -1/-1 counters
-class CounterPowerToughnessEffect : public StateQueryHandler {
+class CounterPowerToughnessEffect : public StaticEffectHandler {
 public:
-	StateQuery& handleEvent(StateQuery& query, const Environment& env) const {
+	StaticEffectQuery& handleEvent(StaticEffectQuery& query, const Environment& env) const {
 		if (PowerQuery* powerQuery = std::get_if<PowerQuery>(&query)) {
 			powerQuery->currentValue += tryAtMap(tryAtMap(env.permanentCounters, powerQuery->target.id, std::map<PermanentCounterType, unsigned int>()), PLUSONEPLUSONECOUNTER, 0u);
 			powerQuery->currentValue -= tryAtMap(tryAtMap(env.permanentCounters, powerQuery->target.id, std::map<PermanentCounterType, unsigned int>()), MINUSONEMINUSONECOUNTER, 0u);
@@ -68,7 +68,7 @@ public:
 	}
 	
 	CounterPowerToughnessEffect()
-		: StateQueryHandler({}, {})
+		: StaticEffectHandler({}, {})
 	{}
 };
 #endif
