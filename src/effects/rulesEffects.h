@@ -57,12 +57,16 @@ class CounterPowerToughnessEffect : public StaticEffectHandler {
 public:
 	StaticEffectQuery& handleEvent(StaticEffectQuery& query, const Environment& env) const {
 		if (PowerQuery* powerQuery = std::get_if<PowerQuery>(&query)) {
-			powerQuery->currentValue += tryAtMap(tryAtMap(env.permanentCounters, powerQuery->target.id, std::map<PermanentCounterType, unsigned int>()), PLUSONEPLUSONECOUNTER, 0u);
-			powerQuery->currentValue -= tryAtMap(tryAtMap(env.permanentCounters, powerQuery->target.id, std::map<PermanentCounterType, unsigned int>()), MINUSONEMINUSONECOUNTER, 0u);
+			if (env.permanentCounters.find(powerQuery->target.id) != env.permanentCounters.end()) {
+				powerQuery->currentValue += tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
+				powerQuery->currentValue -= tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
+			}
 		}
 		else if (ToughnessQuery* toughnessQuery = std::get_if<ToughnessQuery>(&query)) {
-			toughnessQuery->currentValue += tryAtMap(tryAtMap(env.permanentCounters, toughnessQuery->target.id, std::map<PermanentCounterType, unsigned int>()), PLUSONEPLUSONECOUNTER, 0u);
-			toughnessQuery->currentValue -= tryAtMap(tryAtMap(env.permanentCounters, toughnessQuery->target.id, std::map<PermanentCounterType, unsigned int>()), MINUSONEMINUSONECOUNTER, 0u);
+			if (env.permanentCounters.find(toughnessQuery->target.id) != env.permanentCounters.end()) {
+				toughnessQuery->currentValue += tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
+				toughnessQuery->currentValue -= tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
+			}
 		}
 		return query;
 	}

@@ -9,6 +9,7 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
   exile(new Zone<Card, Token>(EXILE)), command(new Zone<Card, Emblem>(COMMAND)), currentPhase(UPKEEP),
   currentPlayer(0), turnPlayer(0)
 {
+	this->changes.reserve(256);
 	// CodeReview: Holding pointers to class members causes crashes on destruction
 	this->gameObjects[battlefield->id] = battlefield;
 	this->gameObjects[stack->id] = stack;
