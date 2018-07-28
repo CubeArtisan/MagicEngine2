@@ -127,6 +127,8 @@ struct Environment {
 
 	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredAttacks;
 	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredBlocks;
+	std::set<xg::Guid> blocked;
+	std::map<xg::Guid, std::vector<xg::Guid>> blockingOrder;
 
     Environment(const std::vector<Player>& players, const std::vector<std::vector<Card>>& libraries);
 
@@ -157,6 +159,9 @@ struct Environment {
 	bool canAttack(std::shared_ptr<const CardToken> target) const;
 	bool canBlock(xg::Guid target) const;
 	bool canBlock(std::shared_ptr<const CardToken> target) const;
+	int getLethalDamage(xg::Guid target, xg::Guid blocker) const;
+	int getLethalDamage(std::shared_ptr<const CardToken> attacker, xg::Guid blocker) const;
+	int getLethalDamage(std::shared_ptr<const CardToken> attacker, std::shared_ptr<const CardToken> blocker) const;
 
 private:
 	StaticEffectQuery& executeStateQuery(StaticEffectQuery&& query) const;

@@ -20,6 +20,9 @@ public:
 																						 std::map<xg::Guid, std::set<xg::Guid>>& possibleBlocks,
 																						 std::map<xg::Guid, std::multiset<xg::Guid>>& requiredBlocks,
 																						 std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks) = 0;
+	virtual std::vector<xg::Guid> chooseBlockingOrder(std::shared_ptr<CardToken> attacker, std::vector<std::shared_ptr<CardToken>> blockers,
+													  const Environment& env) = 0;
+	virtual int chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env) = 0;
 
 	};
 
@@ -36,6 +39,9 @@ public:
 																						 std::map<xg::Guid, std::set<xg::Guid>>& possibleBlocks,
 																						 std::map<xg::Guid, std::multiset<xg::Guid>>& requiredBlocks,
 																						 std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks);
+	virtual std::vector<xg::Guid> chooseBlockingOrder(std::shared_ptr<CardToken> attacker, std::vector<std::shared_ptr<CardToken>> blockers,
+													  const Environment& env);
+	virtual int chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env);
 
 };
 

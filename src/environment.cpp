@@ -231,7 +231,7 @@ bool Environment::canAttack(std::shared_ptr<const CardToken> target) const {
 
 bool Environment::canBlock(xg::Guid target)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(target));
-	return this->getToughness(card);
+	return this->canBlock(card);
 }
 
 bool Environment::canBlock(std::shared_ptr<const CardToken> target) const {
@@ -239,4 +239,19 @@ bool Environment::canBlock(std::shared_ptr<const CardToken> target) const {
 	if (types->find(CREATURE) == types->end()) return false;
 	CanBlockQuery query{ *target, !target->isTapped };
 	return std::get<CanBlockQuery>(executeStateQuery(query)).canBlock;
+}
+
+int Environment::getLethalDamage(xg::Guid attacker, xg::Guid blocker)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(attacker));
+	return this->getLethalDamage(card, blocker);
+}
+
+int Environment::getLethalDamage(std::shared_ptr<const CardToken> attacker, xg::Guid blocker)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(blocker));
+	return this->getLethalDamage(attacker, card);
+}
+
+int Environment::getLethalDamage(std::shared_ptr<const CardToken> attacker, std::shared_ptr<const CardToken> blocker) const {
+	LethalDamageQuery query{ *attacker, *blocker, this->getToughness(blocker) - tryAtMap(this->damage, blocker->id, 0) };
+	return std::get<LethalDamageQuery>(executeStateQuery(query)).damage;
 }

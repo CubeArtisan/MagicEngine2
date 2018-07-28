@@ -144,3 +144,15 @@ std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::c
 	possibilities.push_back(std::nullopt);
 	return select_randomly(possibilities);
 }
+
+std::vector<xg::Guid> RandomStrategy::chooseBlockingOrder(std::shared_ptr<CardToken> attacker, std::vector<std::shared_ptr<CardToken>> blockers,
+	const Environment& env) {
+	std::shuffle(blockers.begin(), blockers.end(), std::mt19937{ std::random_device{}() });
+	std::vector<xg::Guid> result;
+	for (auto& b : blockers) result.push_back(b->id);
+	return result;
+}
+
+int RandomStrategy::chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env) {
+	return (rand() % (minDamage - maxDamage + 1)) + minDamage;
+}

@@ -58,6 +58,8 @@ Changeset Changeset::operator+(const Changeset& other){
 	land.insert(land.end(), other.land.begin(), other.land.end());
 	std::vector<std::shared_ptr<ManaAbility>> manaAbility = this->manaAbility;
 	manaAbility.insert(manaAbility.end(), other.manaAbility.begin(), other.manaAbility.end());
+	std::vector<DeclareAttack> attacks = this->attacks;
+	attacks.insert(attacks.end(), other.attacks.begin(), other.attacks.end());
     StepOrPhaseChange phaseChange = this->phaseChange;
     if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
@@ -66,7 +68,7 @@ Changeset Changeset::operator+(const Changeset& other){
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
 					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, trigger, land, manaAbility, phaseChange, clearTriggers};
+                     target, trigger, land, manaAbility, attacks, phaseChange, clearTriggers};
 }
 
 Changeset& Changeset::operator+=(const Changeset& other){
@@ -91,6 +93,7 @@ Changeset& Changeset::operator+=(const Changeset& other){
 	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
 	land.insert(land.end(), other.land.begin(), other.land.end());
 	manaAbility.insert(manaAbility.end(), other.manaAbility.begin(), other.manaAbility.end());
+	attacks.insert(attacks.end(), other.attacks.begin(), other.attacks.end());
 	if(!phaseChange.changed && other.phaseChange.changed){
         phaseChange = other.phaseChange;
     }
@@ -136,6 +139,9 @@ std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
 	}
 	for (const LandPlay& land : changeset.land) {
 		os << "Playing a land: " << land.land << " by " << land.player << " from " << land.zone << std::endl;
+	}
+	for (const DeclareAttack& attack : changeset.attacks) {
+		os << attack.attacker << " is attacking " << attack.defender << std::endl;
 	}
 	for (const std::shared_ptr<ManaAbility>& manaAbility : changeset.manaAbility) {
 		os << "Activating a mana ability: " << manaAbility->id << std::endl;

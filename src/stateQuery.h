@@ -103,9 +103,15 @@ struct CanBlockQuery {
 	bool canBlock;
 };
 
+struct LethalDamageQuery {
+	const CardToken& attacker;
+	const CardToken& blocker;
+	int damage;
+};
+
 // CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StaticEffectQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
                                        ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery, ReplacementEffectsQuery,
 								       TriggerEffectsQuery, StaticEffectsQuery, SelfReplacementEffectsQuery, CanAttackQuery,
-									   CanBlockQuery>;
+									   CanBlockQuery, LethalDamageQuery>;
 #endif

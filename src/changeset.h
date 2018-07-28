@@ -159,6 +159,11 @@ struct LandPlay {
 	xg::Guid zone;
 };
 
+struct DeclareAttack {
+	xg::Guid attacker;
+	xg::Guid defender;
+};
+
 struct Changeset {
     std::vector<ObjectMovement> moves;
     std::vector<AddPlayerCounter> playerCounters;
@@ -181,10 +186,12 @@ struct Changeset {
 	std::vector<QueueTrigger> trigger;
 	std::vector<LandPlay> land;
 	std::vector<std::shared_ptr<ManaAbility>> manaAbility;
+	std::vector<DeclareAttack> attacks;
     StepOrPhaseChange phaseChange;
 	bool clearTriggers{ false };
 	// CodeReview: Add Destroy
 	// CodeReview: Add Cast
+	// CodeReview: Add CombatDamage
 
     Changeset operator+(const Changeset& other);
     Changeset& operator+=(const Changeset& other);

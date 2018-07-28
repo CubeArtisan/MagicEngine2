@@ -479,9 +479,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         }
 		else if (this->env.currentPhase == ENDCOMBAT) {
 			this->env.currentPhase = POSTCOMBATMAIN;
-			// 511.3. As soon as the end of combat step ends, all creatures and planeswalkers are removed from combat.
-			// After the end of combat step ends, the combat phase is over and the postcombat main phase begins.
-			// CodeReview: Remove all permanents from combat
+			this->env.declaredAttacks.clear();
+			this->env.declaredBlocks.clear();
+			this->env.blocked.clear();
+			this->env.blockingOrder.clear();
 		}
         else{
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
@@ -525,6 +526,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			}
 			std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredAttacks;
 			std::set<xg::Guid> declaredAttackers;
+			Changeset declareAttacks;
 			do {
 				std::vector<std::shared_ptr<CardToken>> possibleAttackers;
 				std::map<xg::Guid, std::set<xg::Guid>> possibleAttacks;
@@ -534,7 +536,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					if (declaredAttackers.find(c->id) != declaredAttackers.end()) continue;
 					if (env.getController(c) != turnPlayerId) continue;
 					if (!env.canAttack(c)) continue;
-					// possibleAttacks[c->id] = opponentsAndPlaneswalkers;
+					possibleAttacks[c->id] = opponentsAndPlaneswalkers;
 					// // We ignore cost based restrictions for now. Up in the air how to decide them.
 					// auto restrictions = this->env.getAttackRestrictions(c);
 					// // If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
@@ -568,6 +570,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 				if (attacker) {
 					declaredAttacks.push_back(attacker.value());
 					declaredAttackers.insert(attacker.value().first->id);
+					declareAttacks.attacks.push_back(DeclareAttack{ attacker.value().first->id, attacker.value().second });
 				}
 				else break;
 			} while (true);
@@ -581,7 +584,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			// For each creature determine the total cost to attack. Sum these costs(can put into vector).
 			// If these costs contain mana abilities allow the player to activate mana abilities
 			// The active player pays all possible costs, if they cannot pay restart the process
-
+			if (!declaredAttacks.empty()) this->applyChangeset(declareAttacks);
 			this->env.declaredAttacks = declaredAttacks;
 			// CodeReview: Queue an event for declaring attackers
 			// CodeReview: If there are no attackers skip to end of combat
@@ -590,10 +593,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			for (auto& player : this->env.players) {
 				if (player->id == turnPlayerId) continue;
-				std::set<std::shared_ptr<const CardToken>> attackers;
+				std::set<xg::Guid> attackers;
 				for (auto& attacker : this->env.declaredAttacks) {
 					if (attacker.second == player->id || this->env.getController(attacker.second) == player->id)
-						attackers.insert(attacker.first);
+						attackers.insert(attacker.first->id);
 				}
 				std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredBlocks;
 				std::set<xg::Guid> declaredBlockers;
@@ -605,9 +608,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 						std::shared_ptr<CardToken> c = std::dynamic_pointer_cast<CardToken>(this->env.gameObjects[getBaseClassPtr<const Targetable>(card)->id]);
 						// CodeReview: Handle multiBlocking
 						if (declaredBlockers.find(c->id) != declaredBlockers.end()) continue;
-						if (env.getController(c) != turnPlayerId) continue;
+						if (env.getController(c) != player->id) continue;
 						if (!env.canBlock(c)) continue;
-						// possibleBlocks[c->id] = attackers;
+						possibleBlocks[c->id] = attackers;
 						// // We ignore cost based restrictions for now. Up in the air how to decide them.
 						// auto restrictions = this->env.getBlockRestrictions(c);
 						// // If any restriction is CantBlockAloneRestriction and there is another creature that has the same restriction make an entry for both 
@@ -641,6 +644,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					if (blocker) {
 						declaredBlocks.push_back(blocker.value());
 						declaredBlockers.insert(blocker.value().first->id);
+						this->env.blocked.insert(blocker.value().second);
 					}
 					else break;
 				} while (true);
@@ -656,29 +660,44 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 				// CodeReview: Queue an event for declaring blockers
 				// CodeReview: Tell the environment that creatures which have a blocker assigned to them are blocked
 			}
-			// CodeReview: Damage ordering
-			// For each blocked creature the attacking player chooses damage assigment order if multiple blockers
-			// For each blocking creature its controller chooses damage assignment order if multiple blockees
+			for (auto& attacker : this->env.declaredAttacks) {
+				std::vector<std::shared_ptr<CardToken>> blockedBy;
+				for (auto& blocker : this->env.declaredBlocks) {
+					if (blocker.second == attacker.first->id) blockedBy.push_back(blocker.first);
+				}
+				if (blockedBy.empty()) continue;
+				Player& player = *std::dynamic_pointer_cast<Player>(this->env.gameObjects[this->env.getController(attacker.first)]);
+				this->env.blockingOrder[attacker.first->id] = player.strategy->chooseBlockingOrder(attacker.first, blockedBy, env);
+			}
+			// CodeReview: For each blocking creature its controller chooses damage assignment order if multiple blockees
 			// CodeReview: If any attacking or blocking creatures have first or double strike create a FirstStrikeDamageStep
 		}
 		else if (this->env.currentPhase == FIRSTSTRIKEDAMAGE) {
-			// For this phase only consider creatures with first or double strike
-			// For each attacking creature its controller chooses how it will assign damage.
-			// To assign damage check that the attackee is still in combat and damage that would be dealt is at least 1 if not skip this attacker
-			// Then in damage assignment order allow the strategy to pick a number from 0 to remaining damage that would leave lethal damage on the creature
-			// If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
-			// Repeat this process for blockers
-			// Assign all combat damage simultaneously(same changeset)
-			// Mark all creatures that dealt damage as having dealt damage this combat
+			// CodeReview: For this phase only consider creatures with first or double strike
+			// Copy COMBATDAMAGE code
+			// CodeReview: Mark all creatures that dealt damage as having dealt damage this combat
 		}
 		else if (this->env.currentPhase == COMBATDAMAGE) {
-			// For this phase do not consider creatures with first strike that dealt damage already this combat
-			// For each attacking creature its controller chooses how it will assign damage.
-			// To assign damage check that the attackee is still in combat and damage that would be dealt is at least 1 if not skip this attacker
-			// Then in damage assignment order allow the strategy to pick a number from 0 to remaining damage that would leave lethal damage on the creature
-			// If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
-			// Repeat this process for blockers
-			// Assign all combat damage simultaneously(same changeset)
+			Changeset damageEvent;
+			for (auto& attack : this->env.declaredAttacks) {
+				if (this->env.blocked.find(attack.first->id) != this->env.blocked.end()) {
+					Player& player = *std::dynamic_pointer_cast<Player>(this->env.gameObjects[this->env.getController(attack.first)]);
+					int powerRemaining = this->env.getPower(attack.first);
+					for (auto& blocker : this->env.blockingOrder[attack.first->id]) {
+						int minDamage = std::min(this->env.getLethalDamage(attack.first, blocker), powerRemaining);
+						int damageAmount = player.strategy->chooseDamageAmount(attack.first, blocker, minDamage, powerRemaining, env);
+						powerRemaining -= damageAmount;
+						damageEvent.damage.push_back(DamageToTarget{ blocker, damageAmount });
+						damageEvent.damage.push_back(DamageToTarget{ attack.first->id, this->env.getPower(blocker) });
+					}
+				}
+				else {
+					damageEvent.damage.push_back(DamageToTarget{ attack.second, this->env.getPower(attack.first) });
+				}
+			}
+			this->applyChangeset(damageEvent);
+			// CodeReview:For this phase do not consider creatures with first strike that dealt damage already this combat
+			// CodeReview: If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
 		}
 		else if (this->env.currentPhase == CLEANUP) {
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
