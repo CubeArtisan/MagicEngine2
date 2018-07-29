@@ -4,6 +4,7 @@
 #include <optional>
 #include <variant>
 
+#include "combat.h"
 #include "enum.h"
 struct ActivatedAbility;
 struct CardToken;
@@ -13,10 +14,6 @@ struct HasAbilities;
 class EventHandler;
 class TriggerHandler;
 class StaticEffectHandler;
-class AttackRequirement;
-class AttackRestriction;
-class BlockRequirement;
-class BlockRestriction;
 
 struct PowerQuery {
     const CardToken& target;
@@ -115,7 +112,7 @@ struct LethalDamageQuery {
 
 struct AttackRestrictionQuery {
 	const CardToken& attacker;
-	std::vector<std::shared_ptr<const AttackRestriction>> restrictions;
+	std::vector<AttackRestriction> restrictions;
 };
 
 struct AttackRequirementQuery {

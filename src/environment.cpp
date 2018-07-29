@@ -257,12 +257,12 @@ int Environment::getLethalDamage(std::shared_ptr<const CardToken> attacker, std:
 	return std::get<LethalDamageQuery>(executeStateQuery(query)).damage;
 }
 
-std::vector<std::shared_ptr<const AttackRestriction>> Environment::getAttackRestrictions(xg::Guid attacker)  const {
+std::vector<AttackRestriction> Environment::getAttackRestrictions(xg::Guid attacker)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(attacker));
 	return this->getAttackRestrictions(card);
 }
 
-std::vector<std::shared_ptr<const AttackRestriction>> Environment::getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const {
+std::vector<AttackRestriction> Environment::getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const {
 	AttackRestrictionQuery query{ *attacker, {} };
 	return std::get<AttackRestrictionQuery>(executeStateQuery(query)).restrictions;
 }

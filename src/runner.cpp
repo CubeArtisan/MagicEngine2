@@ -589,7 +589,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					auto restrictions = this->env.getAttackRestrictions(c);
 					// CodeReview: If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
 					for(auto& restriction : restrictions) {
-					    possibleAttacks[c->id] = restriction->canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
+					    possibleAttacks[c->id] = restriction.canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
 					}
 					if(possibleAttacks[c->id].empty()) continue;
 					requiredAttacks[c->id] = {};

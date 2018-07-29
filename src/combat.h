@@ -3,14 +3,17 @@
 
 #include<set>
 
-#include "card.h"
+#include "dyno.hpp"
+#include "guid.hpp"
 
-class AttackRestriction {
-public:
-	virtual std::set<xg::Guid> canAttack(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
-										 const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
-										 const Environment& env) const = 0;
-};
+struct CardToken;
+struct Environment;
+
+DYNO_INTERFACE(AttackRestriction,
+	(canAttack, std::set<xg::Guid>(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
+								   const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
+								   const Environment& env) const)
+);
 
 class AttackRequirement {
 public:
