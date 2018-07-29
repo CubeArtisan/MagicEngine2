@@ -256,3 +256,43 @@ int Environment::getLethalDamage(std::shared_ptr<const CardToken> attacker, std:
 	LethalDamageQuery query{ *attacker, *blocker, this->getToughness(blocker) - tryAtMap(this->damage, blocker->id, 0) };
 	return std::get<LethalDamageQuery>(executeStateQuery(query)).damage;
 }
+
+std::vector<std::shared_ptr<const AttackRestriction>> Environment::getAttackRestrictions(xg::Guid attacker)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(attacker));
+	return this->getAttackRestrictions(card);
+}
+
+std::vector<std::shared_ptr<const AttackRestriction>> Environment::getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const {
+	AttackRestrictionQuery query{ *attacker, {} };
+	return std::get<AttackRestrictionQuery>(executeStateQuery(query)).restrictions;
+}
+
+std::vector<std::shared_ptr<const AttackRequirement>> Environment::getAttackRequirements(xg::Guid attacker) const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(attacker));
+	return this->getAttackRequirements(card);
+}
+
+std::vector<std::shared_ptr<const AttackRequirement>> Environment::getAttackRequirements(std::shared_ptr<const CardToken> attacker) const {
+	AttackRequirementQuery query{ *attacker,{} };
+	return std::get<AttackRequirementQuery>(executeStateQuery(query)).requirements;
+}
+
+std::vector<std::shared_ptr<const BlockRestriction>> Environment::getBlockRestrictions(xg::Guid blocker)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(blocker));
+	return this->getBlockRestrictions(card);
+}
+
+std::vector<std::shared_ptr<const BlockRestriction>> Environment::getBlockRestrictions(std::shared_ptr<const CardToken> blocker) const {
+	BlockRestrictionQuery query{ *blocker,{} };
+	return std::get<BlockRestrictionQuery>(executeStateQuery(query)).restrictions;
+}
+
+std::vector<std::shared_ptr<const BlockRequirement>> Environment::getBlockRequirements(xg::Guid blocker) const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(blocker));
+	return this->getBlockRequirements(card);
+}
+
+std::vector<std::shared_ptr<const BlockRequirement>> Environment::getBlockRequirements(std::shared_ptr<const CardToken> blocker) const {
+	BlockRequirementQuery query{ *blocker,{} };
+	return std::get<BlockRequirementQuery>(executeStateQuery(query)).requirements;
+}

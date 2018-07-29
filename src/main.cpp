@@ -9,10 +9,10 @@ int main(){
 	libraries[1].reserve(60);
     for(int i=0; i < 40; i++) libraries[0].push_back(cardManager.getCard("Ancestral Recall"));
     for(int i=0; i < 20; i++) libraries[0].push_back(cardManager.getCard("Island"));
-    for(int i=0; i < 20; i++) libraries[1].push_back(cardManager.getCard("Goblin Instigator"));
-	for(int i=0; i < 10; i++) libraries[1].push_back(cardManager.getCard("Impact Tremors"));
-	for(int i=0; i < 10; i++) libraries[1].push_back(cardManager.getCard("Panharmonicon"));
-    for(int i=0; i < 20; i++) libraries[1].push_back(cardManager.getCard("Mountain"));
+    for(int i=0; i < 25; i++) libraries[1].push_back(cardManager.getCard("Goblin Instigator"));
+	for(int i=0; i < 5; i++) libraries[1].push_back(cardManager.getCard("Impact Tremors"));
+	for(int i=0; i < 5; i++) libraries[1].push_back(cardManager.getCard("Panharmonicon"));
+    for(int i=0; i < 25; i++) libraries[1].push_back(cardManager.getCard("Mountain"));
     std::vector<Player> players{Player(std::shared_ptr<Strategy>(new RandomStrategy())),
                                 Player(std::shared_ptr<Strategy>(new RandomStrategy()))};
     Runner runner(libraries, players);

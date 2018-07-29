@@ -13,6 +13,10 @@ struct HasAbilities;
 class EventHandler;
 class TriggerHandler;
 class StaticEffectHandler;
+class AttackRequirement;
+class AttackRestriction;
+class BlockRequirement;
+class BlockRestriction;
 
 struct PowerQuery {
     const CardToken& target;
@@ -109,9 +113,30 @@ struct LethalDamageQuery {
 	int damage;
 };
 
+struct AttackRestrictionQuery {
+	const CardToken& attacker;
+	std::vector<std::shared_ptr<const AttackRestriction>> restrictions;
+};
+
+struct AttackRequirementQuery {
+	const CardToken& attacker;
+	std::vector<std::shared_ptr<const AttackRequirement>> requirements;
+};
+
+struct BlockRestrictionQuery {
+	const CardToken& blocker;
+	std::vector<std::shared_ptr<const BlockRestriction>> restrictions;
+};
+
+struct BlockRequirementQuery {
+	const CardToken& blocker;
+	std::vector<std::shared_ptr<const BlockRequirement>> requirements;
+};
+
 // CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StaticEffectQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
                                        ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery, ReplacementEffectsQuery,
 								       TriggerEffectsQuery, StaticEffectsQuery, SelfReplacementEffectsQuery, CanAttackQuery,
-									   CanBlockQuery, LethalDamageQuery>;
+									   CanBlockQuery, LethalDamageQuery, AttackRestrictionQuery, AttackRequirementQuery,
+									   BlockRestrictionQuery, BlockRequirementQuery>;
 #endif

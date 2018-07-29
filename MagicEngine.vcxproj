@@ -171,6 +171,7 @@
     <ClInclude Include="src\cards\y.h" />
     <ClInclude Include="src\cards\z.h" />
     <ClInclude Include="src\changeset.h" />
+    <ClInclude Include="src\combat.h" />
     <ClInclude Include="src\cost.h" />
     <ClInclude Include="src\effects\panharmoniconEffect.h" />
     <ClInclude Include="src\effects\rulesEffects.h" />

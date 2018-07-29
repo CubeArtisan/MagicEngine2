@@ -1,5 +1,6 @@
 #include "card.h"
 #include "changeset.h"
+#include "combat.h"
 #include "player.h"
 #include "runner.h"
 #include "gameAction.h"
@@ -181,6 +182,9 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 			activateAbility.target.push_back(CreateTargets{ result->id, pActivateAnAbility->targets });
 		}
         activateAbility += pActivateAnAbility->cost.payCost(active, env, result->source);
+#ifdef DEBUG
+		std::cout << active.id << " is activating an ability of " << getBaseClassPtr<const CardToken>(pActivateAnAbility->source)->name << std::endl;
+#endif
         // CodeReview: Use the chosen X value
         return activateAbility;
     }
@@ -327,7 +331,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	this->applyMoveRules(changeset);
 	if (replacementEffects && this->applyReplacementEffects(changeset)) return;
 #ifdef DEBUG
-	std::cout << changeset;
+	// std::cout << changeset;
 #endif
 
     for(AddPlayerCounter& apc : changeset.playerCounters) {
@@ -335,20 +339,32 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
             apc.amount = -(int)this->env.playerCounters[apc.player][apc.counterType];
         }
         this->env.playerCounters[apc.player][apc.counterType] += apc.amount;
+#ifdef DEBUG
+		std::cout << "Changing " << apc.counterType << " counters on player " << apc.player
+			      << " by " << apc.amount << std::endl;
+#endif
     }
     for(AddPermanentCounter& apc : changeset.permanentCounters) {
         if(apc.amount < 0 && this->env.permanentCounters[apc.target][apc.counterType] < (unsigned int)-apc.amount){
             apc.amount = -(int)this->env.permanentCounters[apc.target][apc.counterType];
         }
+#ifdef DEBUG
+		std::cout << "Changing " << apc.counterType << " counters on " << std::dynamic_pointer_cast<CardToken>(this->env.gameObjects.at(apc.target))
+				  << " by " << apc.amount << std::endl;
+#endif
         this->env.permanentCounters[apc.target][apc.counterType] += apc.amount;
     }
     for(ObjectCreation& oc : changeset.create){
-        std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
-		xg::Guid id = oc.created->id;
-        zone->addObject(oc.created);
 		if (!oc.created) {
 			std::cout << "Creating a null object" << std::endl;
 		}
+        std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[oc.zone]);
+		xg::Guid id = oc.created->id;
+#ifdef DEBUG
+		// CodeReview: If is CardToken show name
+		std::cout << "Creating " << id << " in " << zone->type << std::endl;
+#endif
+        zone->addObject(oc.created);
         this->env.gameObjects[id] = oc.created;
 		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(oc.created)) {
 			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
@@ -361,13 +377,20 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
     }
     for(RemoveObject& ro : changeset.remove) {
 		std::shared_ptr<ZoneInterface> zone = std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects[ro.zone]);
+#ifdef DEBUG
+		// CodeReview: If is CardToken show name
+		std::cout << "Removing " << ro.object << " from " << zone->type << std::endl;
+#endif
 		zone->removeObject(ro.object);
 		this->env.gameObjects.erase(ro.object);
 		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
 		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
 		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StaticEffectHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
     }
-    for(LifeTotalChange& ltc : changeset.lifeTotalChanges){
+    for(LifeTotalChange& ltc : changeset.lifeTotalChanges) {
+#ifdef DEBUG
+		std::cout << ltc.player << " has life total set to " << ltc.newValue << " from " << ltc.oldValue << std::endl;
+#endif
         ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
@@ -400,9 +423,15 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
                                                             bool { return *e == *sqh; }), list.end());
     }
     for(AddMana& am : changeset.addMana) {
+#ifdef DEBUG
+		std::cout << "Adding " << am.amount << " to " << am.player << "'s mana pool" << std::endl;
+#endif
         this->env.manaPools.at(am.player) += am.amount;
     }
     for(RemoveMana& rm : changeset.removeMana) {
+#ifdef DEBUG
+		std::cout << "Removing " << rm.amount << " from " << rm.player << "'s mana pool" << std::endl;
+#endif
         this->env.manaPools.at(rm.player) -= rm.amount;
     }
     for(DamageToTarget& dtt : changeset.damage) {
@@ -411,6 +440,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
             int lifeTotal = this->env.lifeTotals[player->id];
             Changeset lifeLoss;
             lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{player->id, lifeTotal, lifeTotal - (int)dtt.amount});
+#ifdef DEBUG
+			std::cout << dtt.amount << " dealt to player " << dtt.target << std::endl;
+#endif
 			applyChangeset(lifeLoss);
 		}
 		else if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(pObject)) {
@@ -423,6 +455,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	for (TapTarget& tt : changeset.tap) {
 		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
 		std::shared_ptr<CardToken> pObject = std::dynamic_pointer_cast<CardToken>(object);
+#ifdef DEBUG
+		std::cout << (tt.tap ? "Tapping " : "Untapping ") << pObject->name << std::endl;
+#endif
 		pObject->isTapped = tt.tap;
 	}
 	for (CreateTargets& ct : changeset.target) {
@@ -434,6 +469,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		// CodeReview: Handle mana that doesn't empty
 		// 500.4. When a step or phase ends, any unused mana left in a player's mana pool empties. This turn-based
 		// action doesn't use the stack.
+#ifdef DEBUG
+		std::cout << "Clearing mana pools" << std::endl;
+#endif
 		for (auto& manaPool : this->env.manaPools) {
 			manaPool.second.clear();
 		}
@@ -475,6 +513,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			// abilities can be activated or resolve.Any ability that triggers during this step will be held until
 			// the next time a player would receive priority, which is usually during the upkeep step.
 			untap.phaseChange = StepOrPhaseChange{ true, UNTAP };
+#ifdef DEBUG
+			std::cout << "Untapping permanents for " << turnPlayerId << std::endl;
+#endif
 			this->applyChangeset(untap);
         }
 		else if (this->env.currentPhase == ENDCOMBAT) {
@@ -488,11 +529,18 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
             this->env.currentPhase = (StepOrPhase)((int)this->env.currentPhase + 1);
 			this->env.currentPlayer = this->env.turnPlayer;
         }
+#ifdef DEBUG
+		std::cout << "Moving to " << this->env.currentPhase << std::endl;
+#endif
 
 		if (this->env.currentPhase == DRAW) {
 			// 504.1. First, the active player draws a card. This turn-based action doesn't use the stack.
 			// CodeReview: Handle first turn don't draw
 			Changeset drawCard = Changeset::drawCards(this->env.players[this->env.turnPlayer]->id, 1, env);
+#ifdef DEBUG
+			if(!drawCard.moves.empty())
+				std::cout << this->env.players[this->env.turnPlayer]->id << "is drawing " << std::dynamic_pointer_cast<CardToken>(this->env.gameObjects.at(drawCard.moves[0].object))->name << std::endl;
+#endif
 			this->applyChangeset(drawCard);
 		}
 		else if (this->env.currentPhase == PRECOMBATMAIN) {
@@ -537,32 +585,32 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					if (env.getController(c) != turnPlayerId) continue;
 					if (!env.canAttack(c)) continue;
 					possibleAttacks[c->id] = opponentsAndPlaneswalkers;
-					// // We ignore cost based restrictions for now. Up in the air how to decide them.
-					// auto restrictions = this->env.getAttackRestrictions(c);
-					// // If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
-					// for(auto& restrictions : restrictions) {
-					//     possibleAttacks[c->id] = restriction.canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
-					// }
-					// if(possibleAttacks[c->id].empty()) continue;
-					// requiredAttacks[c->id] = {};
-					// auto requirements = this->env.getAttackRequirements(c);
-					// for(auto& requirement : requirements) {
-					//     auto attacks = requirement.getRequiredAttacks(c, possibleAttacks, declaredAttacks, env);
-					//     requiredAttacks[c->id].insert(attacks.begin(), attacks.end());
-					// }
-					// if(!requiredAttacks[c->id].empty()) {
-					//     std::set<std::pair<size_t, xg::Guid>> opponentRequirements;
-					//     for(xg::Guid& guid : possibleAttacks[c->id]) {
-					//         opponentRequirements.insert(make_pair(guid, requiredAttacks[c->id].count(guid)));
-					//     }
-					//     std::set<xg::Guid> validAttacks;
-					//     int max = opponentRequirements->rbegin()->first;
-					//     for(auto& iter=opponentRequirements.rbegin(); iter != opponentRequirement.rend(); iter++) {
-					//         if(iter->first != max) break;
-					//         validAttacks.insert(iter->second);
-					//     }
-					//     possibleAttacks[c->id] = validAttacks;
-					// }
+					// We ignore cost based restrictions for now. Up in the air how to decide them.
+					auto restrictions = this->env.getAttackRestrictions(c);
+					// CodeReview: If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
+					for(auto& restriction : restrictions) {
+					    possibleAttacks[c->id] = restriction->canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
+					}
+					if(possibleAttacks[c->id].empty()) continue;
+					requiredAttacks[c->id] = {};
+					auto requirements = this->env.getAttackRequirements(c);
+					for(auto& requirement : requirements) {
+					    auto attacks = requirement->getRequiredAttacks(c, possibleAttacks[c->id], declaredAttacks, env);
+					    requiredAttacks[c->id].insert(attacks.begin(), attacks.end());
+					}
+					if(!requiredAttacks[c->id].empty()) {
+					    std::set<std::pair<size_t, xg::Guid>> opponentRequirements;
+					    for(const xg::Guid& guid : possibleAttacks[c->id]) {
+					        opponentRequirements.insert(std::make_pair(requiredAttacks[c->id].count(guid), guid));
+					    }
+					    std::set<xg::Guid> validAttacks;
+					    size_t max = opponentRequirements.rbegin()->first;
+					    for(auto iter=opponentRequirements.rbegin(); iter != opponentRequirements.rend(); iter++) {
+					        if(iter->first != max) break;
+					        validAttacks.insert(iter->second);
+					    }
+					    possibleAttacks[c->id] = validAttacks;
+					}
 					possibleAttackers.push_back(c);
 				}
 				// CodeReview: Need to figure out how to deal with costs to attack
@@ -584,7 +632,13 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			// For each creature determine the total cost to attack. Sum these costs(can put into vector).
 			// If these costs contain mana abilities allow the player to activate mana abilities
 			// The active player pays all possible costs, if they cannot pay restart the process
-			if (!declaredAttacks.empty()) this->applyChangeset(declareAttacks);
+			if (!declaredAttacks.empty()) {
+				this->applyChangeset(declareAttacks);
+#ifdef DEBUG
+				std::cout << turnPlayerId << " is declaring attacks" << std::endl;
+				std::cout << declareAttacks << std::endl;
+#endif
+			}
 			this->env.declaredAttacks = declaredAttacks;
 			// CodeReview: Queue an event for declaring attackers
 			// CodeReview: If there are no attackers skip to end of combat
@@ -611,32 +665,32 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 						if (env.getController(c) != player->id) continue;
 						if (!env.canBlock(c)) continue;
 						possibleBlocks[c->id] = attackers;
-						// // We ignore cost based restrictions for now. Up in the air how to decide them.
-						// auto restrictions = this->env.getBlockRestrictions(c);
-						// // If any restriction is CantBlockAloneRestriction and there is another creature that has the same restriction make an entry for both 
-						// for(auto& restrictions : restrictions) {
-						//     possibleBlocks[c->id] = restriction.canBlock(c, possibleBlocks[c->id], declaredBlocks, env);
-						// }
-						// if(possibleBlocks[c->id].empty()) continue;
-						// requiredBlocks[c->id] = {};
-						// auto requirements = this->env.getBlockRequirements(c);
-						// for(auto& requirement : requirements) {
-						//     auto blocks = requirement.getRequiredAttacks(c, possibleBlocks, declaredBlocks, env);
-						//     requiredBlocks[c->id].insert(blocks.begin(), blocks.end());
-						// }
-						// if(!requiredBlocks[c->id].empty()) {
-						//     std::set<std::pair<size_t, xg::Guid>> attackerRequirements;
-						//     for(xg::Guid& guid : possibleBlocks[c->id]) {
-						//         attackerRequirements.insert(make_pair(guid, requiredBlocks[c->id].count(guid)));
-						//     }
-						//     std::set<xg::Guid> validBlocks;
-						//     int max = attackersRequirements->rbegin()->first;
-						//     for(auto& iter=attackerRequirements.rbegin(); iter != attackerRequirement.rend(); iter++) {
-						//         if(iter->first != max) break;
-						//         validBlocks.insert(iter->second);
-						//     }
-						//     possibleBlocks[c->id] = validBlocks;
-						// }
+						// We ignore cost based restrictions for now. Up in the air how to decide them.
+						auto restrictions = this->env.getBlockRestrictions(c);
+						// If any restriction is CantBlockAloneRestriction and there is another creature that has the same restriction make an entry for both 
+						for(auto& restriction : restrictions) {
+						    possibleBlocks[c->id] = restriction->canBlock(c, possibleBlocks[c->id], declaredBlocks, env);
+						}
+						if(possibleBlocks[c->id].empty()) continue;
+						requiredBlocks[c->id] = {};
+						auto requirements = this->env.getBlockRequirements(c);
+						for(auto& requirement : requirements) {
+						    auto blocks = requirement->getRequiredBlocks(c, possibleBlocks[c->id], declaredBlocks, env);
+						    requiredBlocks[c->id].insert(blocks.begin(), blocks.end());
+						}
+						if(!requiredBlocks[c->id].empty()) {
+						    std::set<std::pair<size_t, xg::Guid>> blockersRequirements;
+						    for(const xg::Guid& guid : possibleBlocks[c->id]) {
+						        blockersRequirements.insert(std::make_pair(requiredBlocks[c->id].count(guid), guid));
+						    }
+						    std::set<xg::Guid> validBlocks;
+						    size_t max = blockersRequirements.rbegin()->first;
+						    for(auto iter=blockersRequirements.rbegin(); iter != blockersRequirements.rend(); iter++) {
+						        if(iter->first != max) break;
+						        validBlocks.insert(iter->second);
+						    }
+						    possibleBlocks[c->id] = validBlocks;
+						}
 						possibleBlockers.push_back(c);
 					}
 					// CodeReview: Need to figure out how to deal with costs to attack
@@ -649,6 +703,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					else break;
 				} while (true);
 				// CodeReview: Have the defending player organize defenders into bands.
+				// CodeReview: Create an event for notifying that blockers are declared
 
 				// CodeReview: Implement costs to block
 				// If there are optional cost associated with blocking "pay as blocks" strategy chooses whether to pay those
@@ -679,23 +734,28 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		}
 		else if (this->env.currentPhase == COMBATDAMAGE) {
 			Changeset damageEvent;
-			for (auto& attack : this->env.declaredAttacks) {
-				if (this->env.blocked.find(attack.first->id) != this->env.blocked.end()) {
-					Player& player = *std::dynamic_pointer_cast<Player>(this->env.gameObjects[this->env.getController(attack.first)]);
-					int powerRemaining = this->env.getPower(attack.first);
-					for (auto& blocker : this->env.blockingOrder[attack.first->id]) {
-						int minDamage = std::min(this->env.getLethalDamage(attack.first, blocker), powerRemaining);
-						int damageAmount = player.strategy->chooseDamageAmount(attack.first, blocker, minDamage, powerRemaining, env);
-						powerRemaining -= damageAmount;
-						damageEvent.damage.push_back(DamageToTarget{ blocker, damageAmount });
-						damageEvent.damage.push_back(DamageToTarget{ attack.first->id, this->env.getPower(blocker) });
+			if (!this->env.declaredAttacks.empty()) {
+				for (auto& attack : this->env.declaredAttacks) {
+					if (this->env.blocked.find(attack.first->id) != this->env.blocked.end()) {
+						Player& player = *std::dynamic_pointer_cast<Player>(this->env.gameObjects[this->env.getController(attack.first)]);
+						int powerRemaining = this->env.getPower(attack.first);
+						for (auto& blocker : this->env.blockingOrder[attack.first->id]) {
+							int minDamage = std::min(this->env.getLethalDamage(attack.first, blocker), powerRemaining);
+							int damageAmount = player.strategy->chooseDamageAmount(attack.first, blocker, minDamage, powerRemaining, env);
+							powerRemaining -= damageAmount;
+							damageEvent.damage.push_back(DamageToTarget{ blocker, damageAmount });
+							damageEvent.damage.push_back(DamageToTarget{ attack.first->id, this->env.getPower(blocker) });
+						}
+					}
+					else {
+						damageEvent.damage.push_back(DamageToTarget{ attack.second, this->env.getPower(attack.first) });
 					}
 				}
-				else {
-					damageEvent.damage.push_back(DamageToTarget{ attack.second, this->env.getPower(attack.first) });
-				}
+#ifdef DEBUG
+				std::cout << "Applying combat damage" << std::endl;
+#endif
+				this->applyChangeset(damageEvent);
 			}
-			this->applyChangeset(damageEvent);
 			// CodeReview:For this phase do not consider creatures with first strike that dealt damage already this combat
 			// CodeReview: If multiple attackers(similar for blockers) would damage the same creature the total has to be lethal to continue in blocking order but not the individual parcels
 		}
@@ -709,6 +769,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			// use the stack.
 			if (handObjects.size() > 7) {
 				Changeset discard = Changeset::discardCards(turnPlayerId, handObjects.size() - 7, env);
+#ifdef DEBUG
+				std::cout << turnPlayerId << " is discarding " << handObjects.size() - 7 << " cards" << std::endl;
+#endif
 				this->applyChangeset(discard);
 			}
 
@@ -745,7 +808,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			this->applyChangeset(cleanup);
 			// }
 		}
-    }
+	}
 	if (changeset.clearTriggers) {
 		this->env.triggers.clear();
 	}
@@ -754,41 +817,35 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	}
 	for (LandPlay& pl : changeset.land) {
 		env.landPlays[pl.player] += 1;
+#ifdef DEBUG
+		std::cout << pl.player << " is playing a land: " << std::dynamic_pointer_cast<CardToken>(this->env.gameObjects.at(pl.land))->name
+				  << ". They've played " << env.landPlays[pl.player] << " lands this turn" << std::endl;
+#endif
 		Changeset moveLand;
 		moveLand.moves.push_back(ObjectMovement{ pl.land, pl.zone, this->env.battlefield->id });
 		this->applyChangeset(moveLand);
 	}
 	for (std::shared_ptr<ManaAbility> ma : changeset.manaAbility) {
+#ifdef DEBUG
+		std::cout << "Applying mana ability of " << getBaseClassPtr<const CardToken>(ma->source)->name << std::endl;
+#endif
 		Changeset apply = ma->applyEffect(env);
 		this->applyChangeset(apply);
 	}
     for(ObjectMovement& om : changeset.moves) {
-		ZoneInterface& source = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.sourceZone));
-        ZoneInterface& dest = *std::dynamic_pointer_cast<ZoneInterface>(this->env.gameObjects.at(om.destinationZone));
-
-		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == om.object; }), this->env.triggerHandlers.end());
-		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == om.object; }), this->env.replacementEffects.end());
-		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StaticEffectHandler>& a) -> bool { return a->owner == om.object; }), this->env.stateQueryHandlers.end());
-
-        source.removeObject(om.object);
-		std::shared_ptr<Targetable> object = this->env.gameObjects[om.object];
+		std::shared_ptr<Targetable> object = this->env.gameObjects.at(om.object);
+		Changeset remove;
+		remove.remove.push_back(RemoveObject{ om.object, om.sourceZone });
+		this->applyChangeset(remove);
+		Changeset create;
 		object->id = om.newObject;
-		dest.addObject(object);
-		this->env.gameObjects.erase(om.object);
-		if (!object) {
-			std::cout << "Got a null move" << std::endl;
-		}
-		this->env.gameObjects[om.newObject] = object;
-		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(object)) {
-			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, dest.type, source.type);
-			for (auto& r : replacement) r->owner = object->id;
-			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacement.begin(), replacement.end());
-			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->env.getTriggerEffects(abilities, dest.type, source.type);
-			for (auto& t : trigger) t->owner = object->id;
-			this->env.triggerHandlers.insert(this->env.triggerHandlers.end(), trigger.begin(), trigger.end());
-		}
+		create.create.push_back(ObjectCreation{ om.destinationZone, object });
+		this->applyChangeset(create);
 	}
 	for (xg::Guid& ltg : changeset.loseTheGame) {
+#ifdef DEBUG
+		std::cout << ltg << " loses the game" << std::endl;
+#endif
 		unsigned int index = 0;
 		for (auto iter = this->env.players.begin(); iter != this->env.players.end(); iter++) {
 			if ((*iter)->id == ltg) {
@@ -827,6 +884,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			std::vector<Changeset>& changes = *pChangeset;
 			for (Changeset& change : changes) {
 				triggers += change;
+#ifdef DEBUG
+				// CodeReview: This is not safe because of emblems
+				std::cout << "Triggering an ability of " << std::dynamic_pointer_cast<CardToken>(this->env.gameObjects.at(eh->owner))->name << std::endl;
+#endif
 			}
 			apply = true;
 		}

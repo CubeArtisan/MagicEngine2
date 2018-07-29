@@ -11,21 +11,6 @@ class EtbTriggerHandler : public TriggerHandler {
 public:
 	std::vector<QueueTrigger> operator()(const Changeset& changes, const Environment& env) const {
 		std::vector<QueueTrigger> result;
-		for (const ObjectMovement& move : changes.moves) {
-			if (move.destinationZone == env.battlefield->id) {
-				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(move.newObject))) {
-					if (selfOnly && card->id != this->owner) continue;
-					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
-					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
-					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
-						Changeset triggered;
-						triggered.moves.push_back(move);
-						// CodeReview: Have trigger controlled by correct player
-						result.push_back(QueueTrigger{ env.getController(this->owner), triggered, this->createAbility(card, move.sourceZone) });
-					}
-				}
-			}
-		}
 		for (const ObjectCreation& create : changes.create) {
 			if (create.zone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create.created)) {

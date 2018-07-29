@@ -108,5 +108,6 @@ enum ZoneType {
 	EXILE,
 	COMMAND
 };
+std::ostream& operator<<(std::ostream& os, const ZoneType& step);
 
 #endif
