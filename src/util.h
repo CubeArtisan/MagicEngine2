@@ -28,6 +28,21 @@ U tryAtMap(const std::map<T, U> map, const T& key, const U& def) {
 	return def;
 }
 
+// -------------------------------------------------------------------
+// --- Reversed iterable
+// --- https://stackoverflow.com/a/28139075/3300171
+template <typename T>
+struct reversion_wrapper { T& iterable; };
+
+template <typename T>
+auto begin(reversion_wrapper<T> w) { return std::rbegin(w.iterable); }
+
+template <typename T>
+auto end(reversion_wrapper<T> w) { return std::rend(w.iterable); }
+
+template <typename T>
+reversion_wrapper<T> reverse(T&& iterable) { return { iterable }; }
+
 template<size_t N = 16>
 class store
 {
@@ -41,8 +56,8 @@ public:
 	template<typename D, typename V>
 	D *copy(V &&v)
 	{
-		return fits<D>() ? new(space) D{ std::forward<V>(v) } :
-			new        D{ std::forward<V>(v) };
+		return fits<D>() ? new(space) D( std::forward<V>(v) ) :
+			new        D( std::forward<V>(v) );
 	}
 
 	template<typename D, typename V, typename B>
@@ -91,19 +106,20 @@ class polyValue : Store {
 		const T& getValue() const override { return val; }
 
 		base* copy(Store& store) const override {
-			return store.copy<data<T>>(get());
+			return store.copy<data<U>>(get());
 		}
 
 		base* move(Store& store, base*& other) const override {
-			return store.move<data<T>>(std::move(get()), other);
+			return store.move<data<U>>(std::move(get()), other);
 		}
 
 		void free(Store& store) const override {
 			store.free(this);
 		}
-
-		data(U&& val)
-			: val(std::forward<U>(val))
+		
+		template<typename V>
+		data(V&& val)
+			: val(std::forward<V>(val))
 		{}
 
 	protected:
@@ -117,27 +133,21 @@ class polyValue : Store {
 	};
 
 public:
-	template<typename U>
+	template<typename U, typename Enable=std::enable_if_t<std::conjunction_v<std::is_base_of<T, std::decay_t<U>>,
+																			 std::negation<std::is_base_of<polyValue<T>, std::decay_t<U>>>>>>
 	polyValue(U&& val)
-		: val(new data<U>(val))
-	{
-		static_assert(std::is_base_of<T, U>::val, "U must inherit from T");
-		static_assert(!std::is_same<polyValue<T>, U>::val);
-	}
+		: val(new data<U>(std::forward<U>(val)))
+	{}
 
-	template<typename U>
+	template<typename U, typename Enable=std::enable_if_t<std::is_base_of<T, U>::value>>
 	polyValue(const polyValue<U>& other)
 		: val(other.val->copy(*this))
-	{
-		static_assert(std::is_base_of<T, U>::val, "U must inherit from T");
-	}
+	{}
 
-	template<typename U>
+	template<typename U, typename Enable = std::enable_if_t<std::is_base_of<T, U>::value>>
 	polyValue(polyValue<U>&& other)
 		: val(other.val->move(*this, other.val))
-	{
-		static_assert(std::is_base_of<T, U>::val, "U must inherit from T");
-	}
+	{}
 
 	template<typename U>
 	polyValue<T> operator=(const polyValue<U>& other) {

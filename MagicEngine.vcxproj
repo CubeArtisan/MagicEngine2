@@ -173,6 +173,8 @@
     <ClInclude Include="src\changeset.h" />
     <ClInclude Include="src\combat.h" />
     <ClInclude Include="src\cost.h" />
+    <ClInclude Include="src\effects\entersWithCounters.h" />
+    <ClInclude Include="src\effects\flying.h" />
     <ClInclude Include="src\effects\panharmoniconEffect.h" />
     <ClInclude Include="src\effects\rulesEffects.h" />
     <ClInclude Include="src\enum.h" />
@@ -181,6 +183,8 @@
     <ClInclude Include="src\guid.hpp" />
     <ClInclude Include="src\mana.h" />
     <ClInclude Include="src\player.h" />
+    <ClInclude Include="src\propositions\proposition.h" />
+    <ClInclude Include="src\propositions\raid.h" />
     <ClInclude Include="src\runner.h" />
     <ClInclude Include="src\stateQuery.h" />
     <ClInclude Include="src\strategy.h" />

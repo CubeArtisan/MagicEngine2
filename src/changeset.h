@@ -45,9 +45,8 @@ public:
 class EventHandler : public Handler {
 public:
     virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const = 0;
-	EventHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
-		: Handler(activeSourceZones, activeDestinationZones)
-	{}
+	using Handler::Handler;
+	static inline bool selfReplacing = false;
 };
 
 class StaticEffectHandler : public Handler {
@@ -62,12 +61,8 @@ struct QueueTrigger;
 
 class TriggerHandler : public EventHandler {
 public:
-	// CodeReview: Need to know who owns the trigger
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const;
-
-	TriggerHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
-		: EventHandler(activeSourceZones, activeDestinationZones)
-	{}
+	using EventHandler::EventHandler;
 
 protected:
 	virtual std::vector<QueueTrigger> createTriggers(const Changeset&, const Environment&) const = 0;

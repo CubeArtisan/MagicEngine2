@@ -7,7 +7,7 @@
 
 bool canBlockFlying(std::shared_ptr<CardToken> card, const Environment& env);
 
-class FlyingRestriction : BlockRestriction {
+class FlyingRestriction : public BlockRestriction {
 public:
 	virtual std::set<xg::Guid> canBlock(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
 		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&,
