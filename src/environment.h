@@ -162,14 +162,14 @@ struct Environment {
 	int getLethalDamage(xg::Guid target, xg::Guid blocker) const;
 	int getLethalDamage(std::shared_ptr<const CardToken> attacker, xg::Guid blocker) const;
 	int getLethalDamage(std::shared_ptr<const CardToken> attacker, std::shared_ptr<const CardToken> blocker) const;
-	std::vector<std::shared_ptr<const AttackRestriction>> getAttackRestrictions(xg::Guid attacker) const;
-	std::vector<std::shared_ptr<const AttackRestriction>> getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const;
-	std::vector<std::shared_ptr<const AttackRequirement>> getAttackRequirements(xg::Guid attacker) const;
-	std::vector<std::shared_ptr<const AttackRequirement>> getAttackRequirements(std::shared_ptr<const CardToken> attacker) const;
-	std::vector<std::shared_ptr<const BlockRestriction>> getBlockRestrictions(xg::Guid blocker) const;
-	std::vector<std::shared_ptr<const BlockRestriction>> getBlockRestrictions(std::shared_ptr<const CardToken> blocker) const;
-	std::vector<std::shared_ptr<const BlockRequirement>> getBlockRequirements(xg::Guid blocker) const;
-	std::vector<std::shared_ptr<const BlockRequirement>> getBlockRequirements(std::shared_ptr<const CardToken> blocker) const;
+	std::vector<AttackRestrictionValue> getAttackRestrictions(xg::Guid attacker) const;
+	std::vector<AttackRestrictionValue> getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const;
+	std::vector<AttackRequirementValue> getAttackRequirements(xg::Guid attacker) const;
+	std::vector<AttackRequirementValue> getAttackRequirements(std::shared_ptr<const CardToken> attacker) const;
+	std::vector<BlockRestrictionValue> getBlockRestrictions(xg::Guid blocker) const;
+	std::vector<BlockRestrictionValue> getBlockRestrictions(std::shared_ptr<const CardToken> blocker) const;
+	std::vector<BlockRequirementValue> getBlockRequirements(xg::Guid blocker) const;
+	std::vector<BlockRequirementValue> getBlockRequirements(std::shared_ptr<const CardToken> blocker) const;
 
 private:
 	StaticEffectQuery& executeStateQuery(StaticEffectQuery&& query) const;

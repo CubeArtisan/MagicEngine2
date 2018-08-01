@@ -589,13 +589,13 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					auto restrictions = this->env.getAttackRestrictions(c);
 					// CodeReview: If any restriction is CantAttackAloneRestriction and there is another creature that can attack or has the same restriction make an entry for both 
 					for(auto& restriction : restrictions) {
-					    possibleAttacks[c->id] = restriction->canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
+					    possibleAttacks[c->id] = restriction.canAttack(c, possibleAttacks[c->id], declaredAttacks, env);
 					}
 					if(possibleAttacks[c->id].empty()) continue;
 					requiredAttacks[c->id] = {};
 					auto requirements = this->env.getAttackRequirements(c);
 					for(auto& requirement : requirements) {
-					    auto attacks = requirement->getRequiredAttacks(c, possibleAttacks[c->id], declaredAttacks, env);
+					    auto attacks = requirement.getRequiredAttacks(c, possibleAttacks[c->id], declaredAttacks, env);
 					    requiredAttacks[c->id].insert(attacks.begin(), attacks.end());
 					}
 					if(!requiredAttacks[c->id].empty()) {
@@ -669,13 +669,13 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 						auto restrictions = this->env.getBlockRestrictions(c);
 						// If any restriction is CantBlockAloneRestriction and there is another creature that has the same restriction make an entry for both 
 						for(auto& restriction : restrictions) {
-						    possibleBlocks[c->id] = restriction->canBlock(c, possibleBlocks[c->id], declaredBlocks, env);
+						    possibleBlocks[c->id] = restriction.canBlock(c, possibleBlocks[c->id], declaredBlocks, env);
 						}
 						if(possibleBlocks[c->id].empty()) continue;
 						requiredBlocks[c->id] = {};
 						auto requirements = this->env.getBlockRequirements(c);
 						for(auto& requirement : requirements) {
-						    auto blocks = requirement->getRequiredBlocks(c, possibleBlocks[c->id], declaredBlocks, env);
+						    auto blocks = requirement.getRequiredBlocks(c, possibleBlocks[c->id], declaredBlocks, env);
 						    requiredBlocks[c->id].insert(blocks.begin(), blocks.end());
 						}
 						if(!requiredBlocks[c->id].empty()) {
