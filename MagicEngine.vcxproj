@@ -176,6 +176,7 @@
     <ClInclude Include="src\effects\entersWithCounters.h" />
     <ClInclude Include="src\effects\flying.h" />
     <ClInclude Include="src\effects\panharmoniconEffect.h" />
+    <ClInclude Include="src\effects\plusForEachEffect.h" />
     <ClInclude Include="src\effects\rulesEffects.h" />
     <ClInclude Include="src\enum.h" />
     <ClInclude Include="src\environment.h" />

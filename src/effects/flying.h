@@ -43,6 +43,7 @@ public:
 
 			block->restrictions.push_back(FlyingRestriction(this->owner));
 		}
+		return query;
 	}
 
 	FlyingHandler()

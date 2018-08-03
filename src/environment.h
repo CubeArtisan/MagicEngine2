@@ -22,6 +22,7 @@ struct ZoneInterface {
     virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object) = 0;
     virtual std::shared_ptr<const Targetable> removeObject(xg::Guid object) = 0;
 	virtual std::shared_ptr<const Targetable> findObject(xg::Guid object) const = 0;
+	virtual std::vector<std::shared_ptr<const Targetable>> getObjects() const = 0;
 	const ZoneType type;
 
 	ZoneInterface(ZoneType type)
@@ -60,6 +61,15 @@ struct Zone : public Targetable, public ZoneInterface {
 			}
 		}
 		return std::shared_ptr<Targetable>();
+	}
+
+	std::vector<std::shared_ptr<const Targetable>> getObjects() const override {
+		std::vector<std::shared_ptr<const Targetable>> result;
+		result.reserve(objects.size());
+		for (auto& object : objects) {
+			result.push_back(getBaseClassPtr<const Targetable>(object));
+		}
+		return result;
 	}
 
 	Zone(ZoneType type)
