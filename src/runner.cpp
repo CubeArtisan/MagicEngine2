@@ -452,11 +452,29 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			this->env.damage[card->id] += dtt.amount;
 		}
     }
+	for (DamageToTarget& dtt : changeset.combatDamage) {
+		std::shared_ptr<Targetable> pObject = this->env.gameObjects[dtt.target];
+		if (std::shared_ptr<Player> player = std::dynamic_pointer_cast<Player>(pObject)) {
+			int lifeTotal = this->env.lifeTotals[player->id];
+			Changeset lifeLoss;
+			lifeLoss.lifeTotalChanges.push_back(LifeTotalChange{ player->id, lifeTotal, lifeTotal - (int)dtt.amount });
+#ifdef DEBUG
+			std::cout << dtt.amount << " combat damage dealt to player " << dtt.target << std::endl;
+#endif
+			applyChangeset(lifeLoss);
+		}
+		else if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(pObject)) {
+#ifdef DEBUG
+			std::cout << dtt.amount << " combat damage dealt to " << card->name << " " << card->id << std::endl;
+#endif
+			this->env.damage[card->id] += dtt.amount;
+		}
+	}
 	for (TapTarget& tt : changeset.tap) {
 		std::shared_ptr<Targetable> object = this->env.gameObjects[tt.target];
 		std::shared_ptr<CardToken> pObject = std::dynamic_pointer_cast<CardToken>(object);
 #ifdef DEBUG
-		std::cout << (tt.tap ? "Tapping " : "Untapping ") << pObject->name << std::endl;
+		std::cout << (tt.tap ? "Tapping " : "Untapping ") << pObject->name  << " " << pObject->id << std::endl;
 #endif
 		pObject->isTapped = tt.tap;
 	}
@@ -743,12 +761,12 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 							int minDamage = std::min(this->env.getLethalDamage(attack.first, blocker), powerRemaining);
 							int damageAmount = player.strategy->chooseDamageAmount(attack.first, blocker, minDamage, powerRemaining, env);
 							powerRemaining -= damageAmount;
-							damageEvent.damage.push_back(DamageToTarget{ blocker, damageAmount });
-							damageEvent.damage.push_back(DamageToTarget{ attack.first->id, this->env.getPower(blocker) });
+							damageEvent.combatDamage.push_back(DamageToTarget{ blocker, damageAmount, attack.first->id });
+							damageEvent.combatDamage.push_back(DamageToTarget{ attack.first->id, this->env.getPower(blocker), blocker });
 						}
 					}
 					else {
-						damageEvent.damage.push_back(DamageToTarget{ attack.second, this->env.getPower(attack.first) });
+						damageEvent.combatDamage.push_back(DamageToTarget{ attack.second, this->env.getPower(attack.first), attack.first->id });
 					}
 				}
 #ifdef DEBUG

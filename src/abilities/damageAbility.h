@@ -9,7 +9,8 @@ struct DamageAbility : public Ability {
 		std::vector<std::pair<xg::Guid, int>> targets = this->getTargets(env);
 		Changeset damage;
 		for (const std::pair<xg::Guid, int>& target : targets) {
-			damage.damage.push_back(DamageToTarget{ target.first, target.second });
+			xg::Guid source = getBaseClassPtr<const Targetable>(this->source)->id;
+			damage.damage.push_back(DamageToTarget{ target.first, target.second, source });
 		}
 		return damage;
 	}

@@ -9,6 +9,7 @@
 #include "player.h"
 #include "strategy.h"
 #include "targeting.h"
+#include "util.h"
 
 template<typename Iter, typename RandomGenerator>
 Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
@@ -26,24 +27,8 @@ Iter select_randomly(Iter start, Iter end) {
 
 template<template<class, class> class Container, typename T, typename Alloc>
 T select_randomly(Container<T, Alloc> cont) {
-    return *select_randomly(cont.begin(), cont.end());
+	return *select_randomly(cont.begin(), cont.end());
 }
-
-std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>,
-             std::shared_ptr<const Emblem>> upShiftVariant(std::variant<std::shared_ptr<const Card>,
-                                                                        std::shared_ptr<const Token>> variant) {
-    if(std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&variant)) {
-        return *pCard;
-    }
-    if(std::shared_ptr<const Token>* pToken = std::get_if<std::shared_ptr<const Token>>(&variant)) {
-        return *pToken;
-    }
-#ifdef DEBUG
-    std::cerr << "Variant was in a malformed state" << std::endl;
-#endif
-    throw "Variant was in a malformed state";
-}
-
 
 GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env) 
 {
@@ -72,9 +57,10 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
 		if (player.id != card->owner) continue;
 		for(std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
 			std::shared_ptr<ActivatedAbility> ability = std::dynamic_pointer_cast<ActivatedAbility>(pAbility->clone());
-			ability->source = cardWrapper;
+			SourceType upshifted = convertVariant<SourceType>(cardWrapper);
+			ability->source = upshifted;
             if(std::shared_ptr<const Cost> pCost = ability->canPlay(player, env)) {
-                possibilities.push_back(ActivateAnAbility{cardWrapper, ability, std::vector<xg::Guid>(), *pCost, 0});
+                possibilities.push_back(ActivateAnAbility{upshifted, ability, std::vector<xg::Guid>(), *pCost, 0});
             }
         }
     }

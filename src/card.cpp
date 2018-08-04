@@ -5,23 +5,29 @@ HasEffect::HasEffect(std::shared_ptr<const TargetingRestriction> targeting)
 	: targeting(targeting)
 {}
 
-CostedEffect::CostedEffect() {}
+HasCost::HasCost() {}
 
-CostedEffect::CostedEffect(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts,
-						   std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>> source)
-    : costs(costs), additionalCosts(additionalCosts), source(source)
+HasCost::HasCost(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
+    : costs(costs), additionalCosts(additionalCosts)
 {}
 
-std::shared_ptr<const Cost> CostedEffect::canPlay(const Player& player, const Environment& env) const {
+std::shared_ptr<const Cost> HasCost::canPlay(const Player& player, const Environment& env) const {
     // CodeReview: Can choose targets if *this is a HasEffect - Might not be neccesary
-	// CodeReview: Check are in a valid zone to be played from
+
+	SourceType source;
 	if (const Card* self = dynamic_cast<const Card*>(this)) {
+		// CodeReview: Check are in a valid zone to be played from
 		if (!env.goodTiming(self->id)) return std::shared_ptr<Cost>();
+		source = std::dynamic_pointer_cast<const Card>(env.gameObjects.at(self->id));
+	}
+	if (const Ability* self = dynamic_cast<const Ability*>(this)) {
+		// CodeReview: Check source is in a valid zone to activate from
+		source = self->source;
 	}
 	// CodeReview: Figure out timing for abilities
 
     for(const std::shared_ptr<const Cost>& cost : this->costs) {
-        if(cost->canPay(player, env, this->source)) return cost;
+        if(cost->canPay(player, env, source)) return cost;
     }
     return std::shared_ptr<Cost>();
 }
@@ -74,7 +80,7 @@ Card::Card(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::share
            std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
                 targeting, applyAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes),
-	  CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
+	  HasCost(costs, additionalCosts)
     {}
 
 Token::Token(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,

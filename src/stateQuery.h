@@ -7,7 +7,7 @@
 #include "enum.h"
 struct ActivatedAbility;
 struct CardToken;
-struct CostedEffect;
+struct HasCost;
 struct Targetable;
 struct HasAbilities;
 class EventHandler;
@@ -29,7 +29,7 @@ struct ToughnessQuery {
 };
 
 struct TimingQuery {
-	const CostedEffect& effect;
+	const HasCost& effect;
     bool timing;
 };
 

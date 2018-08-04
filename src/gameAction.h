@@ -9,6 +9,7 @@ struct Card;
 struct Cost;
 struct ActivatedAbility;
 struct Token;
+struct Emblem;
 
 // CodeReview: Only handles casting from hand currently
 // CodeReview: Implement Modes
@@ -26,7 +27,7 @@ struct PlayLand {
 };
 
 struct ActivateAnAbility {
-	const std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>> source;
+	const std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>, std::shared_ptr<const Emblem>> source;
 	const std::shared_ptr<ActivatedAbility> ability;
 	const std::vector<xg::Guid> targets;
 	const Cost& cost;

@@ -30,16 +30,13 @@ struct HasEffect {
 };
 
 // All subclasses of this class must inherit from Targetable as well
-struct CostedEffect {
-	std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>> source;
-
+struct HasCost {
 	const std::vector<std::shared_ptr<const Cost>> costs;
     const std::vector<std::shared_ptr<const Cost>> additionalCosts;
 	virtual std::shared_ptr<const Cost> canPlay(const Player& player, const Environment& env) const;
 
-	CostedEffect();
-    CostedEffect(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts,
-		         std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>> source);
+	HasCost();
+    HasCost(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts);
 };
 
 struct HasAbilities {
@@ -83,7 +80,7 @@ struct CardToken : public Targetable, public HasEffect, public HasAbilities {
 			  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 
-struct Card : public CardToken, public CostedEffect {
+struct Card : public CardToken, public HasCost {
 	Card();
 	Card(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
 		 std::shared_ptr<const std::set<CardSubType>> subTypes, int power,

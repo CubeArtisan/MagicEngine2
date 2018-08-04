@@ -28,6 +28,11 @@ U tryAtMap(const std::map<T, U> map, const T& key, const U& def) {
 	return def;
 }
 
+template<typename U, typename... Ts>
+U convertVariant(std::variant<Ts...> variant)
+{
+	return std::visit([](auto& x) { return U{ x }; }, variant);
+}
 // -------------------------------------------------------------------
 // --- Reversed iterable
 // --- https://stackoverflow.com/a/28139075/3300171

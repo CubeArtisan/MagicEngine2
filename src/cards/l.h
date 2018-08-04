@@ -11,7 +11,7 @@ Card LightningBolt = newCard("Lightning Bolt", 0, std::set<CardSuperType>{}, std
 						 	 Mana(std::multiset<Color>{RED}), std::vector<std::shared_ptr<Cost>>{},
 						 	 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>
 						 		 { [](Changeset& change, const Environment& env, xg::Guid source) ->
-						 		 Changeset& { change.damage.push_back(DamageToTarget{ env.targets.at(source)[0], 3 });
+						 		 Changeset& { change.damage.push_back(DamageToTarget{ env.targets.at(source)[0], 3, source });
 											  return change; } });
 
 class LManager : public LetterManager {

@@ -11,7 +11,7 @@ Changeset Ability::operator()(const Environment& env) const {
 
 ActivatedAbility::ActivatedAbility(std::shared_ptr<const TargetingRestriction> targeting, std::vector<std::shared_ptr<const Cost>> costs,
 								   std::vector<std::shared_ptr<const Cost>> additionalCosts)
-    : Ability(targeting), CostedEffect(costs, additionalCosts, std::shared_ptr<Card>())
+    : Ability(targeting), HasCost(costs, additionalCosts)
 {}
 
 ManaAbility::ManaAbility(Mana mana, std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)

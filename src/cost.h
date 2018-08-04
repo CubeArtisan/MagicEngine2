@@ -9,8 +9,9 @@ struct Player;
 struct CardToken;
 struct Token;
 struct Card;
+struct Emblem;
 
-using SourceType = std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>>;
+using SourceType = std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>, std::shared_ptr<const Emblem>>;
 struct Cost {
     virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const = 0;
     virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const = 0;

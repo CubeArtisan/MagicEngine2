@@ -147,7 +147,7 @@ struct Environment {
 	int getToughness(xg::Guid target)  const;
 	int getToughness(std::shared_ptr<const CardToken> target)  const;
 	bool goodTiming(xg::Guid target) const;
-	bool goodTiming(std::shared_ptr<const CostedEffect> target) const;
+	bool goodTiming(std::shared_ptr<const HasCost> target) const;
 	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(xg::Guid target)  const;
 	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(std::shared_ptr<const CardToken> target)  const;
 	std::shared_ptr<const std::set<CardType>> getTypes(xg::Guid target) const;

@@ -136,6 +136,7 @@ struct StepOrPhaseChange {
 struct DamageToTarget {
 	xg::Guid target;
 	int amount;
+	xg::Guid source;
 };
 
 struct TapTarget {
@@ -176,6 +177,7 @@ struct Changeset {
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;
     std::vector<DamageToTarget> damage;
+	std::vector<DamageToTarget> combatDamage;
     std::vector<TapTarget> tap;
 	std::vector<CreateTargets> target;
 	std::vector<QueueTrigger> trigger;
@@ -186,7 +188,6 @@ struct Changeset {
 	bool clearTriggers{ false };
 	// CodeReview: Add Destroy
 	// CodeReview: Add Cast
-	// CodeReview: Add CombatDamage
 
     Changeset operator+(const Changeset& other);
     Changeset& operator+=(const Changeset& other);

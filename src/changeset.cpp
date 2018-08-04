@@ -48,6 +48,8 @@ Changeset Changeset::operator+(const Changeset& other){
     removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
     std::vector<DamageToTarget> damage = this->damage;
     damage.insert(damage.end(), other.damage.begin(), other.damage.end());
+	std::vector<DamageToTarget> combatDamage = this->combatDamage;
+	combatDamage.insert(combatDamage.end(), other.combatDamage.begin(), other.combatDamage.end());
     std::vector<TapTarget> tap = this->tap;
     tap.insert(tap.end(), other.tap.begin(), other.tap.end());
 	std::vector<CreateTargets> target = this->target;
@@ -67,8 +69,8 @@ Changeset Changeset::operator+(const Changeset& other){
 	bool clearTriggers = this->clearTriggers || other.clearTriggers;
 
     return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
-					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage, tap,
-                     target, trigger, land, manaAbility, attacks, phaseChange, clearTriggers};
+					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage,
+					 combatDamage, tap, target, trigger, land, manaAbility, attacks, phaseChange, clearTriggers};
 }
 
 Changeset& Changeset::operator+=(const Changeset& other){
@@ -132,7 +134,10 @@ std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
 		   << " to " << lifeTotalChange.newValue << std::endl;
 	}
 	for (const DamageToTarget& damage : changeset.damage) {
-		os << damage.amount << " damage to  " << damage.target << std::endl;
+		os << damage.amount << " damage to  " << damage.target << " from " << damage.source << std::endl;
+	}
+	for (const DamageToTarget& damage : changeset.combatDamage) {
+		os << damage.amount << " combat damage to  " << damage.target << " from " << damage.source << std::endl;
 	}
 	if (changeset.phaseChange.changed) {
 		os << "Leaving step " << changeset.phaseChange.starting << std::endl;

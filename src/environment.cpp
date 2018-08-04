@@ -36,7 +36,6 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 			std::shared_ptr<Targetable> copy(new Card(card));
 			copy->owner = players[i]->id;
 			copy->id = xg::newGuid();
-			std::dynamic_pointer_cast<Card>(copy)->source = std::dynamic_pointer_cast<Card>(copy);
 			this->libraries[players[i]->id]->addObject(copy);
             this->gameObjects[copy->id] = copy;
 			std::vector<std::shared_ptr<EventHandler>> replacement = this->getReplacementEffects(std::dynamic_pointer_cast<CardToken>(copy), LIBRARY);
@@ -85,11 +84,11 @@ int Environment::getToughness(std::shared_ptr<const CardToken> target) const {
 }
 
 bool Environment::goodTiming(xg::Guid target) const {
-	std::shared_ptr<CostedEffect> effect = std::dynamic_pointer_cast<CostedEffect>(gameObjects.at(target));
+	std::shared_ptr<HasCost> effect = std::dynamic_pointer_cast<HasCost>(gameObjects.at(target));
 	return this->goodTiming(effect);
 }
 
-bool Environment::goodTiming(std::shared_ptr<const CostedEffect> target) const {
+bool Environment::goodTiming(std::shared_ptr<const HasCost> target) const {
 	bool value = false;
 	if (std::shared_ptr<const Card> card = std::dynamic_pointer_cast<const Card>(target)) {
 		std::shared_ptr<const std::set<CardType>> types = this->getTypes(std::dynamic_pointer_cast<const CardToken>(card));
