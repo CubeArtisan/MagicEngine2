@@ -2,6 +2,7 @@
 #define _ENTERSWITHCOUNTERS_H_
 
 #include "../changeset.h"
+#include "../propositions/proposition.h"
 
 class EntersWithCounters : public EventHandler {
 public:

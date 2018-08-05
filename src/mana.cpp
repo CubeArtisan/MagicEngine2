@@ -41,27 +41,26 @@ bool Mana::contains(const Mana& other) const {
 
         ourString.erase(found);
     }
-    int generic = (int)other.generic - (int)this->generic;
-    generic = std::max(generic, 0);
-    return ourString.size() >= other.generic - this->generic;
+    int generic2 = (int)other.generic - (int)this->generic;
+    generic2 = std::max(generic2, 0);
+    return ourString.size() >= generic2;
 }
 
 bool Mana::subtract(const Mana& other) {
     std::multiset<Color> ourString = this->manaString;
     for(Color mana : other.manaString) {
         auto found = ourString.find(mana);
-        if(found == ourString.end()) return false;
-
+		if (found == ourString.end()) return false;
         ourString.erase(found);
     }
     
-    int generic = (int)other.generic - (int)this->generic;
-    if((unsigned int)generic > ourString.size()) return false;
-    generic = std::max(generic, 0);
-    int ourGeneric = std::max(-generic, 0);
-    if(generic > 0) {
+    int generic2 = (int)other.generic - (int)this->generic;
+    if((unsigned int)generic2 > ourString.size()) return false;
+    int ourGeneric = std::max(-generic2, 0);
+	generic2 = std::max(generic2, 0);
+	if(generic2 > 0) {
         auto end = ourString.begin();
-        std::advance(end, generic);
+        std::advance(end, generic2);
         ourString.erase(ourString.begin(), end);
     }
     

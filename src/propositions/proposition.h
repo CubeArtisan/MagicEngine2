@@ -24,13 +24,13 @@ template<typename T>
 constexpr bool isProposition = std::is_base_of<Proposition, T>::value;
 
 class TrueProposition : public Proposition {
-	bool operator()(const Environment& env) const override {
+	bool operator()(const Environment&) const override {
 		return true;
 	}
 };
 
 class FalseProposition : public Proposition {
-	bool operator()(const Environment& env) const override {
+	bool operator()(const Environment&) const override {
 		return false;
 	}
 };

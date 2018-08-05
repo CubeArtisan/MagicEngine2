@@ -9,21 +9,21 @@ class PlusForEachHandler : public StaticEffectHandler {
 public:
 	StaticEffectQuery & handleEvent(StaticEffectQuery& query, const Environment& env) const override {
 		if (power){
-			if (PowerQuery* power = std::get_if<PowerQuery>(&query)) {
+			if (PowerQuery* power2 = std::get_if<PowerQuery>(&query)) {
 				xg::Guid controller = env.getController(this->owner);
 				std::vector<std::shared_ptr<const Targetable>> items = this->getObjectsFromZone(env);
 				int count = 0;
 				for (auto& item : items) if (filter(item, env, controller)) count++;
-				power->currentValue += count;
+				power2->currentValue += count;
 			}
 		}
 		if (toughness) {
-			if (ToughnessQuery* toughness = std::get_if<ToughnessQuery>(&query)) {
+			if (ToughnessQuery* toughness2 = std::get_if<ToughnessQuery>(&query)) {
 				xg::Guid controller = env.getController(this->owner);
 				std::vector<std::shared_ptr<const Targetable>> items = this->getObjectsFromZone(env);
 				int count = 0;
 				for (auto& item : items) if (filter(item, env, controller)) count++;
-				toughness->currentValue += count;
+				toughness2->currentValue += count;
 			}
 		}
 		return query;

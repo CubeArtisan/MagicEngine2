@@ -98,6 +98,26 @@ private:
 	TargetType targeting;
 };
 
+template<typename Target1, typename Target2>
+class OrTarget : public TargetingRestriction {
+public:
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const override {
+		return target1.validFirstN(targets, env) || target2.validFirstN(targets, env);
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const override {
+		return target1.validTargets(targets, env) || target2.validTargets(targets, env);
+	}
+
+	OrTarget()
+		: TargetingRestriction(std::min(target1.minTargets, target2.minTargets), std::max(target1.maxTargets, target2.maxTargets))
+	{}
+
+private:
+	Target1 target1;
+	Target2 target2;
+};
+
 class AnyTarget : public TargetingRestriction {
 public:
 	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
@@ -129,7 +149,7 @@ public:
 	{}
 };
 
-class TargetPlayer : public TargetingRestriction {
+class PlayerTarget : public TargetingRestriction {
 public:
 	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
 		if (targets.size() > 1) return false;
@@ -147,9 +167,30 @@ public:
 		return targets.size() == 1 && this->validFirstN(targets, env);
 	}
 
-	TargetPlayer()
+	PlayerTarget()
 		: TargetingRestriction(1, 1)
 	{}
 };
+
+class PermanentTarget : public TargetingRestriction {
+public:
+	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
+		if (targets.size() > 1) return false;
+		if (targets.size() == 0) return true;
+
+		xg::Guid target = targets[0];
+		return (bool)env.battlefield->findObject(target);
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
+		return targets.size() == 1 && this->validFirstN(targets, env);
+	}
+
+	PermanentTarget()
+		: TargetingRestriction(1, 1)
+	{}
+};
+
+using PermanentOrPlayerTarget = OrTarget<PlayerTarget, PermanentTarget>;
 
 #endif

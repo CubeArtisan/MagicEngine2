@@ -580,7 +580,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		else if (this->env.currentPhase == DECLAREATTACKERS) {
 			std::set<xg::Guid> opponentsAndPlaneswalkers;
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
-			Player& player = *this->env.players[this->env.turnPlayer];
+			Player& turnPlayer = *this->env.players[this->env.turnPlayer];
 			for (auto& player : this->env.players) {
 				if (player->id != turnPlayerId) opponentsAndPlaneswalkers.insert(player->id);
 				for (auto& card : this->env.battlefield->objects) {
@@ -632,7 +632,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 					possibleAttackers.push_back(c);
 				}
 				// CodeReview: Need to figure out how to deal with costs to attack
-				std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> attacker = player.strategy->chooseAttacker(possibleAttackers, possibleAttacks, requiredAttacks, declaredAttacks);
+				std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> attacker = turnPlayer.strategy->chooseAttacker(possibleAttackers, possibleAttacks, requiredAttacks, declaredAttacks);
 				if (attacker) {
 					declaredAttacks.push_back(attacker.value());
 					declaredAttackers.insert(attacker.value().first->id);

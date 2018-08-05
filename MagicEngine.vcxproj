@@ -80,7 +80,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
@@ -105,7 +105,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="src\abilities\createToken.h" />
     <ClInclude Include="src\abilities\damageAbility.h" />
+    <ClInclude Include="src\abilities\singleProliferate.h" />
     <ClInclude Include="src\ability.h" />
     <ClInclude Include="src\card.h" />
     <ClInclude Include="src\cards\a.h" />
@@ -192,6 +193,7 @@
     <ClInclude Include="src\targeting.h" />
     <ClInclude Include="src\tokens\g.h" />
     <ClInclude Include="src\tokens\tokenManager.h" />
+    <ClInclude Include="src\triggers\combatDamage.h" />
     <ClInclude Include="src\triggers\etb.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>
