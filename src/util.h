@@ -33,6 +33,29 @@ U convertVariant(std::variant<Ts...> variant)
 {
 	return std::visit([](auto& x) { return U{ x }; }, variant);
 }
+
+template<typename U, typename T>
+U convertToVariant(T&& t) {
+	return convertRecursive<T, U>(std::forward<T>(t));
+}
+
+template<typename T, typename U, size_t i=0>
+U convertRecursive(T&& t) {
+	using V = std::variant_alternative_t<i, U>;
+	using VT = typename V::element_type;
+	if (V v = std::dynamic_pointer_cast<VT>(t)) {
+		return U(v);
+	}
+	else {
+		if constexpr(i+1 == std::variant_size_v<U>) {
+			throw "Could not convert to the given type";
+		}
+		else {
+			return convertRecursive<T, U, i+1>(std::forward<T>(t));
+		}
+	}
+}
+
 // -------------------------------------------------------------------
 // --- Reversed iterable
 // --- https://stackoverflow.com/a/28139075/3300171
@@ -212,11 +235,11 @@ class polyValue : Store {
 		const T& getValue() const override { return val; }
 
 		base* copy(Store& store) const override {
-			return store.copy<data<U>>(get());
+			return store.template copy<data<U>>(get());
 		}
 
 		base* move(Store& store, base*& other) const override {
-			return store.move<data<U>>(std::move(get()), other);
+			return store.template move<data<U>>(std::move(get()), other);
 		}
 
 		void free(Store& store) const override {
@@ -287,7 +310,7 @@ public:
 	} 
 
 	virtual ~polyValue() {
-		this->val->free(*this);
+		// this->val->free(*this);
 	}
 };
 #endif

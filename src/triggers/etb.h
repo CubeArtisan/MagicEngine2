@@ -21,7 +21,7 @@ public:
 						Changeset triggered;
 						triggered.create.push_back(create);
 						// CodeReview: Have trigger controlled by correct player
-						result.push_back(QueueTrigger{ env.getController(card), triggered, this->createAbility(card, std::nullopt) });
+						result.push_back(QueueTrigger{ env.getController(card), this->owner, triggered, this->createAbility(card, std::nullopt) });
 					}
 				}
 			}

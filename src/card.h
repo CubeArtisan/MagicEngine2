@@ -12,6 +12,7 @@
 
 #include "changeset.h"
 #include "cost.h"
+#include "effect.h"
 #include "enum.h"
 #include "mana.h"
 #include "util.h"
@@ -23,11 +24,14 @@ struct Player;
 struct Card;
 class TargetingRestriction;
 
-struct HasEffect : public clone_inherit<abstract_method<HasEffect>> {
-    virtual Changeset applyEffect(const Environment& env) const = 0;
+struct HasEffect : public clone_inherit<abstract_method<HasEffect>, Targetable> {
+	EffectValue effect;
 	const std::shared_ptr<const TargetingRestriction> targeting;
 
-	HasEffect(std::shared_ptr<const TargetingRestriction> targeting);
+	std::optional<Changeset> getChangeset(const Environment& env);
+	void reset();
+
+	HasEffect(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting);
 };
 
 // All subclasses of this class must inherit from Targetable as well
@@ -52,12 +56,13 @@ struct HasAbilities : public clone_inherit<abstract_method<HasAbilities>> {
 
 struct HasEffectsAndAbilities : public HasEffect, public HasAbilities {
 	HasEffectsAndAbilities(
+		EffectValue effect,
 		std::shared_ptr<const TargetingRestriction> targeting,
 		std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 		std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
 
-struct CardToken : public clone_inherit<abstract_method<CardToken>, HasEffectsAndAbilities, Targetable> {
+struct CardToken : public clone_inherit<abstract_method<CardToken>, HasEffectsAndAbilities> {
     bool isTapped;
 	bool isSummoningSick;
 	// Implement phased out
@@ -77,13 +82,12 @@ struct CardToken : public clone_inherit<abstract_method<CardToken>, HasEffectsAn
 
 	Changeset applyEffect(const Environment& env) const;
 
-	CardToken();
     CardToken(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
 			  std::shared_ptr<const std::set<CardSubType>> subTypes, int power,
               int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 			  std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
+			  EffectValue effect,
 			  std::shared_ptr<const TargetingRestriction> targeting,
-              std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 			  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 			  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };
@@ -93,8 +97,8 @@ struct CardTokenWithCost : public CardToken, public HasCost {
 					  std::shared_ptr<const std::set<CardSubType>> subTypes, int power,
 					  int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 					  std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
+					  EffectValue effect,
 					  std::shared_ptr<const TargetingRestriction> targeting,
-					  std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 					  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 					  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
 					  std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts);

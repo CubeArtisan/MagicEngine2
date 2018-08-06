@@ -201,6 +201,7 @@ struct Changeset {
 
 struct QueueTrigger {
 	xg::Guid player;
+	xg::Guid source;
 	Changeset triggered;
 	std::shared_ptr<Ability> ability;
 };

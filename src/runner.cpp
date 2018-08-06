@@ -125,7 +125,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 			std::shared_ptr<Ability> ability = trigger.ability->clone();
 			ability->id = xg::newGuid();
 			ability->owner = player->id;
-			// CodeReview: Do we need to set source?
+			ability->source = convertToVariant<SourceType>(env.gameObjects.at(trigger.source));
 			applyTriggers.create.push_back(ObjectCreation{ this->env.stack->id, ability });
 			std::vector<xg::Guid> targets = player->strategy->chooseTargets(ability, *player, env);
 			if (!targets.empty()) {
@@ -233,7 +233,13 @@ void Runner::runGame(){
 					// CodeReview: Call getNextApplyEffect if not nullopt applyChangeset
 					// Then repeat till nullopt
 					// Then move ability/card to correct zone
-                    Changeset resolveSpellAbility = getBaseClassPtr<const HasEffect>(top)->applyEffect(this->env);
+                    std::shared_ptr<HasEffect> hasEffect = getBaseClassPtr<const HasEffect>(top)->clone();
+					std::optional<Changeset> resolveAbility = hasEffect->getChangeset(env);
+					while (resolveAbility) {
+						this->applyChangeset(resolveAbility.value());
+						resolveAbility = hasEffect->getChangeset(env);
+					}
+					Changeset resolveSpellAbility;
                     if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&top)) {
 						std::shared_ptr<const Card> card = *pCard;
                         bool isPermanent = false;

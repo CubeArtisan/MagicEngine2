@@ -31,6 +31,8 @@ public:
 	TargetingRestriction(int min, int max)
 		: minTargets(min), maxTargets(max)
 	{}
+
+	virtual ~TargetingRestriction() {}
 };
 
 class NoTargets : public TargetingRestriction {

@@ -179,6 +179,7 @@
     <ClInclude Include="src\changeset.h" />
     <ClInclude Include="src\combat.h" />
     <ClInclude Include="src\cost.h" />
+    <ClInclude Include="src\effect.h" />
     <ClInclude Include="src\effects\entersWithCounters.h" />
     <ClInclude Include="src\effects\flying.h" />
     <ClInclude Include="src\effects\panharmoniconEffect.h" />

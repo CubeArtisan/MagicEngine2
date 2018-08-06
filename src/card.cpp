@@ -1,9 +1,17 @@
 #include "card.h"
 #include "targeting.h"
 
-HasEffect::HasEffect(std::shared_ptr<const TargetingRestriction> targeting)
-	: targeting(targeting)
+HasEffect::HasEffect(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting)
+	: effect(effect), targeting(targeting)
 {}
+
+std::optional<Changeset> HasEffect::getChangeset(const Environment& env) {
+	return this->effect.getChangeset(this->id, env);
+}
+
+void HasEffect::reset() {
+	this->effect.reset();
+}
 
 HasCost::HasCost() {}
 
@@ -43,47 +51,36 @@ HasAbilities::HasAbilities(std::vector<std::shared_ptr<EventHandler>> replacemen
 	: replacementEffects(replacementEffects), triggerEffects(triggerEffects), staticEffects(staticEffects), thisOnlyReplacementIndexes(thisOnlyReplacementIndexes)
 {}
 
-CardToken::CardToken()
-	: CardToken(std::shared_ptr<std::set<CardSuperType>>(new std::set<CardSuperType>{}), std::shared_ptr<std::set<CardType>>(new std::set<CardType>{}),
-		std::shared_ptr<std::set<CardSubType>>(new std::set<CardSubType>{}), 0,
-		0, 0, "Unnamed", 0, std::set<Color>{},
-		std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>>(new std::vector<std::shared_ptr<const ActivatedAbility>>{}),
-		std::shared_ptr<TargetingRestriction>(new NoTargets()),
-		std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>>{},
-		std::vector<std::shared_ptr<EventHandler>>{}, std::vector<std::shared_ptr<TriggerHandler>>{},
-		std::vector<std::shared_ptr<StaticEffectHandler>>{}, std::vector<size_t>{})
-{}
-
-HasEffectsAndAbilities::HasEffectsAndAbilities(std::shared_ptr<const TargetingRestriction> targeting,
+HasEffectsAndAbilities::HasEffectsAndAbilities(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting,
 											   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 											   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
-	: HasEffect(targeting), HasAbilities(replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes)
+	: HasEffect(effect, targeting), HasAbilities(replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes)
 {}
 
 CardToken::CardToken(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
 					 std::shared_ptr<const std::set<CardSubType>> subTypes, int power,
                      int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 					 std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
-                     std::shared_ptr<const TargetingRestriction> targeting,
-					 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyEffects,
+                     EffectValue effect,
+					 std::shared_ptr<const TargetingRestriction> targeting,
 					 std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 					 std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes)
-    : clone_inherit(targeting, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes), baseSuperTypes(superTypes),
+    : clone_inherit(effect, targeting, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes), baseSuperTypes(superTypes),
 	  baseTypes(types), baseSubTypes(subTypes), basePower(power), baseToughness(toughness), startingLoyalty(loyalty), name(name), cmc(cmc),
-	  baseColors(colors), activatableAbilities(activatedAbilities), applyEffects(applyEffects)
+	  baseColors(colors), activatableAbilities(activatedAbilities)
     {}
 
 CardTokenWithCost::CardTokenWithCost(std::shared_ptr<const std::set<CardSuperType>> superTypes, std::shared_ptr<const std::set<CardType>> types,
 	       std::shared_ptr<const std::set<CardSubType>> subTypes, int power,
            int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 		   std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
+		   EffectValue effect,
 		   std::shared_ptr<const TargetingRestriction> targeting,
-           std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities,
 		   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 		   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
            std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
-                targeting, applyAbilities, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes),
+                effect, targeting, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes),
 	  HasCost(costs, additionalCosts)
     {}
 

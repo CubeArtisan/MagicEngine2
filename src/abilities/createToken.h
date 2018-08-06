@@ -7,21 +7,21 @@
 #include "../changeset.h"
 #include "../targeting.h"
 
-struct CreateTokensAbility : public clone_inherit<CreateTokensAbility, Ability> {
-	Changeset applyEffect(const Environment& env) const {
+struct CreateTokensAbility {
+	std::optional<Changeset> operator()(xg::Guid source, const Environment& env) const {
 		Changeset createTokens;
 		for (int i = 0; i < this->amount; i++) {
 			std::shared_ptr<Targetable> created = std::shared_ptr<Targetable>(new Token(token));
 			created->id = xg::newGuid();
 			// 110.5a. The player who creates a token is its owner. The token enters the battlefield under that player's control.
-			created->owner = env.getController(this->id);
+			created->owner = env.getController(source);
 			createTokens.create.push_back(ObjectCreation{ env.battlefield->id, created });
 		}
 		return createTokens;
 	}
 
 	CreateTokensAbility(int amount, Token token)
-		: clone_inherit(std::shared_ptr<TargetingRestriction>(new NoTargets())), amount(amount), token(token)
+		: amount(amount), token(token)
 	{}
 
 private:

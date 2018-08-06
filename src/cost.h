@@ -15,6 +15,8 @@ using SourceType = std::variant<std::shared_ptr<const Card>, std::shared_ptr<con
 struct Cost {
     virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const = 0;
     virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const = 0;
+
+	virtual ~Cost() {}
 };
 
 struct ManaCost : public Cost {

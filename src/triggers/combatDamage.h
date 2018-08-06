@@ -17,7 +17,7 @@ protected:
 			if (!this->justOwner || cdamage.source == this->owner) {
 				Changeset triggered;
 				triggered.combatDamage.push_back(cdamage);
-				results.push_back(QueueTrigger{ env.getController(this->owner), triggered, this->createAbility(cdamage) });
+				results.push_back(QueueTrigger{ env.getController(this->owner), this->owner, triggered, this->createAbility(cdamage) });
 			}
 		}
 		return results;

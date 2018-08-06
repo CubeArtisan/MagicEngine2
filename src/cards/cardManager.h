@@ -36,7 +36,6 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 			 std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
 			 std::shared_ptr<TargetingRestriction> targeting,
 			 Mana cost, std::vector<std::shared_ptr<Cost>> additionalCosts = {},
-			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities = {},
 			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities = {},
 	std::vector<std::shared_ptr<EventHandler>> replacementEffects = {}, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects = {},
 	std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects = {}, std::vector<size_t> thisOnlyReplacementIndexes = {});
@@ -45,7 +44,7 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 			 std::set<CardSubType> subTypes, int power, int toughness, int loyalty, std::set<Color> colors,
 			 std::shared_ptr<TargetingRestriction> targeting,
 			 std::vector<std::shared_ptr<Cost>> costs, std::vector<std::shared_ptr<Cost>> additionalCosts = {},
-			 std::vector<std::function<Changeset&(Changeset&, const Environment&, xg::Guid)>> applyAbilities = {},
+			 std::vector<std::function<std::optional<Changeset>(xg::Guid, const Environment&)>> applyAbilities = {},
 			 std::vector<std::shared_ptr<ActivatedAbility>> activatedAbilities = {},
 			 std::vector<std::shared_ptr<EventHandler>> replacementEffects = {}, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects = {},
 			 std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects = {}, std::vector<size_t> thisOnlyReplacementIndexes = {});
