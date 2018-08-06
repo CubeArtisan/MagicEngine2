@@ -11,25 +11,24 @@
 #include "gameAction.h"
 #include "mana.h"
 #include "stateQuery.h"
+#include "util.h"
 
 struct Ability;
 struct Changeset;
 struct Environment;
 struct ManaAbility;
 
-struct Targetable {
+struct Targetable : public clone_inherit<abstract_method<Targetable>> {
     // This is mutable state
     xg::Guid id;
-    xg::Guid owner;
+    // CodeReview: potentially make const
+	xg::Guid owner;
 
     Targetable();
 	virtual ~Targetable() {}
-	
-	// CodeReview: Implement
-	// virtual std::shared_ptr<Targetable> clone();
 };
 
-class Handler : public Targetable {
+class Handler : public clone_inherit<abstract_method<Handler>, Targetable> {
 public:
 	const std::set<ZoneType> activeSourceZones;
 	const std::set<ZoneType> activeDestinationZones;
@@ -42,27 +41,26 @@ public:
 	{}
 };
 
-class EventHandler : public Handler {
+class EventHandler : public clone_inherit<abstract_method<EventHandler>, Handler> {
 public:
     virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const = 0;
-	using Handler::Handler;
+	using clone_inherit<abstract_method<EventHandler>, Handler>::clone_inherit;
 	static inline bool selfReplacing = false;
 };
 
-class StaticEffectHandler : public Handler {
+class StaticEffectHandler : public clone_inherit<abstract_method<StaticEffectHandler>, Handler> {
 public:
     virtual StaticEffectQuery& handleEvent(StaticEffectQuery&, const Environment&) const = 0;
-	StaticEffectHandler(std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
-		: Handler(activeSourceZones, activeDestinationZones)
-	{}
+	
+	using clone_inherit<abstract_method<StaticEffectHandler>, Handler>::clone_inherit;
 };
 
 struct QueueTrigger;
 
-class TriggerHandler : public EventHandler {
+class TriggerHandler : public clone_inherit<abstract_method<TriggerHandler>, EventHandler> {
 public:
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const;
-	using EventHandler::EventHandler;
+	using clone_inherit<abstract_method<TriggerHandler>, EventHandler>::clone_inherit;
 
 protected:
 	virtual std::vector<QueueTrigger> createTriggers(const Changeset&, const Environment&) const = 0;

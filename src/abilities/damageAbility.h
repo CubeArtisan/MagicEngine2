@@ -4,7 +4,7 @@
 #include "../ability.h"
 #include "../targeting.h"
 
-struct DamageAbility : public Ability {
+struct DamageAbility : public clone_inherit<abstract_method<DamageAbility>, Ability> {
 	Changeset applyEffect(const Environment& env) const {
 		std::vector<std::pair<xg::Guid, int>> targets = this->getTargets(env);
 		Changeset damage;
@@ -16,16 +16,16 @@ struct DamageAbility : public Ability {
 	}
 
 	DamageAbility(std::shared_ptr<const TargetingRestriction> targeting)
-		: Ability(targeting)
+		: clone_inherit(targeting)
 	{}
 
 protected:
 	virtual std::vector<std::pair<xg::Guid, int>> getTargets(const Environment& env) const = 0;
 };
 
-struct EqualDamageAbility : public DamageAbility {
+struct EqualDamageAbility : public clone_inherit<abstract_method<EqualDamageAbility>, DamageAbility> {
 	EqualDamageAbility(std::shared_ptr<const TargetingRestriction> targeting, int amount)
-		: DamageAbility(targeting), amount(amount)
+		: clone_inherit(targeting), amount(amount)
 	{}
 
 protected:
@@ -41,14 +41,10 @@ protected:
 	virtual std::vector<xg::Guid> getTargetSet(const Environment& env) const = 0;
 };
 
-struct EqualDamageEachOpponentAbility : public EqualDamageAbility {
+struct EqualDamageEachOpponentAbility : public clone_inherit<EqualDamageEachOpponentAbility, EqualDamageAbility> {
 	EqualDamageEachOpponentAbility(int amount)
-		: EqualDamageAbility(std::shared_ptr<TargetingRestriction>(new NoTargets()), amount)
+		: clone_inherit(std::shared_ptr<TargetingRestriction>(new NoTargets()), amount)
 	{}
-
-	std::shared_ptr<Ability> clone() const {
-		return std::shared_ptr<Ability>(new EqualDamageEachOpponentAbility(amount));
-	}
 
 protected:
 	std::vector<xg::Guid> getTargetSet(const Environment& env) const {

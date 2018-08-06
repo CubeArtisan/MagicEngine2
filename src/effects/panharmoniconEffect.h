@@ -5,7 +5,7 @@
 #include "../environment.h"
 #include "../util.h"
 
-class PanharmoniconEffect : public EventHandler {
+class PanharmoniconEffect : public clone_inherit<PanharmoniconEffect, EventHandler> {
 public:
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment& env) const {
 		std::vector<QueueTrigger> toAdd;
@@ -27,7 +27,7 @@ public:
 	}
 
 	PanharmoniconEffect()
-		: EventHandler({}, {BATTLEFIELD})
+		: clone_inherit({}, {BATTLEFIELD})
 	{}
 };
 #endif

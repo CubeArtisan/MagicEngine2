@@ -4,7 +4,7 @@
 #include "../changeset.h"
 #include "../propositions/proposition.h"
 
-class EntersWithCounters : public EventHandler {
+class EntersWithCounters : public clone_inherit<EntersWithCounters, EventHandler> {
 public:
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changes, const Environment& env) const {
 		bool replaced = false;
@@ -30,7 +30,7 @@ public:
 	}
 
 	EntersWithCounters(int amount, PropositionValue prop = TrueProposition())
-		: EventHandler({}, {BATTLEFIELD}), amount(amount), prop(prop)
+		: clone_inherit({}, {BATTLEFIELD}), amount(amount), prop(prop)
 	{}
 
 private:

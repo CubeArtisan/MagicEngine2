@@ -28,7 +28,7 @@ private:
 	xg::Guid flyer;
 };
 
-class FlyingHandler : public StaticEffectHandler {
+class FlyingHandler : public clone_inherit<FlyingHandler, StaticEffectHandler> {
 public:
 	StaticEffectQuery& handleEvent(StaticEffectQuery& query, const Environment& env) const override {
 		if (BlockRestrictionQuery* block = std::get_if<BlockRestrictionQuery>(&query)) {
@@ -47,7 +47,7 @@ public:
 	}
 
 	FlyingHandler()
-		: StaticEffectHandler({}, { BATTLEFIELD })
+		: clone_inherit({}, { BATTLEFIELD })
 	{}
 };
 

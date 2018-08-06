@@ -18,8 +18,8 @@
 #include "card.h"
 #include "ability.h"
 
-struct ZoneInterface {
-    virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object) = 0;
+struct ZoneInterface : public clone_inherit<abstract_method<ZoneInterface>>{
+    virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object, int index = 0) = 0;
     virtual std::shared_ptr<const Targetable> removeObject(xg::Guid object) = 0;
 	virtual std::shared_ptr<const Targetable> findObject(xg::Guid object) const = 0;
 	virtual std::vector<std::shared_ptr<const Targetable>> getObjects() const = 0;
@@ -31,15 +31,15 @@ struct ZoneInterface {
 };
 
 template<typename... Args>
-struct Zone : public Targetable, public ZoneInterface {
+struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
     std::vector<std::variant<std::shared_ptr<const Args>...>> objects;
     
-    xg::Guid addObject(const std::shared_ptr<const Targetable>& object) {
-        this->addObjectInternal<Args...>(object);
+    xg::Guid addObject(const std::shared_ptr<const Targetable>& object, int index = 0) override {
+        this->addObjectInternal<Args...>(object, index);
 		return object->id;
 	}
 
-    std::shared_ptr<const Targetable> removeObject(xg::Guid object){
+    std::shared_ptr<const Targetable> removeObject(xg::Guid object) override {
         for(auto iter=objects.rbegin(); iter != objects.rend(); iter++) {
             std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(*iter);
             if(val->id == object){
@@ -53,7 +53,7 @@ struct Zone : public Targetable, public ZoneInterface {
 #endif
         throw "Failed to find object for removal";
     }
-	std::shared_ptr<const Targetable> findObject(xg::Guid object) const {
+	std::shared_ptr<const Targetable> findObject(xg::Guid object) const override {
 		for (auto iter = objects.rbegin(); iter != objects.rend(); iter++) {
 			std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(*iter);
 			if (val->id == object) {
@@ -72,15 +72,14 @@ struct Zone : public Targetable, public ZoneInterface {
 		return result;
 	}
 
-	Zone(ZoneType type)
-		: ZoneInterface(type)
-	{}
+	using clone_inherit<Zone<Args...>, ZoneInterface, Targetable>::clone_inherit;
 
 private:
     template<typename T, typename... Extra>
-    void addObjectInternal(const std::shared_ptr<const Targetable>& object){
+    void addObjectInternal(const std::shared_ptr<const Targetable>& object, int index){
         if(std::shared_ptr<const T> result = std::dynamic_pointer_cast<const T>(object)){
-            this->objects.push_back(result);
+			if (index >= 0) this->objects.insert(this->objects.begin() + (this->objects.size() - index), result);
+			else this->objects.insert(this->objects.begin() + (1 - index), result);
         }
         else {
             if constexpr(sizeof...(Extra) == 0) {
@@ -90,7 +89,7 @@ private:
                 throw "Could not convert to internal types";
             }
             else {
-                return addObjectInternal<Extra...>(object);
+                return addObjectInternal<Extra...>(object, index);
             }
         }
     }

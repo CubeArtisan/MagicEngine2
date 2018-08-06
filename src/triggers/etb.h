@@ -7,7 +7,7 @@
 #include "../environment.h"
 #include "../util.h"
 
-class EtbTriggerHandler : public TriggerHandler {
+class EtbTriggerHandler : public clone_inherit<EtbTriggerHandler, TriggerHandler> {
 public:
 	std::vector<QueueTrigger> operator()(const Changeset& changes, const Environment& env) const {
 		std::vector<QueueTrigger> result;
@@ -31,12 +31,12 @@ public:
 
 	template<typename Trigger>
 	EtbTriggerHandler(Trigger func, bool selfOnly=false)
-		: TriggerHandler(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), selfOnly(selfOnly), createAbility(func)
+		: clone_inherit(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), selfOnly(selfOnly), createAbility(func)
 	{}
 
 	template<typename Trigger>
 	EtbTriggerHandler(std::set<CardType> watchFor, bool controlled, Trigger func, std::set<ZoneType> activeSourceZones, std::set<ZoneType> activeDestinationZones)
-		: TriggerHandler(activeSourceZones, activeDestinationZones), watchFor(watchFor), controlled(controlled), createAbility(func)
+		: clone_inherit(activeSourceZones, activeDestinationZones), watchFor(watchFor), controlled(controlled), createAbility(func)
 	{}
 
 protected:

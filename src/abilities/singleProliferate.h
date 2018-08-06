@@ -5,7 +5,7 @@
 #include "../environment.h"
 #include "../targeting.h"
 
-class SingleProliferateAbility : public Ability {
+class SingleProliferateAbility : public clone_inherit<SingleProliferateAbility, Ability> {
 public:
 	Changeset applyEffect(const Environment& env) const {
 		Changeset changes;
@@ -24,12 +24,8 @@ public:
 	}
 
 	SingleProliferateAbility()
-		: Ability(std::shared_ptr<TargetingRestriction>(new PermanentOrPlayerTarget()))
+		: clone_inherit(std::shared_ptr<TargetingRestriction>(new PermanentOrPlayerTarget()))
 	{}
-
-	std::shared_ptr<Ability> clone() const override {
-		return std::shared_ptr<Ability>(new SingleProliferateAbility(*this));
-	}
 };
 
 #endif

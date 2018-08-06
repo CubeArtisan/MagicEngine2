@@ -5,7 +5,7 @@
 #include "../combat.h"
 #include "../environment.h"
 
-class PlusForEachHandler : public StaticEffectHandler {
+class PlusForEachHandler : public clone_inherit<PlusForEachHandler, StaticEffectHandler> {
 public:
 	StaticEffectQuery & handleEvent(StaticEffectQuery& query, const Environment& env) const override {
 		if (power){
@@ -51,7 +51,7 @@ public:
 	}
 
 	PlusForEachHandler(ZoneType zone, std::function<bool(std::shared_ptr<const Targetable>, const Environment&, xg::Guid)> filter, bool power=true, bool toughness=false)
-		: StaticEffectHandler({}, { BATTLEFIELD }), zone(zone), filter(filter), power(power), toughness(toughness)
+		: clone_inherit({}, { BATTLEFIELD }), zone(zone), filter(filter), power(power), toughness(toughness)
 	{}
 
 private:

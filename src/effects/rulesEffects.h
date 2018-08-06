@@ -4,7 +4,7 @@
 #include "../changeset.h"
 #include "../util.h"
 
-class TokenMovementEffect : public EventHandler {
+class TokenMovementEffect : public clone_inherit<TokenMovementEffect, EventHandler> {
 public:
 	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment& env) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
@@ -24,13 +24,13 @@ public:
 	}
 
 	TokenMovementEffect()
-		: EventHandler({}, {})
+		: clone_inherit({}, {})
 	{}
 };
 
-class ZeroDamageEffect : public EventHandler {
+class ZeroDamageEffect : public clone_inherit<ZeroDamageEffect, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment& env) const {
+	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment&) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
 		std::vector<size_t> toRemove;
 		size_t i = 0;
@@ -48,12 +48,12 @@ public:
 	}
 
 	ZeroDamageEffect()
-		: EventHandler({}, {})
+		: clone_inherit({}, {})
 	{}
 };
 
 // CodeReview: Create StateQueryHandler for +1/+1 and -1/-1 counters
-class CounterPowerToughnessEffect : public StaticEffectHandler {
+class CounterPowerToughnessEffect : public clone_inherit<CounterPowerToughnessEffect, StaticEffectHandler> {
 public:
 	StaticEffectQuery& handleEvent(StaticEffectQuery& query, const Environment& env) const {
 		if (PowerQuery* powerQuery = std::get_if<PowerQuery>(&query)) {
@@ -72,7 +72,7 @@ public:
 	}
 	
 	CounterPowerToughnessEffect()
-		: StaticEffectHandler({}, {})
+		: clone_inherit({}, {})
 	{}
 };
 #endif

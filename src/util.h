@@ -48,6 +48,107 @@ auto end(reversion_wrapper<T> w) { return std::rend(w.iterable); }
 template <typename T>
 reversion_wrapper<T> reverse(T&& iterable) { return { iterable }; }
 
+template<int N, typename... Ts> using NthTypeOf =
+typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+// https://www.fluentcpp.com/2017/09/12/how-to-return-a-smart-pointer-and-use-covariance/
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+class abstract_method
+{
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+class virtual_inherit_from : virtual public T
+{
+	using T::T;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Derived, typename ... Bases>
+class clone_inherit : public Bases...
+{
+public:
+	virtual ~clone_inherit() = default;
+
+	std::shared_ptr<Derived> clone() const
+	{
+		return std::shared_ptr<Derived>(static_cast<Derived *>(this->clone_impl()));
+	}
+
+protected:
+	using NthTypeOf<0, Bases...>::NthTypeOf;
+
+private:
+	virtual clone_inherit * clone_impl() const override
+	{
+		return new Derived(static_cast<const Derived & >(*this));
+	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Derived, typename ... Bases>
+class clone_inherit<abstract_method<Derived>, Bases...> : public Bases...
+{
+public:
+	virtual ~clone_inherit() = default;
+
+	std::shared_ptr<Derived> clone() const
+	{
+		return std::shared_ptr<Derived>(static_cast<Derived *>(this->clone_impl()));
+	}
+
+protected:
+	using NthTypeOf<0, Bases...>::NthTypeOf;
+
+private:
+	virtual clone_inherit * clone_impl() const = 0;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Derived>
+class clone_inherit<Derived>
+{
+public:
+	virtual ~clone_inherit() = default;
+
+	std::shared_ptr<Derived> clone() const
+	{
+		return std::shared_ptr<Derived>(static_cast<Derived *>(this->clone_impl()));
+	}
+
+private:
+	virtual clone_inherit * clone_impl() const override
+	{
+		return new Derived(static_cast<const Derived & >(*this));
+	}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename Derived>
+class clone_inherit<abstract_method<Derived>>
+{
+public:
+	virtual ~clone_inherit() = default;
+
+	std::shared_ptr<Derived> clone() const
+	{
+		return std::shared_ptr<Derived>(static_cast<Derived *>(this->clone_impl()));
+	}
+
+private:
+	virtual clone_inherit * clone_impl() const = 0;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
 template<size_t N = 16>
 class store
 {

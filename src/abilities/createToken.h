@@ -7,7 +7,7 @@
 #include "../changeset.h"
 #include "../targeting.h"
 
-struct CreateTokensAbility : public Ability {
+struct CreateTokensAbility : public clone_inherit<CreateTokensAbility, Ability> {
 	Changeset applyEffect(const Environment& env) const {
 		Changeset createTokens;
 		for (int i = 0; i < this->amount; i++) {
@@ -21,12 +21,8 @@ struct CreateTokensAbility : public Ability {
 	}
 
 	CreateTokensAbility(int amount, Token token)
-		: Ability(std::shared_ptr<TargetingRestriction>(new NoTargets())), amount(amount), token(token)
+		: clone_inherit(std::shared_ptr<TargetingRestriction>(new NoTargets())), amount(amount), token(token)
 	{}
-
-	std::shared_ptr<Ability> clone() const {
-		return std::shared_ptr<Ability>(new CreateTokensAbility(*this));
-	}
 
 private:
 	const int amount;

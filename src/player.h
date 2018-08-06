@@ -4,7 +4,7 @@
 #include "changeset.h"
 #include "strategy.h"
 
-struct Player : public Targetable {
+struct Player : public clone_inherit<Player, Targetable> {
 public:
 	const std::shared_ptr<Strategy> strategy;
 

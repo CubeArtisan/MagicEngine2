@@ -3,10 +3,10 @@
 
 #include "../changeset.h"
 
-class CombatDamageTrigger : public TriggerHandler {
+class CombatDamageTrigger : public clone_inherit<CombatDamageTrigger, TriggerHandler> {
 public:
 	CombatDamageTrigger(std::function<std::shared_ptr<Ability>(DamageToTarget)> createAbility, bool justOwner = true)
-		: TriggerHandler({}, { BATTLEFIELD }), createAbility(createAbility), justOwner(justOwner)
+		: clone_inherit({}, { BATTLEFIELD }), createAbility(createAbility), justOwner(justOwner)
 	{}
 
 protected:
