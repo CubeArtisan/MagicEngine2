@@ -142,3 +142,13 @@ std::vector<xg::Guid> RandomStrategy::chooseBlockingOrder(std::shared_ptr<CardTo
 int RandomStrategy::chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid, int minDamage, int maxDamage, const Environment&) {
 	return (rand() % (maxDamage - minDamage + 1)) + minDamage;
 }
+
+std::optional<Changeset> RandomStrategy::chooseUpToOne(const std::vector<Changeset>& changes, const Player&, const Environment&) {
+	int choice = rand() % (changes.size() + 1);
+	if (choice == changes.size()) return std::nullopt;
+	else return changes[choice];
+}
+
+Changeset RandomStrategy::chooseOne(const std::vector<Changeset>& changes, const Player&, const Environment&) {
+	return changes[rand() % changes.size()];
+}

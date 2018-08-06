@@ -188,3 +188,67 @@ Changeset Changeset::discardCards(xg::Guid playerId, size_t amount, const Enviro
 	for (xg::Guid& guid : cards) result.moves.push_back(ObjectMovement{ guid, env.hands.at(playerId)->id, env.graveyards.at(playerId)->id });
 	return result;
 }
+
+template<typename T>
+std::vector<std::pair<std::vector<T>, std::vector<T>>> create_combinations(std::vector<T> vec) {
+	std::vector<std::pair<std::vector<T>, std::vector<T>>> result;
+	T t = vec.back();
+	if (vec.size() == 1) return { { { t },{} },{ {},{ t } } };
+	vec.erase(vec.end()-1);
+	result = create_combinations(vec);
+	size_t curSize = result.size();
+	result.insert(result.begin(), result.begin(), result.end());
+	for (int i = 0; i < curSize; i++) result[i].first.push_back(t);
+	for (int i = curSize; i < result.size(); i++) result[i].second.push_back(t);
+	return result;
+}
+
+template<typename T>
+std::vector<std::vector<T>> createPermutations(std::vector<T> vec) {
+	std::vector<std::vector<T>> result;
+	for (int i = 0; i < vec.size(); i++) {
+		std::vector<T> vec2 = vec;
+		T t = vec2[i];
+		vec2.erase(vec2.begin() + i);
+		std::vector<std::vector<T>> remaining = createPermutations(vec2);
+		for (auto& v : remaining) {
+			v.push_back(t);
+		}
+		result.insert(result.end(), remaining.begin(), remaining.end());
+	}
+	return result;
+}
+
+Changeset Changeset::scryCards(xg::Guid player, size_t amount, const Environment& env) {
+	Changeset result;
+	const Zone<Card, Token>& libraryZone = *env.libraries.at(player);
+	auto library = libraryZone.objects;
+	if (amount > library.size()) {
+		amount = library.size();
+	}
+	std::vector<xg::Guid> cards;
+	cards.reserve(amount);
+	auto card = library.begin() + (library.size() - amount);
+	for (; card != library.end(); card++) {
+		std::shared_ptr<const Targetable> c = getBaseClassPtr<const Targetable>(*card);
+		cards.push_back(c->id);
+	}
+	std::vector<Changeset> changes;
+	std::vector<std::vector<xg::Guid>> allPermutations = createPermutations(cards);
+	std::vector<std::pair<std::vector<xg::Guid>, std::vector<xg::Guid>>> options;
+	for (auto& p : allPermutations) {
+		std::vector<std::pair<std::vector<xg::Guid>, std::vector<xg::Guid>>> comb = create_combinations(p);
+		options.insert(options.end(), comb.begin(), comb.end());
+	}
+	for (auto& p : options) {
+		Changeset change;
+		for (auto t : p.first) {
+			change.moves.push_back(ObjectMovement{ t, libraryZone.id, libraryZone.id });
+		}
+		for (auto b : p.second) {
+			change.moves.push_back(ObjectMovement{ b, libraryZone.id, libraryZone.id, -1 });
+		}
+	}
+	std::shared_ptr<Player> p = std::dynamic_pointer_cast<Player>(env.gameObjects.at(player));
+	return p->strategy->chooseOne(changes, *p, env);
+}

@@ -368,9 +368,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		xg::Guid id = oc.created->id;
 #ifdef DEBUG
 		// CodeReview: If is CardToken show name
-		std::cout << "Creating " << id << " in " << zone->type << std::endl;
+		std::cout << "Creating " << id << " in " << zone->type << " at index " << oc.index << std::endl;
 #endif
-        zone->addObject(oc.created);
+        zone->addObject(oc.created, oc.index);
         this->env.gameObjects[id] = oc.created;
 		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(oc.created)) {
 			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
@@ -857,13 +857,14 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		this->applyChangeset(apply);
 	}
     for(ObjectMovement& om : changeset.moves) {
+		// CodeReview: Should create a vector of all removes and all adds and do them that way
 		std::shared_ptr<Targetable> object = this->env.gameObjects.at(om.object);
 		Changeset remove;
 		remove.remove.push_back(RemoveObject{ om.object, om.sourceZone });
 		this->applyChangeset(remove);
 		Changeset create;
 		object->id = om.newObject;
-		create.create.push_back(ObjectCreation{ om.destinationZone, object });
+		create.create.push_back(ObjectCreation{ om.destinationZone, object, om.index });
 		this->applyChangeset(create);
 	}
 	for (xg::Guid& ltg : changeset.loseTheGame) {

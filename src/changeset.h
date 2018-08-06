@@ -84,6 +84,7 @@ struct ObjectMovement {
 	xg::Guid object;
 	xg::Guid sourceZone;
 	xg::Guid destinationZone;
+	int index{ 0 };
     xg::Guid newObject { xg::newGuid() };
 };
 
@@ -112,6 +113,7 @@ struct RemoveMana {
 struct ObjectCreation {
 	xg::Guid zone;
 	std::shared_ptr<Targetable> created;
+	int index{ 0 };
 };
 
 struct LifeTotalChange {
@@ -197,6 +199,7 @@ struct Changeset {
 
     static Changeset drawCards(xg::Guid player, size_t amount, const Environment& env);
 	static Changeset discardCards(xg::Guid player, size_t amount, const Environment& env);
+	static Changeset scryCards(xg::Guid player, size_t amount, const Environment& env);
 };
 
 struct QueueTrigger {

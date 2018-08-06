@@ -23,8 +23,9 @@ public:
 	virtual std::vector<xg::Guid> chooseBlockingOrder(std::shared_ptr<CardToken> attacker, std::vector<std::shared_ptr<CardToken>> blockers,
 													  const Environment& env) = 0;
 	virtual int chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env) = 0;
-
-	};
+	virtual std::optional<Changeset> chooseUpToOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env) = 0;
+	virtual Changeset chooseOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env) = 0;
+};
 
 class RandomStrategy : public Strategy {
 public:
@@ -42,7 +43,8 @@ public:
 	virtual std::vector<xg::Guid> chooseBlockingOrder(std::shared_ptr<CardToken> attacker, std::vector<std::shared_ptr<CardToken>> blockers,
 													  const Environment& env);
 	virtual int chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env);
-
+	virtual std::optional<Changeset> chooseUpToOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env);
+	virtual Changeset chooseOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env);
 };
 
 #endif

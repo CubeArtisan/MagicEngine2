@@ -35,14 +35,17 @@
 CardManager::CardManager(){
 	AManager().getCards(this->cards, this->mvids);
 	BManager().getCards(this->cards, this->mvids);
+	CManager().getCards(this->cards, this->mvids);
     DManager().getCards(this->cards, this->mvids);
 	FManager().getCards(this->cards, this->mvids);
 	GManager().getCards(this->cards, this->mvids);
     IManager().getCards(this->cards, this->mvids);
 	LManager().getCards(this->cards, this->mvids);
 	MManager().getCards(this->cards, this->mvids);
+	OManager().getCards(this->cards, this->mvids);
 	PManager().getCards(this->cards, this->mvids);
 	SManager().getCards(this->cards, this->mvids);
+	TManager().getCards(this->cards, this->mvids);
 	WManager().getCards(this->cards, this->mvids);
 }
 
