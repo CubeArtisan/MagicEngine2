@@ -234,6 +234,7 @@ void Runner::runGame(){
 					// Then repeat till nullopt
 					// Then move ability/card to correct zone
                     std::shared_ptr<HasEffect> hasEffect = getBaseClassPtr<const HasEffect>(top)->clone();
+					hasEffect->resetEffect();
 					std::optional<Changeset> resolveAbility = hasEffect->getChangeset(env);
 					while (resolveAbility) {
 						this->applyChangeset(resolveAbility.value());

@@ -37,9 +37,9 @@ public:
 	{}
 
 	std::optional<Changeset> getChangeset(xg::Guid source, const Environment& env) {
-		if (curIndex >= this->funcs.size()) return std::nullopt;
+		if (this->curIndex >= this->funcs.size()) return std::nullopt;
 
-		return funcs[curIndex++](source, env);
+		return funcs[this->curIndex++](source, env);
 	}
 
 	void reset() {

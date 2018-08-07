@@ -9,7 +9,7 @@ std::optional<Changeset> HasEffect::getChangeset(const Environment& env) {
 	return this->effect.getChangeset(this->id, env);
 }
 
-void HasEffect::reset() {
+void HasEffect::resetEffect() {
 	this->effect.reset();
 }
 

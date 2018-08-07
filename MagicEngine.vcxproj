@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="src\abilities\createToken.h" />
     <ClInclude Include="src\abilities\damageAbility.h" />
+    <ClInclude Include="src\abilities\explore.h" />
     <ClInclude Include="src\abilities\singleProliferate.h" />
     <ClInclude Include="src\ability.h" />
     <ClInclude Include="src\card.h" />

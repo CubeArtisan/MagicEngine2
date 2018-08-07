@@ -190,16 +190,16 @@ Changeset Changeset::discardCards(xg::Guid playerId, size_t amount, const Enviro
 }
 
 template<typename T>
-std::vector<std::pair<std::vector<T>, std::vector<T>>> create_combinations(std::vector<T> vec) {
+std::vector<std::pair<std::vector<T>, std::vector<T>>> createCombinations(std::vector<T> vec) {
 	std::vector<std::pair<std::vector<T>, std::vector<T>>> result;
 	T t = vec.back();
 	if (vec.size() == 1) return { { { t },{} },{ {},{ t } } };
 	vec.erase(vec.end()-1);
-	result = create_combinations(vec);
+	result = createCombinations(vec);
 	size_t curSize = result.size();
 	result.insert(result.begin(), result.begin(), result.end());
-	for (int i = 0; i < curSize; i++) result[i].first.push_back(t);
-	for (int i = curSize; i < result.size(); i++) result[i].second.push_back(t);
+	for (size_t i = 0; i < curSize; i++) result[i].first.push_back(t);
+	for (size_t i = curSize; i < result.size(); i++) result[i].second.push_back(t);
 	return result;
 }
 
@@ -237,7 +237,7 @@ Changeset Changeset::scryCards(xg::Guid player, size_t amount, const Environment
 	std::vector<std::vector<xg::Guid>> allPermutations = createPermutations(cards);
 	std::vector<std::pair<std::vector<xg::Guid>, std::vector<xg::Guid>>> options;
 	for (auto& p : allPermutations) {
-		std::vector<std::pair<std::vector<xg::Guid>, std::vector<xg::Guid>>> comb = create_combinations(p);
+		std::vector<std::pair<std::vector<xg::Guid>, std::vector<xg::Guid>>> comb = createCombinations(p);
 		options.insert(options.end(), comb.begin(), comb.end());
 	}
 	for (auto& p : options) {

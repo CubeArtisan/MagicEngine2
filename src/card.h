@@ -29,7 +29,7 @@ struct HasEffect : public clone_inherit<abstract_method<HasEffect>, Targetable> 
 	const std::shared_ptr<const TargetingRestriction> targeting;
 
 	std::optional<Changeset> getChangeset(const Environment& env);
-	void reset();
+	void resetEffect();
 
 	HasEffect(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting);
 };
