@@ -57,6 +57,8 @@ public:
 	Guid &operator=(const Guid &other);
 	bool operator==(const Guid &other) const;
 	bool operator!=(const Guid &other) const;
+	bool operator<=(const Guid &other) const;
+	bool operator>=(const Guid &other) const;
 
 	std::string str() const;
 	operator std::string() const;

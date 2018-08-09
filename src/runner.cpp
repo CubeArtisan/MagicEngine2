@@ -78,7 +78,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 		}
 		// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
 		if (subtypes->find(AURA) != subtypes->end()) {
-			if (!card->targeting->validTargets(this->env.targets.at(card->id), this->env)) {
+			if (!card->targeting->validTargets(this->env.targets.at(card->id), *card, this->env)) {
 				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
 				apply = true;
 			}
@@ -229,37 +229,41 @@ void Runner::runGame(){
                 else{
                     std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>,
                                  std::shared_ptr<const Ability>> top = this->env.stack->objects.back();
-
-					// CodeReview: Call getNextApplyEffect if not nullopt applyChangeset
-					// Then repeat till nullopt
-					// Then move ability/card to correct zone
                     std::shared_ptr<HasEffect> hasEffect = getBaseClassPtr<const HasEffect>(top)->clone();
-					hasEffect->resetEffect();
-					std::optional<Changeset> resolveAbility = hasEffect->getChangeset(env);
-					while (resolveAbility) {
-						this->applyChangeset(resolveAbility.value());
-						resolveAbility = hasEffect->getChangeset(env);
+					std::vector<xg::Guid> targets;
+					if(env.targets.find(hasEffect->id) != env.targets.end()) targets = env.targets.at(hasEffect->id);
+					if (hasEffect->targeting->anyValidTarget(targets, *hasEffect, env)) {
+						hasEffect->resetEffect();
+						std::optional<Changeset> resolveAbility = hasEffect->getChangeset(env);
+						while (resolveAbility) {
+							this->applyChangeset(resolveAbility.value());
+							resolveAbility = hasEffect->getChangeset(env);
+						}
+						Changeset resolveSpellAbility;
+						if (const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&top)) {
+							std::shared_ptr<const Card> card = *pCard;
+							bool isPermanent = false;
+							for (CardType type : *this->env.getTypes(card)) {
+								if (PERMANENTBEGIN < type && type < PERMANENTEND) {
+									resolveSpellAbility.moves.push_back(ObjectMovement{ card->id, stack->id, this->env.battlefield->id });
+									isPermanent = true;
+									break;
+								}
+							}
+							if (!isPermanent) {
+								resolveSpellAbility.moves.push_back(ObjectMovement{ card->id, stack->id, this->env.graveyards.at(card->owner)->id });
+							}
+						}
+						else {
+							xg::Guid id = getBaseClassPtr<const Targetable>(top)->id;
+							resolveSpellAbility.remove.push_back(RemoveObject{ id, stack->id });
+						}
+						applyChangeset(resolveSpellAbility);
 					}
-					Changeset resolveSpellAbility;
-                    if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&top)) {
-						std::shared_ptr<const Card> card = *pCard;
-                        bool isPermanent = false;
-                        for(CardType type : *this->env.getTypes(card)){
-                            if(PERMANENTBEGIN < type && type < PERMANENTEND) {
-                                resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.battlefield->id});
-                                isPermanent = true;
-								break;
-                            }
-                        }
-                        if(!isPermanent){
-                            resolveSpellAbility.moves.push_back(ObjectMovement{card->id, stack->id, this->env.graveyards.at(card->owner)->id});
-                        }
-                    }
-                    else {
-                        xg::Guid id = getBaseClassPtr<const Targetable>(top)->id;
-                        resolveSpellAbility.remove.push_back(RemoveObject{id, stack->id});
-                    }
-                    applyChangeset(resolveSpellAbility);
+					else {
+						Changeset countered;
+						countered.moves.push_back(ObjectMovement{ hasEffect->id, stack->id, this->env.graveyards.at(hasEffect->owner)->id });
+					}
                 }
 				this->env.currentPlayer = this->env.turnPlayer;
             }

@@ -76,7 +76,7 @@ std::vector<xg::Guid> RandomStrategy::chooseTargets(const std::shared_ptr<const 
 		for (int i = 0; i < effect->targeting->maxTargets; i++) {
 			for (const auto& object : env.gameObjects) {
 				targets.push_back(object.first);
-				if (effect->targeting->validFirstN(targets, env)) {
+				if (effect->targeting->validFirstN(targets, *effect, env)) {
 					break;
 				}
 				targets.pop_back();

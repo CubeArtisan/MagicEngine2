@@ -274,6 +274,23 @@ bool Guid::operator!=(const Guid &other) const
 	return !((*this) == other);
 }
 
+bool Guid::operator<=(const Guid &other) const {
+	for (int i = 0; i < this->_bytes.size(); i++) {
+		if(this->_bytes[i] < other._bytes[i]) return true;
+		else if (this->_bytes[i] > other._bytes[i]) return false;
+	}
+	return true;
+}
+
+bool Guid::operator>=(const Guid &other) const {
+	for (int i = 0; i < this->_bytes.size(); i++) {
+		if (this->_bytes[i] < other._bytes[i]) return false;
+		else if (this->_bytes[i] > other._bytes[i]) return true;
+	}
+	return true;
+}
+
+
 // member swap function
 void Guid::swap(Guid &other)
 {

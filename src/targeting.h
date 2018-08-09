@@ -22,8 +22,31 @@ bool isUnique(const std::vector<T>& x) {
 
 class TargetingRestriction {
 public:
-	virtual bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const = 0;
-	virtual bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const = 0;
+	virtual bool validFirstN(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const {
+		if (targets.size() == 0) return true;
+		if (targets.size() > this->maxTargets || !isUnique(targets)) return false;
+
+		size_t index = 0;
+		for (const xg::Guid& target : targets) {
+			if (!this->validTarget(target, index++, source, env)) return false;
+		}
+		return true;
+	}
+	
+	virtual bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const = 0;
+	
+	virtual bool anyValidTarget(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const {
+		if (targets.size() == 0) return true;
+		if (targets.size() > this->maxTargets || !isUnique(targets)) return false;
+
+		size_t index = 0;
+		for (const xg::Guid& target : targets) {
+			if (this->validTarget(target, index++, source, env)) return true;
+		}
+		return false;
+	}
+
+	virtual bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const = 0;
 
 	const int minTargets;
 	const int maxTargets;
@@ -37,12 +60,12 @@ public:
 
 class NoTargets : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment&) const {
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment&) const override {
 		return targets.size() == 0;
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment&) const {
-		return targets.size() == 0;
+	virtual bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+		return false;
 	}
 
 	NoTargets()
@@ -50,65 +73,59 @@ public:
 	{}
 };
 
-template<int n, typename TargetType>
+template<typename TargetType, int n_=1>
 class UpToNTargets : TargetingRestriction{
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		if (targets.size() > n || !isUnique(targets)) return false;
-
-		for (xg::Guid target : targets) {
-			if (targeting.validTargets(std::vector<xg::Guid>{target}, env)) {
-				continue;
-			}
-			return false;
-		}
-	}
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		return targets.size() <= n && this->validFirstN(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return targets.size() <= n && this->validFirstN(targets, source, env);
 	}
 
-	UpToNTargets()
-	: TargetingRestriction(0, n)
+	virtual bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+		return targeting.validTarget(target, 0, source, env);
+	}
+
+	UpToNTargets(int n = n_)
+	: TargetingRestriction(0, n), n(n)
 	{}
 
 private:
+	int n;
 	TargetType targeting;
 };
 
-template<int n, typename TargetType>
+template<typename TargetType, int n_=1>
 class ExactlyNTargets : TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		if (targets.size() > n || !isUnique(targets)) return false;
-
-		for (xg::Guid target : targets) {
-			if (targeting.validTargets(std::vector<xg::Guid>{target}, env)) {
-				continue;
-			}
-			return false;
-		}
-	}
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		return targets.size() == n && this->validFirstN(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return targets.size() == n && this->validFirstN(targets, source, env);
 	}
 
-	ExactlyNTargets()
-		: TargetingRestriction(n, n)
+	virtual bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+		return targeting.validTarget(target, 0, source, env);
+	}
+
+	ExactlyNTargets(int n=n_)
+		: TargetingRestriction(n, n), n(n)
 	{}
 
 private:
+	int n;
 	TargetType targeting;
 };
 
 template<typename Target1, typename Target2>
 class OrTarget : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const override {
-		return target1.validFirstN(targets, env) || target2.validFirstN(targets, env);
+	bool validFirstN(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return target1.validFirstN(targets, source, env) || target2.validFirstN(targets, source, env);
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const override {
-		return target1.validTargets(targets, env) || target2.validTargets(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return target1.validTargets(targets, source, env) || target2.validTargets(targets, source, env);
+	}
+
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+		return target1.validTarget(target, index, source, env), target2.validTarget(target, index, source, env);
 	}
 
 	OrTarget()
@@ -122,11 +139,7 @@ private:
 
 class AnyTarget : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		if (targets.size() > 1) return false;
-		if (targets.size() == 0) return true;
-
-		xg::Guid target = targets[0];
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
 		std::shared_ptr<Targetable> object = env.gameObjects.at(target);
 		if (std::dynamic_pointer_cast<Player>(object)) {
 			return true;
@@ -142,8 +155,8 @@ public:
 		return false;
 	}
 	
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		return targets.size() == 1 && this->validFirstN(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
 	}
 
 	AnyTarget()
@@ -153,11 +166,7 @@ public:
 
 class PlayerTarget : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		if (targets.size() > 1) return false;
-		if (targets.size() == 0) return true;
-
-		xg::Guid target = targets[0];
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
 		std::shared_ptr<Targetable> object = env.gameObjects.at(target);
 		if (std::dynamic_pointer_cast<Player>(object)) {
 			return true;
@@ -165,8 +174,8 @@ public:
 		return false;
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		return targets.size() == 1 && this->validFirstN(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
 	}
 
 	PlayerTarget()
@@ -176,16 +185,12 @@ public:
 
 class PermanentTarget : public TargetingRestriction {
 public:
-	bool validFirstN(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		if (targets.size() > 1) return false;
-		if (targets.size() == 0) return true;
-
-		xg::Guid target = targets[0];
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
 		return (bool)env.battlefield->findObject(target);
 	}
 
-	bool validTargets(const std::vector<xg::Guid>& targets, const Environment& env) const {
-		return targets.size() == 1 && this->validFirstN(targets, env);
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
 	}
 
 	PermanentTarget()

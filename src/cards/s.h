@@ -10,7 +10,7 @@
 
 #include "cardManager.h"
 
-Card SirenLookout = newCard("Siren Lookout", 3, {}, { CREATURE }, { SIREN, PIRATE }, 1, 2, 0, { BLUE }, Mana(1, { BLUE }), {}, {},
+Card SirenLookout = newCard("Siren Lookout", 3, {}, { CREATURE }, { SIREN, PIRATE }, 1, 2, 0, { BLUE }, Mana(2, { BLUE }), {}, {},
 	{}, { std::shared_ptr<TriggerHandler>(new EtbTriggerHandler([](std::shared_ptr<CardToken> card, std::optional<xg::Guid>) ->
 			std::shared_ptr<Ability> { return std::make_shared<Ability>(LambdaEffects(ExploreAbility(card->id)), std::shared_ptr<TargetingRestriction>(new NoTargets())); }, true)) });
 Card SkyshipPlunderer = newCard("Skyship Plunderer", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 2, 1, 0, { BLUE }, Mana(1, { BLUE }), {}, {}, {},
@@ -29,6 +29,7 @@ class SManager : public LetterManager {
 public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
+		insertCard(cards, SirenLookout);
 		insertCard(cards, SkyshipPlunderer);
 		insertCard(cards, StormFleetAerialist);
 		insertCard(cards, Swamp);
