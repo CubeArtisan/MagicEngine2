@@ -70,7 +70,7 @@ int Environment::getPower(xg::Guid target)  const {
 
 int Environment::getPower(std::shared_ptr<const CardToken> target) const{
 	PowerQuery query{ *target, target->basePower };
-	return std::get<PowerQuery>(executeStateQuery(query)).currentValue;
+	return std::get<PowerQuery>(executeStateQuery(query)).power;
 }
 
 int Environment::getToughness(xg::Guid target)  const {
@@ -80,7 +80,7 @@ int Environment::getToughness(xg::Guid target)  const {
 
 int Environment::getToughness(std::shared_ptr<const CardToken> target) const {
 	ToughnessQuery query{ *target, target->baseToughness };
-	return std::get<ToughnessQuery>(executeStateQuery(query)).currentValue;
+	return std::get<ToughnessQuery>(executeStateQuery(query)).toughness;
 }
 
 bool Environment::goodTiming(xg::Guid target) const {
@@ -177,6 +177,12 @@ std::vector<std::shared_ptr<EventHandler>> Environment::getReplacementEffects(st
 	return std::get<ReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
+std::vector<std::shared_ptr<EventHandler>> Environment::getActiveReplacementEffects() const
+{
+	ActiveReplacementEffectsQuery query{ this->replacementEffects };
+	return std::get<ActiveReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
 std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<TriggerHandler>> handlers;
 	for (const auto& h : target->triggerEffects) {
@@ -186,6 +192,12 @@ std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(std:
 	}
 	TriggerEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
 	return std::get<TriggerEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
+std::vector<std::shared_ptr<TriggerHandler>> Environment::getActiveTriggerEffects() const
+{
+	ActiveTriggerEffectsQuery query{ this->triggerHandlers };
+	return std::get<ActiveTriggerEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
 std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
@@ -199,6 +211,12 @@ std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getStaticEffects(
 	return std::get<StaticEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
+std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getActiveStaticEffects() const
+{
+	ActiveStaticEffectsQuery query{ this->stateQueryHandlers };
+	return std::get<ActiveStaticEffectsQuery>(this->executeStateQuery(query)).effects;
+}
+
 std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<EventHandler>> handlers;
 	for (const size_t& i : target->thisOnlyReplacementIndexes) {
@@ -209,13 +227,6 @@ std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffect
 	}
 	SelfReplacementEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
 	return std::get<SelfReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
-}
-
-StaticEffectQuery& Environment::executeStateQuery(StaticEffectQuery&& query) const {
-	for (std::shared_ptr<StaticEffectHandler> sqh : this->stateQueryHandlers) {
-		sqh->handleEvent(query, *this);
-	}
-	return query;
 }
 
 bool Environment::canAttack(xg::Guid target)  const {
@@ -295,4 +306,14 @@ std::vector<BlockRequirementValue> Environment::getBlockRequirements(xg::Guid bl
 std::vector<BlockRequirementValue> Environment::getBlockRequirements(std::shared_ptr<const CardToken> blocker) const {
 	BlockRequirementQuery query{ *blocker,{} };
 	return std::get<BlockRequirementQuery>(executeStateQuery(query)).requirements;
+}
+
+StaticEffectQuery& Environment::executeStateQuery(StaticEffectQuery&& query) const {
+	// CodeReview 107.1b If a calculation yields a negative value use 0 instead, with exceptions
+	// CodeReview: 107.2 some calculations can't complete what should we do then
+	// CodeReview: If layer 7 or nonexistent get static effects
+	for (std::shared_ptr<StaticEffectHandler> sqh : this->stateQueryHandlers) {
+		sqh->handleEvent(query, *this);
+	}
+	return query;
 }

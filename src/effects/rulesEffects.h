@@ -58,18 +58,36 @@ public:
 	StaticEffectQuery& handleEvent(StaticEffectQuery& query, const Environment& env) const {
 		if (PowerQuery* powerQuery = std::get_if<PowerQuery>(&query)) {
 			if (env.permanentCounters.find(powerQuery->target.id) != env.permanentCounters.end()) {
-				powerQuery->currentValue += tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
-				powerQuery->currentValue -= tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
+				powerQuery->power += tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
+				powerQuery->power -= tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
 			}
 		}
 		else if (ToughnessQuery* toughnessQuery = std::get_if<ToughnessQuery>(&query)) {
 			if (env.permanentCounters.find(toughnessQuery->target.id) != env.permanentCounters.end()) {
-				toughnessQuery->currentValue += tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
-				toughnessQuery->currentValue -= tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
+				toughnessQuery->toughness += tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), PLUSONEPLUSONECOUNTER, 0u);
+				toughnessQuery->toughness -= tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), MINUSONEMINUSONECOUNTER, 0u);
 			}
 		}
 		return query;
 	}
+
+	bool appliesTo(StaticEffectQuery& query, const Environment& env) const override {
+		if (PowerQuery* powerQuery = std::get_if<PowerQuery>(&query)) {
+			if (env.permanentCounters.find(powerQuery->target.id) != env.permanentCounters.end()) {
+				return tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u) > 0
+					|| tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u) > 0;
+			}
+		}
+		else if (ToughnessQuery* toughnessQuery = std::get_if<ToughnessQuery>(&query)) {
+			if (env.permanentCounters.find(toughnessQuery->target.id) != env.permanentCounters.end()) {
+				return tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u) > 0
+					|| tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u) > 0;
+			}
+		}
+		return false;
+	}
+
+	bool dependsOn(StaticEffectQuery&, StaticEffectQuery&, const Environment&) const override { return false; }
 	
 	CounterPowerToughnessEffect()
 		: clone_inherit({}, {})

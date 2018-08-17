@@ -46,6 +46,22 @@ public:
 		return query;
 	}
 
+	bool appliesTo(StaticEffectQuery& query, const Environment& env) const override {
+		if (BlockRestrictionQuery* block = std::get_if<BlockRestrictionQuery>(&query)) {
+			bool found = false;
+			for (auto& attack : env.declaredAttacks) {
+				if (attack.first->id == this->owner) {
+					found = true;
+					break;
+				}
+			}
+			return found;
+		}
+		return false;
+	}
+
+	bool dependsOn(StaticEffectQuery&, StaticEffectQuery&, const Environment&) const override { return false; }
+
 	FlyingHandler()
 		: clone_inherit({}, { BATTLEFIELD })
 	{}

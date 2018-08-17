@@ -11,10 +11,10 @@ AbilityWithCost::AbilityWithCost(EffectValue effect, std::shared_ptr<const Targe
 {}
 
 ManaAbility::ManaAbility(Mana mana, std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
-	: clone_inherit(LambdaEffects([=](xg::Guid source, const Environment& env)
+	: clone_inherit(LambdaEffects([=](xg::Guid s, const Environment& env)
 					{
 						Changeset changes;
-						changes.addMana.push_back(AddMana{ env.getController(source), mana });
+						changes.addMana.push_back(AddMana{ env.getController(s), mana });
 						return changes;
 					}),
 					std::shared_ptr<TargetingRestriction>(new NoTargets()), costs, additionalCosts), mana(mana)

@@ -179,26 +179,26 @@ class store
 
 	template<typename T>
 	static constexpr bool
-		fits() { return sizeof(typename std::decay<T>::type) <= N; }
+		fits = sizeof(typename std::decay<T>::type) <= N;
 
 public:
 	template<typename D, typename V>
 	D *copy(V &&v)
 	{
-		return fits<D>() ? new(space) D( std::forward<V>(v) ) :
+		return fits<D> ? new(space) D( std::forward<V>(v) ) :
 			new        D( std::forward<V>(v) );
 	}
 
 	template<typename D, typename V, typename B>
 	B *move(V &&v, B *&p)
 	{
-		B *q = fits<D>() ? copy<D>(std::forward<V>(v)) : p;
+		B *q = fits<D> ? copy<D>(std::forward<V>(v)) : p;
 		p = nullptr;
 		return q;
 	}
 
 	template<typename D>
-	void free(D *p) { fits<D>() ? p->~D() : delete p; }
+	void free(D *p) { fits<D> ? p->~D() : delete p; }
 };
 
 template<typename T, typename Store = store<sizeof(T) + 16>>

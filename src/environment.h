@@ -14,6 +14,7 @@
 #include "guid.hpp"
 
 #include "changeset.h"
+#include "combat.h"
 #include "player.h"
 #include "card.h"
 #include "ability.h"
@@ -110,6 +111,7 @@ struct Environment {
     std::shared_ptr<Zone<Card, Emblem>> command;
 	// CodeReview: Create Sideboard?
 
+	// CodeReview: Suspend, skullbriar, lighnting storm all have counters off battlefield
 	std::map<xg::Guid, std::map<PermanentCounterType, unsigned int>> permanentCounters;
 	// Should be unsigned but that causes issues with comparisons
 	std::map<xg::Guid, int> damage;
@@ -161,8 +163,11 @@ struct Environment {
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<const CardToken> target) const;
 	unsigned int getLandPlays(xg::Guid player) const;
 	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<EventHandler>> getActiveReplacementEffects() const;
 	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<TriggerHandler>> getActiveTriggerEffects() const;
 	std::vector<std::shared_ptr<StaticEffectHandler>> getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<StaticEffectHandler>> getActiveStaticEffects() const;
 	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	bool canAttack(xg::Guid target) const;
 	bool canAttack(std::shared_ptr<const CardToken> target) const;

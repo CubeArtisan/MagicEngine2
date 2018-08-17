@@ -10,23 +10,44 @@ public:
 	StaticEffectQuery & handleEvent(StaticEffectQuery& query, const Environment& env) const override {
 		if (power){
 			if (PowerQuery* power2 = std::get_if<PowerQuery>(&query)) {
+				if (power2->target.id != this->owner) return query;
 				xg::Guid controller = env.getController(this->owner);
 				std::vector<std::shared_ptr<const Targetable>> items = this->getObjectsFromZone(env);
 				int count = 0;
 				for (auto& item : items) if (filter(item, env, controller)) count++;
-				power2->currentValue += count;
+				power2->power += count;
 			}
 		}
 		if (toughness) {
 			if (ToughnessQuery* toughness2 = std::get_if<ToughnessQuery>(&query)) {
+				if (toughness2->target.id != this->owner) return query;
 				xg::Guid controller = env.getController(this->owner);
 				std::vector<std::shared_ptr<const Targetable>> items = this->getObjectsFromZone(env);
 				int count = 0;
 				for (auto& item : items) if (filter(item, env, controller)) count++;
-				toughness2->currentValue += count;
+				toughness2->toughness += count;
 			}
 		}
 		return query;
+	}
+
+	bool appliesTo(StaticEffectQuery& query, const Environment&) const override {
+		if (power) {
+			if (PowerQuery* power2 = std::get_if<PowerQuery>(&query)) {
+				return power2->target.id == this->owner;
+			}
+		}
+		if (toughness) {
+			if (ToughnessQuery* toughness2 = std::get_if<ToughnessQuery>(&query)) {
+				return toughness2->target.id == this->owner;
+			}
+		}
+		return false;
+	}
+
+	bool dependsOn(StaticEffectQuery&, StaticEffectQuery&, const Environment&) const override {
+		// CodeReview: check if resulting state end changes filter
+		return false;
 	}
 
 	std::vector<std::shared_ptr<const Targetable>> getObjectsFromZone(const Environment& env) const {

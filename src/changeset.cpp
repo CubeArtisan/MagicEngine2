@@ -1,4 +1,5 @@
 #include "changeset.h"
+#include "combat.h"
 #include "environment.h"
 
 Targetable::Targetable()
@@ -16,61 +17,61 @@ std::variant<std::vector<Changeset>, PassPriority> TriggerHandler::handleEvent(C
 }
 
 Changeset Changeset::operator+(const Changeset& other){
-    std::vector<ObjectMovement> moves = this->moves;
-    moves.insert(moves.end(), other.moves.begin(), other.moves.end());
-    std::vector<AddPlayerCounter> playerCounters = this->playerCounters;
-    playerCounters.insert(playerCounters.end(), other.playerCounters.begin(), other.playerCounters.end());
-    std::vector<AddPermanentCounter> permanentCounters = this->permanentCounters;
-    permanentCounters.insert(permanentCounters.end(), other.permanentCounters.begin(), other.permanentCounters.end());
-    std::vector<ObjectCreation> create = this->create;
-    create.insert(create.end(), other.create.begin(), other.create.end());
-    std::vector<RemoveObject> remove = this->remove;
-    remove.insert(remove.end(), other.remove.begin(), other.remove.end());
-    std::vector<LifeTotalChange> lifeTotalChanges = this->lifeTotalChanges;
-    lifeTotalChanges.insert(lifeTotalChanges.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
-	std::vector<std::shared_ptr<EventHandler>> effectsToAdd = this->effectsToAdd;
-	effectsToAdd.insert(effectsToAdd.end(), other.effectsToAdd.begin(), other.effectsToAdd.end());
-	std::vector<std::shared_ptr<EventHandler>> effectsToRemove = this->effectsToRemove;
-	effectsToRemove.insert(effectsToRemove.end(), other.effectsToRemove.begin(), other.effectsToRemove.end());
-	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd = this->triggersToAdd;
-    triggersToAdd.insert(triggersToAdd.end(), other.triggersToAdd.begin(), other.triggersToAdd.end());
-    std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove = this->triggersToRemove;
-    triggersToRemove.insert(triggersToRemove.end(), other.triggersToRemove.begin(), other.triggersToRemove.end());
-	std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToAdd = this->propertiesToAdd;
-    propertiesToAdd.insert(propertiesToAdd.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
-    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToRemove = this->propertiesToRemove;
-    propertiesToRemove.insert(propertiesToRemove.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
-    std::vector<xg::Guid> loseTheGame = this->loseTheGame;
-    loseTheGame.insert(loseTheGame.end(), other.loseTheGame.begin(), other.loseTheGame.end());
-    std::vector<AddMana> addMana = this->addMana;
-    addMana.insert(addMana.end(), other.addMana.begin(), other.addMana.end());
-    std::vector<RemoveMana> removeMana = this->removeMana;
-    removeMana.insert(removeMana.end(), other.removeMana.begin(), other.removeMana.end());
-    std::vector<DamageToTarget> damage = this->damage;
-    damage.insert(damage.end(), other.damage.begin(), other.damage.end());
-	std::vector<DamageToTarget> combatDamage = this->combatDamage;
-	combatDamage.insert(combatDamage.end(), other.combatDamage.begin(), other.combatDamage.end());
-    std::vector<TapTarget> tap = this->tap;
-    tap.insert(tap.end(), other.tap.begin(), other.tap.end());
-	std::vector<CreateTargets> target = this->target;
-	target.insert(target.end(), other.target.begin(), other.target.end());
-	std::vector<QueueTrigger> trigger = this->trigger;
-	trigger.insert(trigger.end(), other.trigger.begin(), other.trigger.end());
-	std::vector<LandPlay> land = this->land;
-	land.insert(land.end(), other.land.begin(), other.land.end());
-	std::vector<std::shared_ptr<ManaAbility>> manaAbility = this->manaAbility;
-	manaAbility.insert(manaAbility.end(), other.manaAbility.begin(), other.manaAbility.end());
-	std::vector<DeclareAttack> attacks = this->attacks;
-	attacks.insert(attacks.end(), other.attacks.begin(), other.attacks.end());
-    StepOrPhaseChange phaseChange = this->phaseChange;
-    if(!phaseChange.changed && other.phaseChange.changed){
-        phaseChange = other.phaseChange;
+    std::vector<ObjectMovement> moves2 = this->moves;
+    moves2.insert(moves2.end(), other.moves.begin(), other.moves.end());
+    std::vector<AddPlayerCounter> playerCounters2 = this->playerCounters;
+    playerCounters2.insert(playerCounters2.end(), other.playerCounters.begin(), other.playerCounters.end());
+    std::vector<AddPermanentCounter> permanentCounters2 = this->permanentCounters;
+    permanentCounters2.insert(permanentCounters2.end(), other.permanentCounters.begin(), other.permanentCounters.end());
+    std::vector<ObjectCreation> create2 = this->create;
+    create2.insert(create2.end(), other.create.begin(), other.create.end());
+    std::vector<RemoveObject> remove2 = this->remove;
+    remove2.insert(remove2.end(), other.remove.begin(), other.remove.end());
+    std::vector<LifeTotalChange> lifeTotalChanges2 = this->lifeTotalChanges;
+    lifeTotalChanges2.insert(lifeTotalChanges2.end(), other.lifeTotalChanges.begin(), other.lifeTotalChanges.end());
+	std::vector<std::shared_ptr<EventHandler>> effectsToAdd2 = this->effectsToAdd;
+	effectsToAdd2.insert(effectsToAdd2.end(), other.effectsToAdd.begin(), other.effectsToAdd.end());
+	std::vector<std::shared_ptr<EventHandler>> effectsToRemove2 = this->effectsToRemove;
+	effectsToRemove2.insert(effectsToRemove2.end(), other.effectsToRemove.begin(), other.effectsToRemove.end());
+	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd2 = this->triggersToAdd;
+    triggersToAdd2.insert(triggersToAdd2.end(), other.triggersToAdd.begin(), other.triggersToAdd.end());
+    std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove2 = this->triggersToRemove;
+    triggersToRemove2.insert(triggersToRemove2.end(), other.triggersToRemove.begin(), other.triggersToRemove.end());
+	std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToAdd2 = this->propertiesToAdd;
+    propertiesToAdd2.insert(propertiesToAdd2.end(), other.propertiesToAdd.begin(), other.propertiesToAdd.end());
+    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToRemove2 = this->propertiesToRemove;
+    propertiesToRemove2.insert(propertiesToRemove2.end(), other.propertiesToRemove.begin(), other.propertiesToRemove.end());
+    std::vector<xg::Guid> loseTheGame2 = this->loseTheGame;
+    loseTheGame2.insert(loseTheGame2.end(), other.loseTheGame.begin(), other.loseTheGame.end());
+    std::vector<AddMana> addMana2 = this->addMana;
+    addMana2.insert(addMana2.end(), other.addMana.begin(), other.addMana.end());
+    std::vector<RemoveMana> removeMana2 = this->removeMana;
+    removeMana2.insert(removeMana2.end(), other.removeMana.begin(), other.removeMana.end());
+    std::vector<DamageToTarget> damage2 = this->damage;
+    damage2.insert(damage2.end(), other.damage.begin(), other.damage.end());
+	std::vector<DamageToTarget> combatDamage2 = this->combatDamage;
+	combatDamage2.insert(combatDamage2.end(), other.combatDamage.begin(), other.combatDamage.end());
+    std::vector<TapTarget> tap2 = this->tap;
+    tap2.insert(tap2.end(), other.tap.begin(), other.tap.end());
+	std::vector<CreateTargets> target2 = this->target;
+	target2.insert(target2.end(), other.target.begin(), other.target.end());
+	std::vector<QueueTrigger> trigger2 = this->trigger;
+	trigger2.insert(trigger2.end(), other.trigger.begin(), other.trigger.end());
+	std::vector<LandPlay> land2 = this->land;
+	land2.insert(land2.end(), other.land.begin(), other.land.end());
+	std::vector<std::shared_ptr<ManaAbility>> manaAbility2 = this->manaAbility;
+	manaAbility2.insert(manaAbility2.end(), other.manaAbility.begin(), other.manaAbility.end());
+	std::vector<DeclareAttack> attacks2 = this->attacks;
+	attacks2.insert(attacks2.end(), other.attacks.begin(), other.attacks.end());
+    StepOrPhaseChange phaseChange2 = this->phaseChange;
+    if(!phaseChange2.changed && other.phaseChange.changed){
+        phaseChange2 = other.phaseChange;
     }
-	bool clearTriggers = this->clearTriggers || other.clearTriggers;
+	bool clearTriggers2 = this->clearTriggers || other.clearTriggers;
 
-    return Changeset{moves, playerCounters, permanentCounters, create, remove, lifeTotalChanges, effectsToAdd, effectsToRemove,
-					 triggersToAdd, triggersToRemove, propertiesToAdd, propertiesToRemove, loseTheGame, addMana, removeMana, damage,
-					 combatDamage, tap, target, trigger, land, manaAbility, attacks, phaseChange, clearTriggers};
+    return Changeset{moves2, playerCounters2, permanentCounters2, create2, remove2, lifeTotalChanges2, effectsToAdd2, effectsToRemove2,
+					 triggersToAdd2, triggersToRemove2, propertiesToAdd2, propertiesToRemove2, loseTheGame2, addMana2, removeMana2, damage2,
+					 combatDamage2, tap2, target2, trigger2, land2, manaAbility2, attacks2, phaseChange2, clearTriggers2};
 }
 
 Changeset& Changeset::operator+=(const Changeset& other){
@@ -175,7 +176,7 @@ Changeset Changeset::drawCards(xg::Guid player, size_t amount, const Environment
     auto card = library.begin() + (library.size() - amount);
     for(; card != library.end(); card++) {
         std::shared_ptr<const Targetable> c = getBaseClassPtr<const Targetable>(*card);
-        result.moves.push_back(ObjectMovement{c->id, libraryZone.id, handZone.id});
+        result.moves.push_back(ObjectMovement{c->id, libraryZone.id, handZone.id, 0, DRAWCARD});
     }
     return result;
 }
@@ -185,7 +186,7 @@ Changeset Changeset::discardCards(xg::Guid playerId, size_t amount, const Enviro
 	Changeset result;
 	const Player& player = *std::dynamic_pointer_cast<Player>(env.gameObjects.at(playerId));
 	std::vector<xg::Guid> cards = player.strategy->chooseDiscards(amount, player, env);
-	for (xg::Guid& guid : cards) result.moves.push_back(ObjectMovement{ guid, env.hands.at(playerId)->id, env.graveyards.at(playerId)->id });
+	for (xg::Guid& guid : cards) result.moves.push_back(ObjectMovement{ guid, env.hands.at(playerId)->id, env.graveyards.at(playerId)->id, 0, DISCARD });
 	return result;
 }
 
@@ -248,6 +249,7 @@ Changeset Changeset::scryCards(xg::Guid player, size_t amount, const Environment
 		for (auto b : p.second) {
 			change.moves.push_back(ObjectMovement{ b, libraryZone.id, libraryZone.id, -1 });
 		}
+		changes.push_back(change);
 	}
 	std::shared_ptr<Player> p = std::dynamic_pointer_cast<Player>(env.gameObjects.at(player));
 	return p->strategy->chooseOne(changes, *p, env);

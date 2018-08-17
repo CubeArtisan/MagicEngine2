@@ -51,7 +51,10 @@ public:
 class StaticEffectHandler : public clone_inherit<abstract_method<StaticEffectHandler>, Handler> {
 public:
     virtual StaticEffectQuery& handleEvent(StaticEffectQuery&, const Environment&) const = 0;
-	
+	virtual bool appliesTo(StaticEffectQuery&, const Environment&) const = 0;
+	virtual bool dependsOn(StaticEffectQuery& start, StaticEffectQuery& end, const Environment& env) const = 0;
+
+	// CodeReview: Is CDA
 	using clone_inherit<abstract_method<StaticEffectHandler>, Handler>::clone_inherit;
 };
 
@@ -85,7 +88,8 @@ struct ObjectMovement {
 	xg::Guid sourceZone;
 	xg::Guid destinationZone;
 	int index{ 0 };
-    xg::Guid newObject { xg::newGuid() };
+	MovementType type{ DEFAULTMOVEMENTTYPE };
+    xg::Guid newObject{ xg::newGuid() };
 };
 
 struct AddPlayerCounter {
@@ -186,8 +190,6 @@ struct Changeset {
 	std::vector<DeclareAttack> attacks;
     StepOrPhaseChange phaseChange;
 	bool clearTriggers{ false };
-	// CodeReview: Add Destroy
-	// CodeReview: Add Cast
 
     Changeset operator+(const Changeset& other);
     Changeset& operator+=(const Changeset& other);

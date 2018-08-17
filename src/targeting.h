@@ -60,11 +60,11 @@ public:
 
 class NoTargets : public TargetingRestriction {
 public:
-	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment&) const override {
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect&, const Environment&) const override {
 		return targets.size() == 0;
 	}
 
-	virtual bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+	virtual bool validTarget(const xg::Guid&, size_t, const HasEffect&, const Environment&) const override {
 		return false;
 	}
 
@@ -139,7 +139,8 @@ private:
 
 class AnyTarget : public TargetingRestriction {
 public:
-	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const override {
+		if (index != 0) return false;
 		std::shared_ptr<Targetable> object = env.gameObjects.at(target);
 		if (std::dynamic_pointer_cast<Player>(object)) {
 			return true;
@@ -166,7 +167,8 @@ public:
 
 class PlayerTarget : public TargetingRestriction {
 public:
-	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const override {
+		if (index != 0) return false;
 		std::shared_ptr<Targetable> object = env.gameObjects.at(target);
 		if (std::dynamic_pointer_cast<Player>(object)) {
 			return true;
@@ -185,7 +187,8 @@ public:
 
 class PermanentTarget : public TargetingRestriction {
 public:
-	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const override {
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const override {
+		if (index != 0) return false;
 		return (bool)env.battlefield->findObject(target);
 	}
 
