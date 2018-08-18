@@ -273,25 +273,18 @@ void Runner::runGame(){
 }
 
 void Runner::applyMoveRules(Changeset& changeset) {
-	std::vector<std::tuple<std::shared_ptr<HasAbilities>, ZoneType, std::optional<ZoneType>>> objects;
-	for (auto& move : changeset.moves) {
-		if (std::shared_ptr<HasAbilities> object = std::dynamic_pointer_cast<HasAbilities>(env.gameObjects.at(move.object))) {
-			std::shared_ptr<ZoneInterface> source = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(move.sourceZone));
-			std::shared_ptr<ZoneInterface> destination = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(move.destinationZone));
-			objects.push_back(std::make_tuple(object, destination->type, source->type));
-		}
-	}
+	std::vector<std::tuple<std::shared_ptr<CardToken>, ZoneType>> objects;
 	for (auto& create : changeset.create) {
-		if (std::shared_ptr<HasAbilities> object = std::dynamic_pointer_cast<HasAbilities>(create.created)) {
+		if (std::shared_ptr<CardToken> object = std::dynamic_pointer_cast<CardToken>(create.created)) {
 			std::shared_ptr<ZoneInterface> destination = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(create.zone));
-			objects.push_back(std::make_tuple(object, destination->type, std::nullopt));
+			objects.push_back(std::make_tuple(object, destination->type));
 		}
 	}
 	std::vector<Changeset> result;
 	bool apply = false;
 	Changeset addStatic;
 	for (auto& object : objects) {
-		std::vector<std::shared_ptr<StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
+		std::vector<std::shared_ptr<StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
 		if (!handlers.empty()) {
 			for (const auto& h : handlers) addStatic.propertiesToAdd.push_back(h);
 			apply = true;
@@ -307,7 +300,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 	Changeset addReplacement;
 	for (auto& object : objects) {
 		if (std::get<1>(object) != BATTLEFIELD) continue;
-		std::vector<std::shared_ptr<EventHandler>> handlers = env.getSelfReplacementEffects(std::get<0>(object), std::get<1>(object), std::get<2>(object));
+		std::vector<std::shared_ptr<EventHandler>> handlers = env.getSelfReplacementEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
 		if (!handlers.empty()) {
 			for (auto& h : handlers) addReplacement.effectsToAdd.push_back(h);
 			apply = true;
@@ -372,7 +365,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 #endif
         zone->addObject(oc.created, oc.index);
         this->env.gameObjects[id] = oc.created;
-		if (std::shared_ptr<HasAbilities> abilities = std::dynamic_pointer_cast<HasAbilities>(oc.created)) {
+		if (std::shared_ptr<CardToken> abilities = std::dynamic_pointer_cast<CardToken>(oc.created)) {
 			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
 			for (auto& r : replacement) r->owner = oc.created->id;
 			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacement.begin(), replacement.end());

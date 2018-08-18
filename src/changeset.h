@@ -32,7 +32,7 @@ class Handler : public clone_inherit<abstract_method<Handler>, Targetable> {
 public:
 	const std::set<ZoneType> activeSourceZones;
 	const std::set<ZoneType> activeDestinationZones;
-	bool operator==(Handler& other) const {
+	virtual bool operator==(Handler& other) const {
 		return this->id == other.id;
 	}
 

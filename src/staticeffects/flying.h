@@ -14,7 +14,7 @@ public:
 		const Environment& env) const override {
 		std::set<xg::Guid> result;
 		for(auto& possibility : possibleBlocks){
-			if (possibility == this->flyer && !canBlockFlying(card, env)) continue;
+			if (possibility == this->flyer && !env.hasStaticEffect<FlyingHandler>(card, BATTLEFIELD)) continue;
 			result.insert(possibility);
 		}
 		return result;
@@ -66,11 +66,4 @@ public:
 		: clone_inherit({}, { BATTLEFIELD })
 	{}
 };
-
-bool canBlockFlying(std::shared_ptr<CardToken> card, const Environment& env) {
-	for (auto& ability : env.getStaticEffects(card, BATTLEFIELD, std::nullopt)) {
-		if (std::dynamic_pointer_cast<FlyingHandler>(ability)) return true;
-	}
-	return false;
-}
 #endif

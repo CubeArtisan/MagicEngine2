@@ -172,7 +172,7 @@ unsigned int Environment::getLandPlays(xg::Guid player) const {
 	return std::get<LandPlaysQuery>(this->executeStateQuery(query)).amount;
 }
 
-std::vector<std::shared_ptr<EventHandler>> Environment::getReplacementEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+std::vector<std::shared_ptr<EventHandler>> Environment::getReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<EventHandler>> handlers;
 	for (const auto& h : target->replacementEffects) {
 		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
@@ -189,7 +189,7 @@ std::vector<std::shared_ptr<EventHandler>> Environment::getActiveReplacementEffe
 	return std::get<ActiveReplacementEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
-std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+std::vector<std::shared_ptr<TriggerHandler>> Environment::getTriggerEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<TriggerHandler>> handlers;
 	for (const auto& h : target->triggerEffects) {
 		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
@@ -206,7 +206,7 @@ std::vector<std::shared_ptr<TriggerHandler>> Environment::getActiveTriggerEffect
 	return std::get<ActiveTriggerEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
-std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getStaticEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getStaticEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<StaticEffectHandler>> handlers;
 	for (const auto& h : target->staticEffects) {
 		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
@@ -223,7 +223,7 @@ std::vector<std::shared_ptr<StaticEffectHandler>> Environment::getActiveStaticEf
 	return std::get<ActiveStaticEffectsQuery>(this->executeStateQuery(query)).effects;
 }
 
-std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
+std::vector<std::shared_ptr<EventHandler>> Environment::getSelfReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone) const {
 	std::vector<std::shared_ptr<EventHandler>> handlers;
 	for (const size_t& i : target->thisOnlyReplacementIndexes) {
 		const auto& h = target->replacementEffects[i];

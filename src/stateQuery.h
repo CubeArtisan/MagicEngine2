@@ -101,7 +101,7 @@ struct LandPlaysQuery {
 };
 
 struct ReplacementEffectsQuery {
-	const HasAbilities& target;
+	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<EventHandler>> effects;
@@ -120,7 +120,7 @@ struct ActiveReplacementEffectsQuery {
 };
 
 struct TriggerEffectsQuery {
-	const HasAbilities& target;
+	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<TriggerHandler>> effects;
@@ -139,7 +139,7 @@ struct ActiveTriggerEffectsQuery {
 };
 
 struct StaticEffectsQuery {
-	const HasAbilities& target;
+	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
 	std::vector<std::shared_ptr<StaticEffectHandler>> effects;
