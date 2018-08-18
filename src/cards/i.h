@@ -3,7 +3,7 @@
 #include "../environment.h"
 
 #include "../abilities/damageAbility.h"
-#include "../triggers/etb.h"
+#include "../triggeredeffects/etb.h"
 
 #include "cardManager.h"
 

@@ -1,8 +1,8 @@
 #ifndef _RULESEFFECTS_H_
 #define _RULESEFFECTS_H_
 
-#include "../changeset.h"
-#include "../util.h"
+#include "changeset.h"
+#include "util.h"
 
 class TokenMovementEffect : public clone_inherit<TokenMovementEffect, EventHandler> {
 public:

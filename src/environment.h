@@ -144,47 +144,55 @@ struct Environment {
     Environment(const std::vector<Player>& players, const std::vector<std::vector<Card>>& libraries);
 
 	int getPower(xg::Guid target)  const;
-	int getPower(std::shared_ptr<const CardToken> target) const;
+	int getPower(const std::shared_ptr<const CardToken>& target) const;
 	int getToughness(xg::Guid target)  const;
-	int getToughness(std::shared_ptr<const CardToken> target)  const;
+	int getToughness(const std::shared_ptr<const CardToken>& target)  const;
 	bool goodTiming(xg::Guid target) const;
-	bool goodTiming(std::shared_ptr<const HasCost> target) const;
+	bool goodTiming(const std::shared_ptr<const HasCost>& target) const;
 	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(xg::Guid target)  const;
-	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(std::shared_ptr<const CardToken> target)  const;
+	std::shared_ptr<const std::set<CardSuperType>> getSuperTypes(const std::shared_ptr<const CardToken>& target)  const;
 	std::shared_ptr<const std::set<CardType>> getTypes(xg::Guid target) const;
-	std::shared_ptr<const std::set<CardType>> getTypes(std::shared_ptr<const CardToken> target) const;
+	std::shared_ptr<const std::set<CardType>> getTypes(const std::shared_ptr<const CardToken>& target) const;
 	std::shared_ptr<const std::set<CardSubType>> getSubTypes(xg::Guid target)  const;
-	std::shared_ptr<const std::set<CardSubType>> getSubTypes(std::shared_ptr<const CardToken> target)  const;
+	std::shared_ptr<const std::set<CardSubType>> getSubTypes(const std::shared_ptr<const CardToken>& target)  const;
 	std::set<Color> getColors(xg::Guid target)  const;
-	std::set<Color> getColors(std::shared_ptr<const CardToken> target)  const;
+	std::set<Color> getColors(const std::shared_ptr<const CardToken>& target)  const;
 	xg::Guid getController(xg::Guid target) const;
-	xg::Guid getController(std::shared_ptr<const Targetable> target) const;
+	xg::Guid getController(const std::shared_ptr<const Targetable>& target) const;
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
-	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(std::shared_ptr<const CardToken> target) const;
+	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(const std::shared_ptr<const CardToken>& target) const;
 	unsigned int getLandPlays(xg::Guid player) const;
-	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	std::vector<std::shared_ptr<EventHandler>> getActiveReplacementEffects() const;
-	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	std::vector<std::shared_ptr<TriggerHandler>> getActiveTriggerEffects() const;
-	std::vector<std::shared_ptr<StaticEffectHandler>> getStaticEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<StaticEffectHandler>> getStaticEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	std::vector<std::shared_ptr<StaticEffectHandler>> getActiveStaticEffects() const;
-	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(std::shared_ptr<const HasAbilities> target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(const std::shared_ptr<const HasAbilities>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	bool canAttack(xg::Guid target) const;
-	bool canAttack(std::shared_ptr<const CardToken> target) const;
+	bool canAttack(const std::shared_ptr<const CardToken>& target) const;
 	bool canBlock(xg::Guid target) const;
-	bool canBlock(std::shared_ptr<const CardToken> target) const;
+	bool canBlock(const std::shared_ptr<const CardToken>& target) const;
 	int getLethalDamage(xg::Guid target, xg::Guid blocker) const;
-	int getLethalDamage(std::shared_ptr<const CardToken> attacker, xg::Guid blocker) const;
-	int getLethalDamage(std::shared_ptr<const CardToken> attacker, std::shared_ptr<const CardToken> blocker) const;
+	int getLethalDamage(const std::shared_ptr<const CardToken>& attacker, xg::Guid blocker) const;
+	int getLethalDamage(const std::shared_ptr<const CardToken>& attacker, const std::shared_ptr<const CardToken>& blocker) const;
 	std::vector<AttackRestrictionValue> getAttackRestrictions(xg::Guid attacker) const;
-	std::vector<AttackRestrictionValue> getAttackRestrictions(std::shared_ptr<const CardToken> attacker) const;
+	std::vector<AttackRestrictionValue> getAttackRestrictions(const std::shared_ptr<const CardToken>& attacker) const;
 	std::vector<AttackRequirementValue> getAttackRequirements(xg::Guid attacker) const;
-	std::vector<AttackRequirementValue> getAttackRequirements(std::shared_ptr<const CardToken> attacker) const;
+	std::vector<AttackRequirementValue> getAttackRequirements(const std::shared_ptr<const CardToken>& attacker) const;
 	std::vector<BlockRestrictionValue> getBlockRestrictions(xg::Guid blocker) const;
-	std::vector<BlockRestrictionValue> getBlockRestrictions(std::shared_ptr<const CardToken> blocker) const;
+	std::vector<BlockRestrictionValue> getBlockRestrictions(const std::shared_ptr<const CardToken>& blocker) const;
 	std::vector<BlockRequirementValue> getBlockRequirements(xg::Guid blocker) const;
-	std::vector<BlockRequirementValue> getBlockRequirements(std::shared_ptr<const CardToken> blocker) const;
-
+	std::vector<BlockRequirementValue> getBlockRequirements(const std::shared_ptr<const CardToken>& blocker) const;
+	
+	template<typename Effect>
+	bool hasStaticEffect(const std::shared_ptr<const CardToken>& card, ZoneType zone) const {
+		std::vector<std::shared_ptr<StaticEffectHandler>> effects = this->getStaticEffects(card, zone);
+		for (auto& effect : effects) {
+			if (std::dynamic_pointer_cast<Effect>(effect)) return true;
+		}
+		return false;
+	}
 private:
 	StaticEffectQuery& executeStateQuery(StaticEffectQuery&& query) const;
 

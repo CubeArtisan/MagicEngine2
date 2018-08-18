@@ -2,7 +2,7 @@
 #include "../environment.h"
 #include "../targeting.h"
 #include "../abilities/createToken.h"
-#include "../triggers/etb.h"
+#include "../triggeredeffects/etb.h"
 
 Card GoblinInstigator = newCard("Goblin Instigator", 2, std::set<CardSuperType>{}, { CREATURE }, { GOBLIN }, 1, 1, 0,
 	{RED}, std::shared_ptr<TargetingRestriction>(new NoTargets()),

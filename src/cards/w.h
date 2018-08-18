@@ -1,7 +1,7 @@
 #include "../ability.h"
 #include "../card.h"
 #include "../environment.h"
-#include "../effects/flying.h"
+#include "../staticeffects/flying.h"
 
 #include "cardManager.h"
 

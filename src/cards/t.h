@@ -2,7 +2,7 @@
 #include "../card.h"
 #include "../environment.h"
 
-#include "../effects/plusForEachEffect.h"
+#include "../staticeffects/plusForEachEffect.h"
 
 #include "cardManager.h"
 

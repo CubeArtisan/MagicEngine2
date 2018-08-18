@@ -1,6 +1,5 @@
 #include "cards/cardManager.h"
 #include "runner.h"
-#include "strategy.h"
 
 int main(){
 	std::vector<std::vector<Card>> libraries{ std::vector<Card>(), std::vector<Card>() };
@@ -16,8 +15,13 @@ int main(){
     std::vector<Player> players{Player(std::shared_ptr<Strategy>(new RandomStrategy())),
                                 Player(std::shared_ptr<Strategy>(new RandomStrategy()))};
     Runner runner(libraries, players);
-	for (int i = 0; i < 1; i++) {
+#if DEBUG
+	const int count = 1;
+#else
+	const int count = 10'000;
+#endif
+	for (int i = 0; i < count; i++) {
 		runner.runGame();
-		std::cout << i << std::endl;
+		// std::cout << i << std::endl;
 	}
 }

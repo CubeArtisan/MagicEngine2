@@ -88,10 +88,14 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_MBCS;GUID_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>false</ExceptionHandling>
+      <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
+      <EnableModules>true</EnableModules>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -115,12 +119,18 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
+      <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_MBCS;GUID_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>false</ExceptionHandling>
+      <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -181,11 +191,6 @@
     <ClInclude Include="src\combat.h" />
     <ClInclude Include="src\cost.h" />
     <ClInclude Include="src\effect.h" />
-    <ClInclude Include="src\effects\entersWithCounters.h" />
-    <ClInclude Include="src\effects\flying.h" />
-    <ClInclude Include="src\effects\panharmoniconEffect.h" />
-    <ClInclude Include="src\effects\plusForEachEffect.h" />
-    <ClInclude Include="src\effects\rulesEffects.h" />
     <ClInclude Include="src\enum.h" />
     <ClInclude Include="src\environment.h" />
     <ClInclude Include="src\gameAction.h" />
@@ -194,14 +199,19 @@
     <ClInclude Include="src\player.h" />
     <ClInclude Include="src\propositions\proposition.h" />
     <ClInclude Include="src\propositions\raid.h" />
+    <ClInclude Include="src\replacementeffects\entersWithCounters.h" />
+    <ClInclude Include="src\replacementeffects\panharmoniconEffect.h" />
+    <ClInclude Include="src\rulesEffects.h" />
     <ClInclude Include="src\runner.h" />
     <ClInclude Include="src\stateQuery.h" />
+    <ClInclude Include="src\staticeffects\flying.h" />
+    <ClInclude Include="src\staticeffects\plusForEachEffect.h" />
     <ClInclude Include="src\strategy.h" />
     <ClInclude Include="src\targeting.h" />
     <ClInclude Include="src\tokens\g.h" />
     <ClInclude Include="src\tokens\tokenManager.h" />
-    <ClInclude Include="src\triggers\combatDamage.h" />
-    <ClInclude Include="src\triggers\etb.h" />
+    <ClInclude Include="src\triggeredeffects\combatDamage.h" />
+    <ClInclude Include="src\triggeredeffects\etb.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

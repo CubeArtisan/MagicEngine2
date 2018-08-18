@@ -1,11 +1,6 @@
 #include "card.h"
-#include "changeset.h"
-#include "combat.h"
-#include "player.h"
 #include "runner.h"
-#include "gameAction.h"
 #include "targeting.h"
-#include "util.h"
 
 std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	bool apply = false;
@@ -52,7 +47,6 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	for (auto& variant : this->env.battlefield->objects) {
 		std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(variant);
 		std::shared_ptr<const std::set<CardType>> types = this->env.getTypes(card);
-		std::shared_ptr<const std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
 		if(types->find(CREATURE) != types->end()) {
 			int toughness = this->env.getToughness(card);
 			// 704.5f. If a creature has toughness 0 or less, it's put into its owner's graveyard. Regeneration can't replace this event.
@@ -76,6 +70,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 				apply = true;
 			}
 		}
+		std::shared_ptr<const std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
 		// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
 		if (subtypes->find(AURA) != subtypes->end()) {
 			if (!card->targeting->validTargets(this->env.targets.at(card->id), *card, this->env)) {
@@ -924,7 +919,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	}
 	if (apply) this->applyChangeset(triggers);
 
-    this->env.changes.push_back(changeset);
+    this->env.changes.emplace_back(changeset);
 }
 
 Runner::Runner(std::vector<std::vector<Card>>& libraries, std::vector<Player> players)

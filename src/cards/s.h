@@ -4,9 +4,9 @@
 
 #include "../abilities/singleProliferate.h"
 #include "../abilities/explore.h"
-#include "../effects/entersWithCounters.h"
+#include "../replacementeffects/entersWithCounters.h"
 #include "../propositions/raid.h"
-#include "../triggers/combatDamage.h"
+#include "../triggeredeffects/combatDamage.h"
 
 #include "cardManager.h"
 

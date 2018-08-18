@@ -188,14 +188,14 @@ struct Changeset {
 	std::vector<LandPlay> land;
 	std::vector<std::shared_ptr<ManaAbility>> manaAbility;
 	std::vector<DeclareAttack> attacks;
-    StepOrPhaseChange phaseChange;
+	StepOrPhaseChange phaseChange{ false };
 	bool clearTriggers{ false };
 
-    Changeset operator+(const Changeset& other);
+    Changeset operator+(const Changeset& other) const;
     Changeset& operator+=(const Changeset& other);
 
 	// CodeReview: implement then use to filter out empty Changesets
-	// bool empty();
+	bool empty() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Changeset& changeset);
 

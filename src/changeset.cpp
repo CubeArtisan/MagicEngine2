@@ -1,5 +1,4 @@
 #include "changeset.h"
-#include "combat.h"
 #include "environment.h"
 
 Targetable::Targetable()
@@ -16,7 +15,7 @@ std::variant<std::vector<Changeset>, PassPriority> TriggerHandler::handleEvent(C
 	return result;
 }
 
-Changeset Changeset::operator+(const Changeset& other){
+Changeset Changeset::operator+(const Changeset& other) const {
     std::vector<ObjectMovement> moves2 = this->moves;
     moves2.insert(moves2.end(), other.moves.begin(), other.moves.end());
     std::vector<AddPlayerCounter> playerCounters2 = this->playerCounters;
@@ -103,6 +102,15 @@ Changeset& Changeset::operator+=(const Changeset& other){
 	this->clearTriggers |= other.clearTriggers;
 
     return *this;
+}
+
+bool Changeset::empty() const {
+	return moves.empty() && playerCounters.empty() && permanentCounters.empty() && create.empty() && remove.empty()
+			&& lifeTotalChanges.empty() && effectsToAdd.empty() && effectsToRemove.empty() && triggersToAdd.empty()
+			&& triggersToRemove.empty() && propertiesToAdd.empty() && propertiesToRemove.empty() && loseTheGame.empty()
+			&& addMana.empty() && removeMana.empty() && damage.empty() && combatDamage.empty() && tap.empty()
+			&& target.empty() && trigger.empty() && land.empty() && manaAbility.empty() && attacks.empty() && !phaseChange.changed
+			&& !clearTriggers;
 }
 
 std::ostream& operator<<(std::ostream& os, const Changeset& changeset) {
