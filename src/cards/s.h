@@ -6,7 +6,7 @@
 #include "../abilities/explore.h"
 #include "../replacementeffects/entersWithCounters.h"
 #include "../propositions/raid.h"
-#include "../triggeredeffects/combatDamage.h"
+#include "../triggeredeffects/combatDamageTrigger.h"
 
 #include "cardManager.h"
 

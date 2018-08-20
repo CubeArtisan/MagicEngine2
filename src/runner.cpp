@@ -240,8 +240,13 @@ void Runner::runGame(){
 							bool isPermanent = false;
 							for (CardType type : *this->env.getTypes(card)) {
 								if (PERMANENTBEGIN < type && type < PERMANENTEND) {
-									resolveSpellAbility.moves.push_back(ObjectMovement{ card->id, stack->id, this->env.battlefield->id });
+									ObjectMovement move{ card->id, stack->id, this->env.battlefield->id };
+									resolveSpellAbility.moves.push_back(move);
 									isPermanent = true;
+									std::shared_ptr<const std::set<CardSubType>> subtypes = env.getSubTypes(card);
+									if (subtypes->find(AURA) != subtypes->end()) {
+										resolveSpellAbility.target.push_back(CreateTargets{ move.newObject, env.targets.at(card->id) });
+									}
 									break;
 								}
 							}

@@ -22,25 +22,25 @@ bool intersect(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
 
 
 template<class T, class U>
-U tryAtMap(const std::map<T, U> map, const T& key, const U& def) noexcept {
+U tryAtMap(const std::map<T, U>& map, const T& key, const U& def) noexcept {
 	auto iter = map.find(key);
 	if (iter != map.end()) return iter->second;
 	return def;
 }
 
 template<typename U, typename... Ts>
-U convertVariant(std::variant<Ts...> variant) noexcept
+U convertVariant(const std::variant<Ts...>& variant) noexcept
 {
 	return std::visit([](auto& x) { return U{ x }; }, variant);
 }
 
 template<typename U, typename T>
-U convertToVariant(T&& t) {
-	return convertToVariantRecursive<T, U>(std::forward<T>(t));
+U convertToVariant(const std::shared_ptr<T>& t) {
+	return convertToVariantRecursive<U>(t);
 }
 
-template<typename T, typename U, size_t i=0>
-U convertToVariantRecursive(T&& t) {
+template<typename U, typename T, size_t i=0>
+U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 	using V = std::variant_alternative_t<i, U>;
 	using VT = typename V::element_type;
 	if (V v = std::dynamic_pointer_cast<VT>(t)) {
@@ -51,10 +51,13 @@ U convertToVariantRecursive(T&& t) {
 			throw "Could not convert to the given type";
 		}
 		else {
-			return convertToVariantRecursive<T, U, i+1>(std::forward<T>(t));
+			return convertToVariantRecursive<U, T, i+1>(t);
 		}
 	}
 }
+
+template<int N, typename... Ts> using NthTypeOf =
+typename std::tuple_element<N, std::tuple<Ts...>>::type;
 
 // -------------------------------------------------------------------
 // --- Reversed iterable
@@ -70,9 +73,6 @@ auto end(reversion_wrapper<T> w) noexcept { return std::rend(w.iterable); }
 
 template <typename T>
 reversion_wrapper<T> reverse(T&& iterable) noexcept { return { iterable }; }
-
-template<int N, typename... Ts> using NthTypeOf =
-typename std::tuple_element<N, std::tuple<Ts...>>::type;
 
 // https://www.fluentcpp.com/2017/09/12/how-to-return-a-smart-pointer-and-use-covariance/
 ///////////////////////////////////////////////////////////////////////////////

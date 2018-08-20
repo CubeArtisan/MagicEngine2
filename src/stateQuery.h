@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "enum.h"
+#include "mana.h"
 struct ActivatedAbility;
 struct CardToken;
 struct HasCost;
