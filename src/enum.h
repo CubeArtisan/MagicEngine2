@@ -112,6 +112,7 @@ enum ZoneType {
 
 enum MovementType {
 	CAST,
+	COUNTER,
 	DEFAULTMOVEMENTTYPE,
 	DESTROY,
 	DISCARD,

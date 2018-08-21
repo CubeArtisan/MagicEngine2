@@ -97,18 +97,41 @@ public:
 	}
 };
 
+template<typename Prop>
+class NotProposition;
+
+template<typename... Args>
+class NotProposition<Proposition<Args...>> : public Proposition<Args...> {
+public:
+	bool operator()(const Args&... args) const override {
+		return !this->prop(args...);
+	}
+
+	template<typename T>
+	NotProposition(const T& prop)
+		: prop(prop)
+	{ }
+
+private:
+	PropositionValue<Args...> prop;
+};
+
+template<typename T>
+NotProposition(T) -> NotProposition<ParentOfForm<T, Proposition>>;
+
 template<typename Enable, typename ArgsProp, typename... Args>
 class AndPropositionImpl;
 
 template<typename... ArgsPropArgs, typename... Args>
-class AndPropositionImpl<std::enable_if_t<std::conjunction_v<is_proposition<Args, ArgsPropArgs...>...>>, Proposition<ArgsPropArgs...>, Args...> : public Proposition<ArgsPropArgs...> {
+class AndPropositionImpl<std::enable_if_t<std::conjunction_v<can_upcast_proposition<ParentOfForm<Args, Proposition>, Proposition<ArgsPropArgs...>>...>>, Proposition<ArgsPropArgs...>, Args...> : public Proposition<ArgsPropArgs...> {
 public:
 	bool operator()(const ArgsPropArgs&... args) const override {
-		return andAll<Args...>(args...);
+		return andAll<UpcastProposition<Args, ArgsPropArgs...>...>(args...);
 	}
 	template<typename T, typename... Left>
 	bool andAll(const ArgsPropArgs&... args) const {
-		bool result = std::get<T>(children)(args...);
+		const Proposition<ArgsPropArgs...>& prop = std::get<T>(children);
+		bool result = prop(args...);
 		if constexpr (sizeof...(Left) == 0) return result;
 		else return result && andAll<Left...>(args...);
 	}
@@ -117,15 +140,15 @@ public:
 	{}
 
 	AndPropositionImpl(Args... args)
-		: children{ args... }
+		: children{ UpcastProposition<Args, ArgsPropArgs...>(args)... }
 	{}
 
 private:
-	std::tuple<Args...> children;
+	std::tuple<UpcastProposition<Args, ArgsPropArgs...>...> children;
 };
 
 template<typename... Args>
-AndPropositionImpl(Args...)->AndPropositionImpl<void, ParentOfForm<NthTypeOf<0, Args...>, Proposition>, Args...>;
+AndPropositionImpl(Args...) -> AndPropositionImpl<void, typename union_packs_impl<void, ParentOfForm<Args, Proposition>...>::type, Args...>;
 
 template<typename ArgsProp, typename... Args>
 using AndProposition = AndPropositionImpl<void, ArgsProp, Args...>;

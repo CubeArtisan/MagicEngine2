@@ -19,4 +19,5 @@ private:
 	void applyMoveRules(Changeset& changeset);
 	bool applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied = {});
 	void applyChangeset(Changeset& changeset, bool replacementEffects=true);
+	void allowActivateManaAbility(xg::Guid player) const;
 };

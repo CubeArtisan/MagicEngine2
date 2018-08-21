@@ -75,11 +75,70 @@ using FunctionEquivalent = std::function<decltype(T::operator())>;
 template <class T, class... U>
 struct contains : std::disjunction<std::is_same<T, U>...> {};
 
-template <typename...>
+template <typename, typename>
 struct is_subset_of : std::false_type {};
 
 template <typename... Types1, typename ... Types2>
 struct is_subset_of<std::tuple<Types1...>, std::tuple<Types2...>> : std::conjunction<contains<Types1, Types2...>...> {};
+
+// ----
+template<typename, typename>
+struct concat;
+
+template<template <typename...> typename Pack, typename... Ts, typename T>
+struct concat<Pack<Ts...>, T> {
+	using type = Pack<Ts..., T>;
+};
+
+template<typename, typename>
+struct prepend;
+
+template<template <typename...> typename Pack, typename... Ts, typename T>
+struct prepend<Pack<Ts...>, T> {
+	using type = Pack<T, Ts...>;
+};
+
+template<typename>
+struct reverse_pack;
+
+template<template <typename...> typename Pack, typename T, typename... Ts>
+struct reverse_pack<Pack<T, Ts...>> {
+	using type = typename concat<typename reverse_pack<Pack<Ts...>>::type, T>::type;
+};
+
+template<template <typename...> typename Pack>
+struct reverse_pack<Pack<>> {
+	using type = Pack<>;
+};
+
+template<typename, typename, typename, typename...>
+struct union_packs_impl {
+	using type = std::false_type;
+};
+
+template<template <typename...> typename Pack, typename... SoFar, typename T, typename... Types1, typename... Rest>
+struct union_packs_impl<std::enable_if_t<std::negation_v<contains<T, SoFar...>>>, Pack<SoFar...>, Pack<T, Types1...>, Rest...> {
+	using next = typename concat<Pack<SoFar...>, T>::type;
+	using type = typename union_packs_impl<void, Pack<next...>, Pack<Types1...>, Rest...>::type;
+};
+
+template<template <typename...> typename Pack, typename... SoFar, typename T, typename... Types1, typename... Rest>
+struct union_packs_impl<std::enable_if_t<contains<T, SoFar...>::value>, Pack<SoFar...>, Pack<T, Types1...>, Rest...> {
+	using type = typename union_packs_impl<void, Pack<SoFar...>, Pack<Types1...>, Rest...>::type;
+};
+
+template<template <typename...> typename Pack, typename... SoFar, typename... Rest>
+struct union_packs_impl<std::enable_if_t<sizeof...(Rest)>, Pack<SoFar...>, Pack<>, Rest...> {
+	using type = typename union_packs_impl<void, Pack<SoFar...>, Rest...>::type;
+};
+
+template<template <typename...> typename Pack, typename... SoFar, typename... Rest>
+struct union_packs_impl<std::enable_if_t<sizeof...(Rest) == 0>, Pack<SoFar...>, Pack<>, Rest...> {
+	using type = Pack<SoFar...>;
+};
+
+template<typename T, typename... Args>
+using union_packs = typename union_packs_impl<void, T, Args...>::type;
 
 // -------------------------------------------------------------------
 // --- Reversed iterable
@@ -246,12 +305,13 @@ class polyValue : Store {
 
 	template<typename U>
 	struct data final : base  {
-		U val;
+		using type = std::remove_const_t<std::remove_reference_t<U>>;
+		type val;
 		
-		U& get() noexcept { return val; }
-		const U& get() const noexcept { return val; }
+		type& get() noexcept { return val; }
+		const type& get() const noexcept { return val; }
 
-		T& getValue() noexcept override { return val; }
+		type& getValue() noexcept override { return val; }
 		const T& getValue() const noexcept override { return val; }
 
 		base* copy(Store& store) const noexcept override {

@@ -20,8 +20,8 @@ struct Cost {
 };
 
 struct ManaCost : public Cost {
-    virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
-    virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 
     ManaCost(Mana mana);
 
@@ -30,14 +30,13 @@ private:
 };
 
 struct LandPlayCost : public Cost {
-    virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
-    virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 };
 
 struct TapCost : public Cost {
     bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
     Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
-private:
 };
 
 #endif
