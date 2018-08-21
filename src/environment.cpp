@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <random>
 
+#include "ability.h"
 #include "environment.h"
 #include "rulesEffects.h"
 
@@ -67,6 +68,25 @@ void Environment::createRulesEffects() {
 	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new TokenMovementEffect()));
 	this->replacementEffects.push_back(std::shared_ptr<EventHandler>(new ZeroDamageEffect()));
 	this->stateQueryHandlers.push_back(std::shared_ptr<StaticEffectHandler>(new CounterPowerToughnessEffect()));
+}
+
+template<typename T, typename... Extra, typename... Args>
+void addObjectInternal(Zone<Args...>& zone, const std::shared_ptr<const Targetable>& object, int index) {
+	if (std::shared_ptr<const T> result = std::dynamic_pointer_cast<const T>(object)) {
+		if (index >= 0) zone.objects.insert(zone.objects.begin() + (zone.objects.size() - index), result);
+		else zone.objects.insert(zone.objects.begin() + (1 - index), result);
+	}
+	else {
+		if constexpr (sizeof...(Extra) == 0) {
+#ifdef DEBUG
+			std::cerr << "Could not convert to internal types" << std::endl;
+#endif
+			throw "Could not convert to internal types";
+		}
+		else {
+			return addObjectInternal<Extra...>(zone, object, index);
+		}
+	}
 }
 
 int Environment::getPower(xg::Guid target)  const {

@@ -4,7 +4,7 @@
 #include "../util.h"
 #include "proposition.h"
 
-class RaidProposition : public Proposition {
+class RaidProposition : public Proposition<Environment> {
 public:
 	bool operator()(const Environment& env) const override {
 		if (controller.isValid() && env.players[env.turnPlayer]->id != controller) return false;

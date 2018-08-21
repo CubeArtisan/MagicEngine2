@@ -71,19 +71,17 @@ public:
 	}
 
 	bool dependsOn(StaticEffectQuery&, StaticEffectQuery&, const Environment&) const override {
-		// CodeReview if pred would change from start to end
 		return false;
 	}
 
-	AuraEffect(std::function<bool(const CardToken&, const Environment&)> pred, int powerBoost=0, int toughnessBoost=0,
+	AuraEffect(int powerBoost=0, int toughnessBoost=0,
 		std::vector<std::shared_ptr<EventHandler>> replacementEffectBoost = {}, std::vector<std::shared_ptr<TriggerHandler>> triggerEffectBoost={},
 		std::vector<std::shared_ptr<StaticEffectHandler>> staticEffectBoost={})
-		: clone_inherit({}, { BATTLEFIELD }), pred(pred), powerBoost(powerBoost), toughnessBoost(toughnessBoost),
+		: clone_inherit({}, { BATTLEFIELD }), powerBoost(powerBoost), toughnessBoost(toughnessBoost),
 		  replacementEffectBoost(replacementEffectBoost), triggerEffectBoost(triggerEffectBoost), staticEffectBoost(staticEffectBoost)
 	{}
 
 private:
-	std::function<bool(const CardToken&, const Environment&)> pred;
 	int powerBoost;
 	int toughnessBoost;
 	std::vector<std::shared_ptr<EventHandler>> replacementEffectBoost;

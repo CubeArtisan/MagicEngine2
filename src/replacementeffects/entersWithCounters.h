@@ -29,13 +29,13 @@ public:
 		else return PassPriority();
 	}
 
-	EntersWithCounters(int amount, PropositionValue prop = TrueProposition())
+	EntersWithCounters(int amount, PropositionValue<Environment> prop = TrueProposition<Environment>())
 		: clone_inherit({}, {BATTLEFIELD}), amount(amount), prop(prop)
 	{}
 
 private:
 	int amount;
-	PropositionValue prop;
+	PropositionValue<Environment> prop;
 };
 
 #endif

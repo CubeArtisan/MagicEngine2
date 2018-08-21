@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\cards">
+      <UniqueIdentifier>{756554d1-5c44-4155-87ae-89edfd7849ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\abilities">
+      <UniqueIdentifier>{9cae666e-c691-4507-a569-38be8fe5433c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\tokens">
+      <UniqueIdentifier>{719204e8-372f-419c-85ca-5d84827f9690}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cards">
+      <UniqueIdentifier>{2e103a04-1d15-4e99-b3ee-7996bb06565a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\propositions">
+      <UniqueIdentifier>{5a722abd-82bc-4293-a1ac-02be82e5cc33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\tokens">
+      <UniqueIdentifier>{90bf6999-130f-42c2-936c-c0a43f4d492a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\staticeffects">
+      <UniqueIdentifier>{dc919e8f-c66f-45bc-aeef-a7676023c495}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\replacementeffects">
+      <UniqueIdentifier>{fdece619-3896-4edd-801c-6698cbd7afc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\triggeredeffects">
+      <UniqueIdentifier>{66499c2e-54ce-4dba-a7ac-20d748193004}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\ability.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\card.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\changeset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cost.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\environment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\guid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mana.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strategy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\enum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cards\cardManager.cpp">
+      <Filter>Source Files\cards</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tokens\tokenManager.cpp">
+      <Filter>Source Files\tokens</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ability.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\card.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\changeset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gameAction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\guid.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mana.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\runner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stateQuery.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\strategy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\targeting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\a.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\b.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\c.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\d.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\e.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\f.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\g.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\h.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\i.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\j.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\k.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\l.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\m.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\n.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\o.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\p.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\q.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\r.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\s.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\t.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\u.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\v.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\w.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\x.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\y.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\z.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cards\cardManager.h">
+      <Filter>Header Files\cards</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\damageAbility.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tokens\g.h">
+      <Filter>Header Files\tokens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tokens\tokenManager.h">
+      <Filter>Header Files\tokens</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\createToken.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\combat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\propositions\raid.h">
+      <Filter>Header Files\propositions</Filter>
+    </ClInclude>
+    <ClInclude Include="src\propositions\proposition.h">
+      <Filter>Header Files\propositions</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\singleProliferate.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\effect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\explore.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\triggeredeffects\etb.h">
+      <Filter>Header Files\triggeredeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\replacementeffects\entersWithCounters.h">
+      <Filter>Header Files\replacementeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\replacementeffects\panharmoniconEffect.h">
+      <Filter>Header Files\replacementeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\staticeffects\flying.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\staticeffects\plusForEachEffect.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rulesEffects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\staticeffects\lordEffect.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\handlers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\staticeffects\auraEffect.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\triggeredeffects\combatDamageTrigger.h">
+      <Filter>Header Files\triggeredeffects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\triggeredeffects\lambdaTrigger.h">
+      <Filter>Header Files\triggeredeffects</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

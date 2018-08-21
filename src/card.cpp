@@ -1,3 +1,4 @@
+#include "ability.h"
 #include "card.h"
 #include "targeting.h"
 

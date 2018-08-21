@@ -115,7 +115,8 @@ enum MovementType {
 	DEFAULTMOVEMENTTYPE,
 	DESTROY,
 	DISCARD,
-	DRAWCARD
+	DRAWCARD,
+	SACRIFICE
 };
 std::ostream& operator<<(std::ostream& os, const ZoneType& step);
 

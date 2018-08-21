@@ -127,7 +127,7 @@
       <OmitFramePointers>true</OmitFramePointers>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <CompileAs>CompileAsCpp</CompileAs>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <EnableModules>true</EnableModules>
@@ -215,6 +215,7 @@
     <ClInclude Include="src\tokens\tokenManager.h" />
     <ClInclude Include="src\triggeredeffects\combatDamageTrigger.h" />
     <ClInclude Include="src\triggeredeffects\etb.h" />
+    <ClInclude Include="src\triggeredeffects\lambdaTrigger.h" />
     <ClInclude Include="src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,6 +5,8 @@
 #include "../combat.h"
 #include "../environment.h"
 
+#include "../propositions/proposition.h"
+
 class PlusForEachHandler : public clone_inherit<PlusForEachHandler, StaticEffectHandler> {
 public:
 	StaticEffectQuery & handleEvent(StaticEffectQuery& query, const Environment& env) const override {
@@ -71,13 +73,13 @@ public:
 		return inter->getObjects();
 	}
 
-	PlusForEachHandler(ZoneType zone, std::function<bool(std::shared_ptr<const Targetable>, const Environment&, xg::Guid)> filter, bool power=true, bool toughness=false)
+	PlusForEachHandler(ZoneType zone, PropositionValue<std::shared_ptr<const Targetable>, Environment, xg::Guid> filter, bool power=true, bool toughness=false)
 		: clone_inherit({}, { BATTLEFIELD }), zone(zone), filter(filter), power(power), toughness(toughness)
 	{}
 
 private:
 	ZoneType zone;
-	std::function<bool(std::shared_ptr<const Targetable>, const Environment&, xg::Guid)> filter;
+	PropositionValue<std::shared_ptr<const Targetable>, Environment, xg::Guid> filter;
 	bool power;
 	bool toughness;
 };

@@ -1,3 +1,4 @@
+#include "ability.h"
 #include "changeset.h"
 #include "environment.h"
 

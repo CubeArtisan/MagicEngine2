@@ -56,8 +56,30 @@ U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 	}
 }
 
+template<template <typename...> typename A>
+struct RefMap {
+	template<typename... Args>
+	const A<Args...>& operator()(const A<Args...>& a) { return a; }
+};
+
+template<typename T, template <typename...> typename A>
+using ParentOfForm = std::remove_const_t<std::remove_reference_t<std::invoke_result_t<RefMap<A>, T>>>;
+
 template<int N, typename... Ts> using NthTypeOf =
 typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+template<typename T>
+using FunctionEquivalent = std::function<decltype(T::operator())>;
+
+// --- https://stackoverflow.com/a/42583794/3300171
+template <class T, class... U>
+struct contains : std::disjunction<std::is_same<T, U>...> {};
+
+template <typename...>
+struct is_subset_of : std::false_type {};
+
+template <typename... Types1, typename ... Types2>
+struct is_subset_of<std::tuple<Types1...>, std::tuple<Types2...>> : std::conjunction<contains<Types1, Types2...>...> {};
 
 // -------------------------------------------------------------------
 // --- Reversed iterable
@@ -210,8 +232,6 @@ class polyValue : Store {
 		virtual base* copy(Store& store) const noexcept = 0;
 		virtual base* move(Store& store, base*& other) const noexcept = 0;
 		virtual void free(Store& store) const noexcept = 0;
-
-	protected:
 		virtual T* getValPtr() noexcept = 0;
 		virtual const T* getValPtr() const noexcept = 0;
 		template<typename U>
@@ -251,7 +271,6 @@ class polyValue : Store {
 			: val(std::forward<V>(val))
 		{}
 
-	protected:
 		T* getValPtr() noexcept override {
 			return &val;
 		}
@@ -302,7 +321,7 @@ public:
 
 	template<typename U>
 	friend U* poly_cast(polyValue<T> poly)  noexcept {
-		return poly.value->poly_cast<U>();
+		return poly.val->poly_cast<U>();
 	}
 
 	T* operator->()  noexcept {

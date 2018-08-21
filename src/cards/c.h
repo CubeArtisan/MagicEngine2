@@ -1,6 +1,9 @@
 #include "cardManager.h"
 #include "../environment.h"
 #include "../targeting.h"
+
+#include "../triggeredeffects/lambdaTrigger.h"
+#include "../propositions/proposition.h"
 #include "../propositions/raid.h"
 
 Card ChartACourse = newCard("Chart a Course", 1, {}, { SORCERY }, {},
@@ -11,6 +14,19 @@ Card ChartACourse = newCard("Chart a Course", 1, {}, { SORCERY }, {},
 								if (RaidProposition(env.getController(source))(env))
 									changes += Changeset::discardCards(env.getController(source), 1, env);
 								return changes; } });
+
+Card CuriousObsession = newCard("Curious Obsession", 1, {}, { ENCHANTMENT }, { AURA }, 0, 0, 0, { BLUE }, Mana({ BLUE }),
+	{}, {}, {}, { std::make_shared<LambdaTriggerHandler>(AndPropositionImpl(LambdaProposition(std::function([](const Changeset& c, const Environment&)
+		{ return c.phaseChange.changed && c.phaseChange.starting == POSTCOMBATMAIN; })), UpcastProposition<RaidProposition, Changeset, Environment>(RaidProposition())),
+		[](const TriggerInfo& info) { std::vector<QueueTrigger> res; Changeset cause;
+									  cause.phaseChange = info.change.phaseChange;
+									  res.push_back(QueueTrigger{ info.player, info.source, cause,
+											std::make_shared<Ability>(LambdaEffects([](xg::Guid source, const Environment& env) -> std::optional<Changeset>
+												{ Changeset res;
+												  xg::Guid owner = std::dynamic_pointer_cast<const CardToken>(env.gameObjects.at(source))->owner;
+												  res.moves.push_back(ObjectMovement{source, env.battlefield->id, env.graveyards.at(owner)->id, SACRIFICE});
+												  return res; })) });
+										  return res; }) });
 
 class CManager : public LetterManager {
 public:

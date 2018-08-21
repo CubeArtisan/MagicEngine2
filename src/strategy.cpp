@@ -1,6 +1,7 @@
 #include <numeric>
 #include <random>
 
+#include "ability.h"
 #include "card.h"
 #include "strategy.h"
 #include "targeting.h"

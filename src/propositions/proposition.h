@@ -6,72 +6,183 @@
 #include "../environment.h"
 #include "../util.h"
 
+template<typename... Args>
 class Proposition {
 public:
-	virtual bool operator()(const Environment& env) const = 0;
+	virtual bool operator()(const Args&... args) const = 0;
+};
+template<typename T, typename... Args>
+using is_proposition = std::is_base_of<Proposition<Args...>, T>;
+
+template<typename T, typename... Args>
+constexpr bool is_proposition_v = is_proposition<T, Args...>::value;
+
+template<typename T, typename U>
+struct can_upcast_proposition;
+
+template<typename... Args1, typename... Args2>
+struct can_upcast_proposition<Proposition<Args1...>, Proposition<Args2...>> {
+	constexpr static bool value = is_subset_of<std::tuple<Args1...>, std::tuple<Args2...>>::value;
 };
 
-class PropositionValue : public polyValue<Proposition>, public Proposition {
-public:
-	using polyValue<Proposition>::polyValue;
+template<typename T, typename... Us>
+struct call_operator_with_args;
 
-	bool operator()(const Environment& env) const {
-		return this->value()(env);
+template<typename... Args1, typename... Args2>
+struct call_operator_with_args<Proposition<Args1...>, Args2...> {
+	static bool make_call(const Proposition<Args1...>& prop, const Args2&... args) {
+		std::tuple<const Args2&...> tuple(args...);
+		return prop(std::get<const Args1&>(tuple)...);
 	}
 };
 
-template<typename T>
-constexpr bool isProposition = std::is_base_of<Proposition, T>::value;
+template<typename Enable, typename Prop, typename... Args>
+class UpcastPropositionImpl;
 
-class TrueProposition : public Proposition {
-	bool operator()(const Environment&) const override {
+template<typename Prop, typename... Args>
+class UpcastPropositionImpl<std::enable_if_t<can_upcast_proposition<ParentOfForm<Prop, Proposition>, Proposition<Args...>>::value>, Prop, Args...> : public Proposition<Args...> {
+public:
+	using ChildType = ParentOfForm<Prop, ::Proposition>;
+	bool operator()(const Args&... args) const override {
+		return call_operator_with_args<ChildType, Args...>::make_call(this->prop, args...);
+	}
+
+	UpcastPropositionImpl(const Prop& prop)
+		: prop(prop)
+	{}
+
+private:
+	Prop prop;
+};
+
+template<typename Prop, typename... Args>
+using UpcastProposition = UpcastPropositionImpl<void, Prop, Args...>;
+
+
+template<typename... Args>
+class TrueProposition : public Proposition<Args...> {
+public:
+	bool operator()(const Args&...) const override {
 		return true;
 	}
 };
 
-class FalseProposition : public Proposition {
-	bool operator()(const Environment&) const override {
+template<typename... Args>
+class FalseProposition : public Proposition<Args...> {
+public:
+	bool operator()(const Args&...) const override {
 		return false;
 	}
 };
 
-template<typename A, typename B>
-class AndProposition : public Proposition {
-	bool operator()(const Environment& env) const override {
-		return a(env) && b(env);
+template<typename... Args>
+class PropositionValue : public polyValue<Proposition<Args...>>, public Proposition<Args...> {
+public:
+	using polyValue<Proposition<Args...>>::polyValue;
+
+	bool operator()(const Args&... args) const override {
+		return this->value()(args...);
+	}
+	PropositionValue()
+		: PropositionValue(TrueProposition<Args...>())
+	{}
+	template<typename Prop, typename Enable = std::enable_if_t<can_upcast_proposition<ParentOfForm<Prop, Proposition>, Proposition<Args...>>::value>>
+	PropositionValue(const Prop& other)
+		: PropositionValue(UpcastProposition<Prop, Args...>(other))
+	{}
+
+	template<typename Prop, typename Enable = std::enable_if_t<can_upcast_proposition<Prop, Proposition<Args...>>::value>>
+	PropositionValue& operator=(const Prop& other) {
+		*this = UpcastProposition<Prop, Args...>(other);
+	}
+};
+
+template<typename Enable, typename ArgsProp, typename... Args>
+class AndPropositionImpl;
+
+template<typename... ArgsPropArgs, typename... Args>
+class AndPropositionImpl<std::enable_if_t<std::conjunction_v<is_proposition<Args, ArgsPropArgs...>...>>, Proposition<ArgsPropArgs...>, Args...> : public Proposition<ArgsPropArgs...> {
+public:
+	bool operator()(const ArgsPropArgs&... args) const override {
+		return andAll<Args...>(args...);
+	}
+	template<typename T, typename... Left>
+	bool andAll(const ArgsPropArgs&... args) const {
+		bool result = std::get<T>(children)(args...);
+		if constexpr (sizeof...(Left) == 0) return result;
+		else return result && andAll<Left...>(args...);
 	}
 
-	AndProposition()
-	{
-		static_assert(isProposition<A> && isProposition<B>, "A and B must be Propositions");
-	}
+	AndPropositionImpl()
+	{}
 
-	AndProposition(A a, B b)
-		: a(a), b(b)
+	AndPropositionImpl(Args... args)
+		: children{ args... }
 	{}
 
 private:
-	A a;
-	B b;
+	std::tuple<Args...> children;
 };
 
-template<typename A, typename B>
-class OrProposition : public Proposition {
-	bool operator()(const Environment& env) const override {
-		return a(env) || b(env);
+template<typename... Args>
+AndPropositionImpl(Args...)->AndPropositionImpl<void, ParentOfForm<NthTypeOf<0, Args...>, Proposition>, Args...>;
+
+template<typename ArgsProp, typename... Args>
+using AndProposition = AndPropositionImpl<void, ArgsProp, Args...>;
+
+template<typename Enable, typename ArgsProp, typename... Args>
+class OrPropositionImpl;
+
+template<typename... ArgsPropArgs, typename... Args>
+class OrPropositionImpl<std::enable_if_t<std::conjunction_v<is_proposition<Args, ArgsPropArgs...>...>>, std::tuple<ArgsPropArgs...>, Args...> : public Proposition<ArgsPropArgs...> {
+public:
+	bool operator()(const ArgsPropArgs&... args) const override {
+		return orAll<Args...>(args...);
+	}
+	template<typename T, typename... Left>
+	bool orAll(const ArgsPropArgs&... args) const {
+		bool result = std::get<T>(children)(args...);
+		if constexpr (sizeof...(Left) == 0) return result;
+		else return result || orAll<Left...>(args...);
 	}
 
-	OrProposition()
+	OrPropositionImpl()
 	{}
 
-	OrProposition(A a, B b)
-		: a(a), b(b)
+	OrPropositionImpl(Args... args)
+		: children(args...)
 	{}
 
 private:
-	A a;
-	B b;
+	std::tuple<Args...> children;
 };
 
+template<typename... Args>
+OrPropositionImpl(Args...)->OrPropositionImpl<void, ParentOfForm<NthTypeOf<0, Args...>, Proposition>, Args...>;
+
+template<typename ArgsTuple, typename... Args>
+using OrProposition = OrPropositionImpl<void, ArgsTuple, Args...>;
+
+template<typename... Args>
+class LambdaProposition : public Proposition<Args...> {
+public:
+	using functionType = std::function<bool(const Args&...)>;
+
+	bool operator()(const Args&... args) const override {
+		return this->prop(args...);
+	}
+
+	LambdaProposition(functionType prop)
+		: prop(prop)
+	{}
+
+private:
+	functionType prop;
+};
+
+using EnvProposition = Proposition<Environment>;
+using EnvPropositionValue = PropositionValue<Environment>;
+using ChangeProposition = Proposition<Changeset>;
+using ChangePropositionValue = PropositionValue<Changeset>;
 
 #endif

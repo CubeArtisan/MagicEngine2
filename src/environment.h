@@ -17,7 +17,9 @@
 #include "combat.h"
 #include "player.h"
 #include "card.h"
-#include "ability.h"
+
+struct Ability;
+struct ActivatedAbility;
 
 struct ZoneInterface : public clone_inherit<abstract_method<ZoneInterface>>{
     virtual xg::Guid addObject(const std::shared_ptr<const Targetable>& object, int index = 0) = 0;
@@ -34,9 +36,12 @@ struct ZoneInterface : public clone_inherit<abstract_method<ZoneInterface>>{
 template<typename... Args>
 struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
     std::vector<std::variant<std::shared_ptr<const Args>...>> objects;
-    
+
+	template<typename T, typename... Extra, typename... Args2>
+	friend void addObjectInternal(Zone<Args2...>& zone, const std::shared_ptr<const Targetable>& object, int index);
+
     xg::Guid addObject(const std::shared_ptr<const Targetable>& object, int index = 0) override {
-        this->addObjectInternal<Args...>(object, index);
+        addObjectInternal<Args...>(*this, object, index);
 		return object->id;
 	}
 
@@ -74,26 +79,6 @@ struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
 	}
 
 	using clone_inherit<Zone<Args...>, ZoneInterface, Targetable>::clone_inherit;
-
-private:
-    template<typename T, typename... Extra>
-    void addObjectInternal(const std::shared_ptr<const Targetable>& object, int index){
-        if(std::shared_ptr<const T> result = std::dynamic_pointer_cast<const T>(object)){
-			if (index >= 0) this->objects.insert(this->objects.begin() + (this->objects.size() - index), result);
-			else this->objects.insert(this->objects.begin() + (1 - index), result);
-        }
-        else {
-            if constexpr(sizeof...(Extra) == 0) {
-#ifdef DEBUG
-                std::cerr << "Could not convert to internal types" << std::endl;
-#endif
-                throw "Could not convert to internal types";
-            }
-            else {
-                return addObjectInternal<Extra...>(object, index);
-            }
-        }
-    }
 };
 
 template<typename... Args>
