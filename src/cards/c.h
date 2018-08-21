@@ -1,10 +1,13 @@
 #include "cardManager.h"
+
 #include "../environment.h"
 #include "../targeting.h"
 
-#include "../triggeredeffects/lambdaTrigger.h"
 #include "../propositions/proposition.h"
 #include "../propositions/raid.h"
+#include "../staticeffects/auraEffect.h"
+#include "../triggeredeffects/lambdaTrigger.h"
+#include "../triggeredeffects/combatDamageTrigger.h"
 
 Card ChartACourse = newCard("Chart a Course", 1, {}, { SORCERY }, {},
 	2, 1, 0, { BLUE }, std::shared_ptr<TargetingRestriction>(new NoTargets()),
@@ -26,7 +29,9 @@ Card CuriousObsession = newCard("Curious Obsession", 1, {}, { ENCHANTMENT }, { A
 												  xg::Guid owner = std::dynamic_pointer_cast<const CardToken>(env.gameObjects.at(source))->owner;
 												  res.moves.push_back(ObjectMovement{source, env.battlefield->id, env.graveyards.at(owner)->id, SACRIFICE});
 												  return res; })) });
-										  return res; }) });
+									  return res; }) }, { std::shared_ptr<StaticEffectHandler>(new AuraEffect(1, 1, {}, { std::make_shared<CombatDamageTrigger>(toPlayerProp, [](DamageToTarget damage)
+															{ return std::make_shared<Ability>(LambdaEffects([](xg::Guid source, const Environment& env)
+									  { return Changeset::drawCards(env.getController(source), 1, env); })); })})) });
 
 class CManager : public LetterManager {
 public:
