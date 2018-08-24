@@ -11,7 +11,7 @@
 
 Card ChartACourse = newCard("Chart a Course", 1, {}, { SORCERY }, {},
 	2, 1, 0, { BLUE }, std::shared_ptr<TargetingRestriction>(new NoTargets()),
-	std::vector<std::shared_ptr<Cost>> { std::shared_ptr<Cost>(new ManaCost(Mana(1, { BLUE }))) }, {}, { [](xg::Guid source, const Environment& env) -> std::optional<Changeset> { return Changeset::drawCards(env.getController(source), 2, env); },
+	{ ManaCost(Mana(1, { BLUE })) }, {}, { [](xg::Guid source, const Environment& env) -> std::optional<Changeset> { return Changeset::drawCards(env.getController(source), 2, env); },
 							 [](xg::Guid source, const Environment& env) -> std::optional<Changeset> {
 								Changeset changes;
 								if (RaidProposition(env.getController(source))(env))

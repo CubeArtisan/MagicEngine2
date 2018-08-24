@@ -5,12 +5,12 @@ Ability::Ability(EffectValue effect, std::shared_ptr<const TargetingRestriction>
 	: clone_inherit(effect, targeting)
 {}
 
-AbilityWithCost::AbilityWithCost(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting, std::vector<std::shared_ptr<const Cost>> costs,
-								 std::vector<std::shared_ptr<const Cost>> additionalCosts)
+AbilityWithCost::AbilityWithCost(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting, std::vector<CostValue> costs,
+								 std::vector<CostValue> additionalCosts)
     : Ability(effect, targeting), HasCost(costs, additionalCosts)
 {}
 
-ManaAbility::ManaAbility(Mana mana, std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
+ManaAbility::ManaAbility(Mana mana, std::vector<CostValue> costs, std::vector<CostValue> additionalCosts)
 	: clone_inherit(LambdaEffects([=](xg::Guid s, const Environment& env)
 					{
 						Changeset changes;

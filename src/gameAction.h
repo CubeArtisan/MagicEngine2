@@ -6,7 +6,7 @@
 #include <vector>
 
 struct Card;
-struct Cost;
+struct CostValue;
 struct ActivatedAbility;
 struct Token;
 struct Emblem;
@@ -16,8 +16,8 @@ struct Emblem;
 struct CastSpell {
 	const xg::Guid spell;
 	const std::vector<xg::Guid> targets;
-	const Cost& cost;
-	const std::vector<std::shared_ptr<Cost>> additionalCosts;
+	const CostValue cost;
+	const std::vector<CostValue> additionalCosts;
 	const unsigned int x;
 };
 
@@ -30,7 +30,7 @@ struct ActivateAnAbility {
 	const std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>, std::shared_ptr<const Emblem>> source;
 	const std::shared_ptr<ActivatedAbility> ability;
 	const std::vector<xg::Guid> targets;
-	const Cost& cost;
+	const CostValue cost;
 	const unsigned int x;
 };
 

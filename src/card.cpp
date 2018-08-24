@@ -1,5 +1,6 @@
 #include "ability.h"
 #include "card.h"
+#include "cost.h"
 #include "targeting.h"
 
 HasEffect::HasEffect(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting)
@@ -16,17 +17,17 @@ void HasEffect::resetEffect() {
 
 HasCost::HasCost() {}
 
-HasCost::HasCost(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
+HasCost::HasCost(std::vector<CostValue> costs, std::vector<CostValue> additionalCosts)
     : costs(costs), additionalCosts(additionalCosts)
 {}
 
-std::shared_ptr<const Cost> HasCost::canPlay(const Player& player, const Environment& env) const {
+std::optional<CostValue> HasCost::canPlay(const Player& player, const Environment& env) const {
     // CodeReview: Can choose targets if *this is a HasEffect - Might not be neccesary
 
 	SourceType source;
 	if (const Card* self = dynamic_cast<const Card*>(this)) {
 		// CodeReview: Check are in a valid zone to be played from
-		if (!env.goodTiming(self->id)) return std::shared_ptr<Cost>();
+		if (!env.goodTiming(self->id)) return std::nullopt;
 		source = std::dynamic_pointer_cast<const Card>(env.gameObjects.at(self->id));
 	}
 	if (const Ability* self = dynamic_cast<const Ability*>(this)) {
@@ -35,10 +36,10 @@ std::shared_ptr<const Cost> HasCost::canPlay(const Player& player, const Environ
 	}
 	// CodeReview: Figure out timing for abilities
 
-    for(const std::shared_ptr<const Cost>& cost : this->costs) {
-        if(cost->canPay(player, env, source)) return cost;
+    for(const CostValue& cost : this->costs) {
+        if(cost.value().canPay(player, env, source)) return cost;
     }
-    return std::shared_ptr<Cost>();
+    return std::nullopt;
 }
 
 Changeset CardToken::applyEffect(const Environment& env) const {
@@ -79,7 +80,7 @@ CardTokenWithCost::CardTokenWithCost(std::shared_ptr<const std::set<CardSuperTyp
 		   std::shared_ptr<const TargetingRestriction> targeting,
 		   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 		   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
-           std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts)
+           std::vector<CostValue> costs, std::vector<CostValue> additionalCosts)
     : CardToken(superTypes, types, subTypes, power, toughness, loyalty, name, cmc, colors, activatedAbilities,
                 effect, targeting, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes),
 	  HasCost(costs, additionalCosts)

@@ -14,11 +14,11 @@ Card ImpactTremors = newCard("Impact Tremors", 2, {}, { ENCHANTMENT }, {}, 0, 0,
 
 Card Island = newCard("Island", 0, std::set<CardSuperType>{BASIC}, std::set<CardType>{LAND}, std::set<CardSubType>{ISLAND}, 0, 0, 0,
 				      std::set<Color>{}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
-                      std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new LandPlayCost())}, std::vector<std::shared_ptr<Cost>>{},
+					  {LandPlayCost()}, {},
 					  {},
 					  std::vector<std::shared_ptr<ActivatedAbility>>{
 					  std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{BLUE}),
-					  std::vector<std::shared_ptr<const Cost>>{std::shared_ptr<const Cost>(new TapCost())}))});
+					  {TapCost()}))});
 
 class IManager : public LetterManager {
 public:

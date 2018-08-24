@@ -7,7 +7,7 @@
 
 class PanharmoniconEffect : public clone_inherit<PanharmoniconEffect, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment& env) const {
+	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const {
 		std::vector<QueueTrigger> toAdd;
 		// CodeReview: Currently doubles instead of just adding one
 		for (QueueTrigger& trigger : changeset.trigger) {

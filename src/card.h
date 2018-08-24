@@ -36,12 +36,12 @@ struct HasEffect : public clone_inherit<abstract_method<HasEffect>, Targetable> 
 
 // All subclasses of this class must inherit from Targetable as well
 struct HasCost : public clone_inherit<abstract_method<HasCost>> {
-	const std::vector<std::shared_ptr<const Cost>> costs;
-    const std::vector<std::shared_ptr<const Cost>> additionalCosts;
-	virtual std::shared_ptr<const Cost> canPlay(const Player& player, const Environment& env) const;
+	const std::vector<CostValue> costs;
+    const std::vector<CostValue> additionalCosts;
+	virtual std::optional<CostValue> canPlay(const Player& player, const Environment& env) const;
 
 	HasCost();
-    HasCost(std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts);
+    HasCost(std::vector<CostValue> costs, std::vector<CostValue> additionalCosts);
 };
 
 struct HasAbilities : public clone_inherit<abstract_method<HasAbilities>> {
@@ -101,7 +101,7 @@ struct CardTokenWithCost : public CardToken, public HasCost {
 					  std::shared_ptr<const TargetingRestriction> targeting,
 					  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 					  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
-					  std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts);
+					  std::vector<CostValue> costs, std::vector<CostValue> additionalCosts);
 };
 
 struct Card : public clone_inherit<Card, CardTokenWithCost> {

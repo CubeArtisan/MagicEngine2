@@ -146,7 +146,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 			castSpell.target.push_back(CreateTargets{ castSpell.moves[0].newObject, pCastSpell->targets });
 		}
         castSpell += pCastSpell->cost.payCost(active, env, spell);
-        for(std::shared_ptr<Cost> c : pCastSpell->additionalCosts) {
+        for(const CostValue& c : pCastSpell->additionalCosts) {
             castSpell += c->payCost(active, env, spell);
         }
         // CodeReview: Use the chosen X value
@@ -177,7 +177,8 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
 		if (pActivateAnAbility->targets.size() > 0) {
 			activateAbility.target.push_back(CreateTargets{ result->id, pActivateAnAbility->targets });
 		}
-        activateAbility += pActivateAnAbility->cost.payCost(active, env, result->source);
+		CostValue cost = pActivateAnAbility->cost;
+        activateAbility += cost.payCost(active, env, result->source);
 #ifdef DEBUG
 		std::cout << active.id << " is activating an ability of " << getBaseClassPtr<const CardToken>(pActivateAnAbility->source)->name << std::endl;
 #endif
@@ -320,8 +321,8 @@ bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> ap
 	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
 		if (applied.find(eh->id) != applied.end()) continue;
 		auto result = eh->handleEvent(changeset, this->env);
-		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&result)) {
-			std::vector<Changeset>& changes = *pChangeset;
+		if (result) {
+			std::vector<Changeset>& changes = *result;
 			applied.insert(eh->id);
 			for (Changeset& change : changes) {
 				if (!this->applyReplacementEffects(change, applied)) this->applyChangeset(change, false);
@@ -904,8 +905,8 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 	Changeset triggers;
 	for (std::shared_ptr<TriggerHandler> eh : this->env.triggerHandlers) {
 		auto changePrelim = eh->handleEvent(changeset, this->env);
-		if (std::vector<Changeset>* pChangeset = std::get_if<std::vector<Changeset>>(&changePrelim)) {
-			std::vector<Changeset>& changes = *pChangeset;
+		if (changePrelim) {
+			std::vector<Changeset>& changes = *changePrelim;
 			for (Changeset& change : changes) {
 				triggers += change;
 #ifdef DEBUG

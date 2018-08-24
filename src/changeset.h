@@ -8,7 +8,6 @@
 #include "guid.hpp"
 
 #include "enum.h"
-#include "gameAction.h"
 #include "handlers.h"
 #include "mana.h"
 #include "stateQuery.h"

@@ -6,7 +6,7 @@
 
 class TokenMovementEffect : public clone_inherit<TokenMovementEffect, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment& env) const {
+	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
 		std::vector<size_t> toRemove;
 		size_t i = 0;
@@ -19,7 +19,7 @@ public:
 		for (size_t j = toRemove.size(); j > 0; j--) {
 			changeset.moves.erase(changeset.moves.begin() + toRemove[j-1]);
 		}
-		if (toRemove.empty()) return PassPriority();
+		if (toRemove.empty()) return std::nullopt;
 		else return std::vector<Changeset>{ changeset };
 	}
 
@@ -30,7 +30,7 @@ public:
 
 class ZeroDamageEffect : public clone_inherit<ZeroDamageEffect, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changeset, const Environment&) const {
+	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment&) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
 		std::vector<size_t> toRemove;
 		size_t i = 0;
@@ -43,7 +43,7 @@ public:
 		for (size_t j = toRemove.size(); j > 0; j--) {
 			changeset.damage.erase(changeset.damage.begin() + toRemove[j - 1]);
 		}
-		if (toRemove.empty()) return PassPriority();
+		if (toRemove.empty()) return std::nullopt;
 		else return std::vector<Changeset>{ changeset };
 	}
 

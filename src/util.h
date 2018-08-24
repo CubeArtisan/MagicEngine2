@@ -71,39 +71,95 @@ typename std::tuple_element<N, std::tuple<Ts...>>::type;
 template<typename T>
 using FunctionEquivalent = std::function<decltype(T::operator())>;
 
+template<template<typename> typename Pack, typename T>
+struct ExtractParameterIfPack {
+	using type = T;
+};
+
+template<template<typename> typename Pack, typename T>
+struct ExtractParameterIfPack<Pack, Pack<T>> {
+	using type = T;
+};
+
+template<template<typename> typename Pack, typename T>
+using extract_parameter_if_pack_t = typename ExtractParameterIfPack<Pack, T>::type;
+
 // --- https://stackoverflow.com/a/42583794/3300171
-template <class T, class... U>
-struct contains : std::disjunction<std::is_same<T, U>...> {};
+template <class T, class... Us>
+struct contains : std::disjunction<std::is_same<T, Us>...> {};
 
 template <typename, typename>
-struct is_subset_of : std::false_type {};
+struct is_subset_of;
 
-template <typename... Types1, typename ... Types2>
-struct is_subset_of<std::tuple<Types1...>, std::tuple<Types2...>> : std::conjunction<contains<Types1, Types2...>...> {};
+template <template<typename...> typename Pack, typename... Types1, typename ... Types2>
+struct is_subset_of<Pack<Types1...>, Pack<Types2...>> : std::conjunction<contains<Types1, Types2...>...> {};
 
 // ----
-template<typename, typename>
-struct concat;
+template<typename>
+struct is_pack : std::false_type {};
 
-template<template <typename...> typename Pack, typename... Ts, typename T>
-struct concat<Pack<Ts...>, T> {
-	using type = Pack<Ts..., T>;
+template<template<typename...> typename Pack, typename... Args>
+struct is_pack<Pack<Args...>> : std::true_type {};
+
+template<template<typename...> typename, typename>
+struct is_specific_pack : std::false_type {};
+
+template<template<typename...> typename Pack, typename... Args>
+struct is_specific_pack<Pack, Pack<Args...>> : std::true_type {};
+
+template<typename, typename>
+struct pack_contains : std::false_type {};
+
+template<template <typename...> typename Pack, typename T, typename... Args>
+struct pack_contains<T, Pack<Args...>> : contains<T, Args...>{};
+
+template<typename T, typename U>
+constexpr bool pack_contains_v = pack_contains<T, U>::value;
+
+template<typename, typename...>
+struct append;
+
+template<template <typename...> typename Pack, typename... Ts, typename... Us>
+struct append<Pack<Ts...>, Us...> {
+	using type = Pack<Ts..., Us...>;
 };
 
-template<typename, typename>
+template<typename Pack, typename... Ts>
+using append_t = typename append<Pack, Ts...>::type;
+
+template<typename, typename...>
 struct prepend;
 
-template<template <typename...> typename Pack, typename... Ts, typename T>
-struct prepend<Pack<Ts...>, T> {
-	using type = Pack<T, Ts...>;
+template<template <typename...> typename Pack, typename... Ts, typename... Us>
+struct prepend<Pack<Ts...>, Us...> {
+	using type = Pack<Us..., Ts...>;
 };
+
+template<typename Pack, typename... Ts>
+using prepend_t = typename prepend<Pack, Ts...>::type;
+
+template<typename, typename...>
+struct concatenate;
+
+template<template <typename...> typename Pack, typename... Ts, typename... Us, typename... Rest>
+struct concatenate<Pack<Ts...>, Pack<Us...>, Rest...> {
+	using type = typename concatenate<Pack<Ts..., Us...>, Rest...>::type;
+};
+
+template<template<typename...> typename Pack, typename...Ts>
+struct concatenate<Pack<Ts...>> {
+	using type = Pack<Ts...>;
+};
+
+template<typename... Ts>
+using concatenate_t = typename concatenate<Ts...>::type;
 
 template<typename>
 struct reverse_pack;
 
 template<template <typename...> typename Pack, typename T, typename... Ts>
 struct reverse_pack<Pack<T, Ts...>> {
-	using type = typename concat<typename reverse_pack<Pack<Ts...>>::type, T>::type;
+	using type = typename append<typename reverse_pack<Pack<Ts...>>::type, T>::type;
 };
 
 template<template <typename...> typename Pack>
@@ -111,15 +167,15 @@ struct reverse_pack<Pack<>> {
 	using type = Pack<>;
 };
 
-template<typename, typename, typename, typename...>
-struct union_packs_impl {
-	using type = std::false_type;
-};
+template<typename Pack>
+using reverse_pack_t = typename reverse_pack<Pack>::type;
+
+template<typename, typename, typename...>
+struct union_packs_impl;
 
 template<template <typename...> typename Pack, typename... SoFar, typename T, typename... Types1, typename... Rest>
 struct union_packs_impl<std::enable_if_t<std::negation_v<contains<T, SoFar...>>>, Pack<SoFar...>, Pack<T, Types1...>, Rest...> {
-	using next = typename concat<Pack<SoFar...>, T>::type;
-	using type = typename union_packs_impl<void, Pack<next...>, Pack<Types1...>, Rest...>::type;
+	using type = typename union_packs_impl<void, append_t<Pack<SoFar...>, T>, Pack<Types1...>, Rest...>::type;
 };
 
 template<template <typename...> typename Pack, typename... SoFar, typename T, typename... Types1, typename... Rest>
@@ -138,7 +194,105 @@ struct union_packs_impl<std::enable_if_t<sizeof...(Rest) == 0>, Pack<SoFar...>, 
 };
 
 template<typename T, typename... Args>
-using union_packs = typename union_packs_impl<void, T, Args...>::type;
+using union_packs_t = typename union_packs_impl<void, T, Args...>::type;
+
+template<typename, typename, typename...>
+struct intersect_packs_impl;
+
+template<template <typename...> typename Pack, typename T, typename... Args, typename... Rest>
+struct intersect_packs_impl<std::enable_if_t<std::conjunction_v<pack_contains<T, Rest>...>>, Pack<T, Args...>, Rest...> {
+	using type = prepend_t<T, intersect_packs_impl<void, Pack<Args...>, Rest...>>;
+};
+
+template<template <typename...> typename Pack, typename T, typename... Args, typename... Rest>
+struct intersect_packs_impl<std::enable_if_t<std::negation_v<std::conjunction<pack_contains<T, Rest>...>>>, Pack<T, Args...>, Rest...> {
+	using type = intersect_packs_impl<void, Pack<Args...>, Rest...>;
+};
+
+template<template <typename...> typename Pack, typename... Rest>
+struct intersect_packs_impl<void, Pack<>, Rest...> {
+	using type = Pack<>;
+};
+
+template<typename T, typename... Args>
+using intersect_packs_t = intersect_packs_impl<void, T, Args...>;
+
+template<typename, typename, typename>
+struct difference_packs_impl;
+
+template<template <typename...> typename Pack, typename T, typename... Args, typename... OArgs>
+struct difference_packs_impl<std::enable_if_t<contains<T, OArgs...>::value>, Pack<T, Args...>, Pack<OArgs...>> {
+	using type = difference_packs_impl<void, Pack<Args...>, Pack<OArgs...>>;
+};
+
+template<template <typename...> typename Pack, typename T, typename... Args, typename... OArgs>
+struct difference_packs_impl<std::enable_if_t<std::negation_v<contains<T, OArgs...>>>, Pack<T, Args...>, Pack<OArgs...>> {
+	using type = prepend_t<T, difference_packs_impl<void, Pack<Args...>, Pack<OArgs...>>>;
+};
+
+template<template <typename...> typename Pack, typename Other>
+struct difference_packs_impl<void, Pack<>, Other> {
+	using type = Pack<>;
+};
+
+template<typename T, typename U>
+using difference_packs_t = difference_packs_impl<void, T, U>;
+
+template<template<typename> typename Filter, typename T>
+struct filter_pack;
+
+template<template<typename> typename Filter, template <typename...> typename Pack, typename... Args>
+struct filter_pack<Filter, Pack<Args...>> {
+	using type = Pack<typename Filter<Args>::type...>;
+};
+
+template<template<typename> typename Filter, typename T>
+using filter_pack_t = typename filter_pack<Filter, T>::type;
+
+template<template<typename...> typename, typename, typename=void>
+struct flatten_pack_impl;
+
+template<template<typename...> typename Pack, typename... Args>
+struct flatten_pack_impl<Pack, Pack<Args...>, void> {
+	using type = concatenate_t<typename flatten_pack_impl<Pack, Args, void>::type...>;
+};
+
+template<template<typename...> typename Pack, typename T>
+struct flatten_pack_impl<Pack, T, std::enable_if_t<std::negation_v<is_specific_pack<Pack, T>>>> {
+	using type = Pack<T>;
+};
+
+template<template<typename...> typename Pack, typename T>
+using flatten_pack_t = typename flatten_pack_impl<Pack, T, void>::type;
+
+template<template<typename...> typename Pack, typename T>
+struct switch_pack;
+
+template<template<typename...> typename Pack1, template<typename...> typename Pack2, typename... Args>
+struct switch_pack<Pack2, Pack1<Args...>> {
+	using type = Pack2<Args...>;
+};
+
+template<typename T, typename=void>
+struct unique_pack_impl;
+
+template<typename T>
+using unique_pack_t = typename unique_pack_impl<T, void>::type;
+
+template<template<typename...> typename Pack, typename T, typename... Args>
+struct unique_pack_impl<Pack<Args..., T>, std::enable_if_t<std::negation_v<contains<T, Args...>>>> {
+	using type = append_t<unique_pack_t<Pack<Args...>>, T>;
+};
+
+template<template<typename...> typename Pack, typename T, typename... Args>
+struct unique_pack_impl<Pack<Args..., T>, std::enable_if_t<contains<T, Args...>::value>> {
+	using type = typename unique_pack_impl<Pack<Args...>, void>::type;
+};
+
+template<template<typename...> typename Pack>
+struct unique_pack_impl<Pack<>, void> {
+	using type = Pack<>;
+};
 
 // -------------------------------------------------------------------
 // --- Reversed iterable
@@ -364,9 +518,10 @@ public:
 	}
 	
 	template<typename U>
-		polyValue<T> operator=(polyValue<U>&& other) noexcept {
+		polyValue<T>& operator=(polyValue<U>&& other) noexcept {
 		this->val->free(*this);
 		this->val = other.val->move(*this, other.val);
+		return *this;
 	}
 
 	operator T&()  noexcept { return val->getValue(); }
@@ -386,7 +541,11 @@ public:
 
 	T* operator->()  noexcept {
 		return val->getValPtr();
-	} 
+	}
+	
+	const T* operator->() const noexcept {
+		return val->getValPtr();
+	}
 
 	virtual ~polyValue()  noexcept {
 		// this->val->free(*this);

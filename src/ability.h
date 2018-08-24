@@ -17,8 +17,8 @@ struct Ability : public clone_inherit<Ability, HasEffect> {
 };
 
 struct AbilityWithCost : public Ability, public HasCost {
-	AbilityWithCost(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting, std::vector<std::shared_ptr<const Cost>> costs,
-					std::vector<std::shared_ptr<const Cost>> additionalCosts = {});
+	AbilityWithCost(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting, std::vector<CostValue> costs,
+					std::vector<CostValue> additionalCosts = {});
 };
 
 struct ActivatedAbility : public clone_inherit<ActivatedAbility, AbilityWithCost> {
@@ -28,7 +28,7 @@ struct ActivatedAbility : public clone_inherit<ActivatedAbility, AbilityWithCost
 struct ManaAbility : public clone_inherit<ManaAbility, ActivatedAbility> {
     Changeset applyEffect(const Environment& env) const;
 
-    ManaAbility(Mana mana, std::vector<std::shared_ptr<const Cost>> costs, std::vector<std::shared_ptr<const Cost>> additionalCosts={});
+    ManaAbility(Mana mana, std::vector<CostValue> costs, std::vector<CostValue> additionalCosts={});
 
 private:
     const Mana mana;

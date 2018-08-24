@@ -6,10 +6,10 @@ Targetable::Targetable()
     : id(xg::newGuid())
 {}
 
-std::variant<std::vector<Changeset>, PassPriority> TriggerHandler::handleEvent(Changeset& changeset, const Environment& env) const {
+std::optional<std::vector<Changeset>> TriggerHandler::handleEvent(Changeset& changeset, const Environment& env) const {
 	std::vector<Changeset> result;
 	std::vector<QueueTrigger> queue = this->createTriggers(changeset, env);
-	if (queue.empty()) return PassPriority();
+	if (queue.empty()) return std::nullopt;
 	Changeset createTrigger;
 	for(QueueTrigger& q : queue) createTrigger.trigger.push_back(q);
 	result.push_back(createTrigger);

@@ -19,11 +19,11 @@ Card StormFleetAerialist = newCard("Storm Fleet Aerialist", 2, {}, { CREATURE },
 	{}, { std::shared_ptr<EventHandler>(new EntersWithCounters(1, RaidProposition())) }, {}, {}, { 0 });
 Card Swamp = newCard("Swamp", 0, std::set<CardSuperType>{BASIC}, std::set<CardType>{LAND}, std::set<CardSubType>{SWAMP}, 0, 0, 0,
 				     std::set<Color>{}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
-				     std::vector<std::shared_ptr<Cost>>{std::shared_ptr<Cost>(new LandPlayCost())}, std::vector<std::shared_ptr<Cost>>{},
+					 { LandPlayCost() }, {},
 				     {},
 				     std::vector<std::shared_ptr<ActivatedAbility>>{
 				  	     std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{BLACK}),
-				  		     std::vector<std::shared_ptr<const Cost>>{std::shared_ptr<const Cost>(new TapCost())}))});
+							 {TapCost()}))});
 
 class SManager : public LetterManager {
 public:

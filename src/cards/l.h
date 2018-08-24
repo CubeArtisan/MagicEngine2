@@ -8,7 +8,7 @@
 
 Card LightningBolt = newCard("Lightning Bolt", 0, std::set<CardSuperType>{}, std::set<CardType>{INSTANT}, std::set<CardSubType>{}, 0, 0, 0,
 						     std::set<Color>{RED}, std::shared_ptr<TargetingRestriction>(new AnyTarget()),
-							{ std::shared_ptr<Cost>(new ManaCost(Mana(std::multiset<Color>{RED}))) }, std::vector<std::shared_ptr<Cost>>{},
+							{ ManaCost(Mana(std::multiset<Color>{RED})) }, {},
 						 	 std::vector<std::function<std::optional<Changeset>(xg::Guid, const Environment&)>>
 						 		 { [](xg::Guid source, const Environment& env) ->
 								std::optional<Changeset> { Changeset change;

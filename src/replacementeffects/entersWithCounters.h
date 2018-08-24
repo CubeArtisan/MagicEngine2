@@ -6,11 +6,11 @@
 
 class EntersWithCounters : public clone_inherit<EntersWithCounters, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset& changes, const Environment& env) const {
+	std::optional<std::vector<Changeset>> handleEvent(Changeset& changes, const Environment& env) const {
 		bool replaced = false;
 		for (const auto& create : changes.create) {
 			if (create.created->id == this->owner) {
-				if (!prop(env)) return PassPriority();
+				if (!prop(env)) return std::nullopt;
 				replaced = true;
 				bool existing = false;
 				for (auto& counter : changes.permanentCounters) {
@@ -26,7 +26,7 @@ public:
 		}
 
 		if(replaced) return std::vector<Changeset>{ changes };
-		else return PassPriority();
+		else return std::nullopt;
 	}
 
 	EntersWithCounters(int amount, PropositionValue<Environment> prop = TrueProposition<Environment>())

@@ -9,7 +9,6 @@
 #include "guid.hpp"
 
 #include "enum.h"
-#include "gameAction.h"
 #include "stateQuery.h"
 #include "util.h"
 
@@ -41,9 +40,8 @@ public:
 
 class EventHandler : public clone_inherit<abstract_method<EventHandler>, Handler> {
 public:
-    virtual std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const = 0;
+    virtual std::optional<std::vector<Changeset>> handleEvent(Changeset&, const Environment&) const = 0;
 	using clone_inherit<abstract_method<EventHandler>, Handler>::clone_inherit;
-	static inline bool selfReplacing = false;
 };
 
 class StaticEffectHandler : public clone_inherit<abstract_method<StaticEffectHandler>, Handler> {
@@ -60,7 +58,7 @@ struct QueueTrigger;
 
 class TriggerHandler : public clone_inherit<abstract_method<TriggerHandler>, EventHandler> {
 public:
-	std::variant<std::vector<Changeset>, PassPriority> handleEvent(Changeset&, const Environment&) const;
+	std::optional<std::vector<Changeset>> handleEvent(Changeset&, const Environment&) const;
 	using clone_inherit<abstract_method<TriggerHandler>, EventHandler>::clone_inherit;
 
 protected:

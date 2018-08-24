@@ -126,14 +126,14 @@ template<typename... ArgsPropArgs, typename... Args>
 class AndPropositionImpl<std::enable_if_t<std::conjunction_v<can_upcast_proposition<ParentOfForm<Args, Proposition>, Proposition<ArgsPropArgs...>>...>>, Proposition<ArgsPropArgs...>, Args...> : public Proposition<ArgsPropArgs...> {
 public:
 	bool operator()(const ArgsPropArgs&... args) const override {
-		return andAll<UpcastProposition<Args, ArgsPropArgs...>...>(args...);
+		return andAll(args...);
 	}
-	template<typename T, typename... Left>
+	template<size_t I=0>
 	bool andAll(const ArgsPropArgs&... args) const {
-		const Proposition<ArgsPropArgs...>& prop = std::get<T>(children);
+		const Proposition<ArgsPropArgs...>& prop = std::get<I>(children);
 		bool result = prop(args...);
-		if constexpr (sizeof...(Left) == 0) return result;
-		else return result && andAll<Left...>(args...);
+		if constexpr (I == sizeof...(Args) - 1) return result;
+		else return result && andAll<I+1>(args...);
 	}
 
 	AndPropositionImpl()

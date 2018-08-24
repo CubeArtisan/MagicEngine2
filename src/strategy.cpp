@@ -32,7 +32,7 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
     for(auto& cardWrapper : env.hands.at(player.id)->objects) {
         if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&cardWrapper)) {
             std::shared_ptr<const Card> card = *pCard;
-            if(std::shared_ptr<const Cost> pCost = card->canPlay(player, env)) {
+            if(std::optional<CostValue> pCost = card->canPlay(player, env)) {
 				std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
                 if(types->find(LAND) != types->end()) {
                     possibilities.push_back(PlayLand{card->id});
@@ -41,7 +41,7 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
 					std::vector<xg::Guid> targets = this->chooseTargets(card, player, env);
 					if (targets.size() < card->targeting->minTargets) continue;
                     possibilities.push_back(CastSpell{card->id, targets, *pCost,
-                                            std::vector<std::shared_ptr<Cost>>(), 0});
+													  {}, 0 });
                 }
             }
         }
@@ -54,7 +54,7 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
 			std::shared_ptr<ActivatedAbility> ability = std::dynamic_pointer_cast<ActivatedAbility>(pAbility->clone());
 			SourceType upshifted = convertVariant<SourceType>(cardWrapper);
 			ability->source = upshifted;
-            if(std::shared_ptr<const Cost> pCost = ability->canPlay(player, env)) {
+            if(std::optional<CostValue> pCost = ability->canPlay(player, env)) {
                 possibilities.push_back(ActivateAnAbility{upshifted, ability, std::vector<xg::Guid>(), *pCost, 0});
             }
         }

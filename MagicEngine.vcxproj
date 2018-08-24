@@ -92,7 +92,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_MBCS;GUID_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>false</ExceptionHandling>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <EnableModules>true</EnableModules>
@@ -143,6 +143,7 @@
     <ClCompile Include="src\cards\cardManager.cpp" />
     <ClCompile Include="src\changeset.cpp" />
     <ClCompile Include="src\cost.cpp" />
+    <ClCompile Include="src\createConcat.cpp" />
     <ClCompile Include="src\enum.cpp" />
     <ClCompile Include="src\environment.cpp" />
     <ClCompile Include="src\guid.cpp" />

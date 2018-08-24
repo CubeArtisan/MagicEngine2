@@ -5,7 +5,7 @@
 
 Card Opt = newCard("Opt", 1, {}, { INSTANT }, {},
 	0, 0, 0, { BLUE }, std::shared_ptr<TargetingRestriction>(new NoTargets()),
-	std::vector<std::shared_ptr<Cost>> { std::shared_ptr<Cost>(new ManaCost(Mana({ BLUE }))) }, {},
+	{ ManaCost(Mana({ BLUE })) }, {},
 	{ [](xg::Guid source, const Environment& env) -> std::optional<Changeset> { return Changeset::scryCards(env.getController(source), 1, env); },
 	[](xg::Guid source, const Environment& env) -> std::optional<Changeset> { return Changeset::drawCards(env.getController(source), 1, env); } });
 
