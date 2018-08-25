@@ -36,18 +36,22 @@ struct Cost {
 struct CostValue : public polyValue<Cost>, public Cost {
 	using polyValue<Cost>::polyValue;
 
-	virtual bool canPay(const Player& player, const Environment& env, const SourceType& source) const {
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const {
 		return this->value().canPay(player, env, source);
 	}
-	virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const {
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const {
 		return this->value().payCost(player, env, source);
 	}
-	virtual Cost& operator+=(const Cost& other);
-	virtual Cost& operator-=(const Cost& other);
+	Cost& operator+=(const Cost& other);
+	Cost& operator-=(const Cost& other);
 	CostValue createCostValue() const { return *this; }
 
 	const std::type_info& getType() const {
 		return typeid(this->value());
+	}
+
+	bool operator==(const CostValue& other) {
+		return this->getType() == other.getType();
 	}
 };
 

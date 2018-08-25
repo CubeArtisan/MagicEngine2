@@ -351,6 +351,11 @@ std::vector<BlockRequirementValue> Environment::getBlockRequirements(const std::
 	return std::get<BlockRequirementQuery>(executeStateQuery(query)).requirements;
 }
 
+CostValue Environment::getCostReduction(const std::shared_ptr<const HasCost> costed) const {
+	CostReductionQuery query{ *costed, std::make_shared<CostValue>(EmptyCost()) };
+	return *std::get<CostReductionQuery>(executeStateQuery(query)).reduction;
+}
+
 StaticEffectQuery& Environment::executeStateQuery(StaticEffectQuery&& query) const {
 	// CodeReview 107.1b If a calculation yields a negative value use 0 instead, with exceptions
 	// CodeReview: 107.2 some calculations can't complete what should we do then

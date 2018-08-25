@@ -169,6 +169,7 @@ struct Environment {
 	std::vector<BlockRestrictionValue> getBlockRestrictions(const std::shared_ptr<const CardToken>& blocker) const;
 	std::vector<BlockRequirementValue> getBlockRequirements(xg::Guid blocker) const;
 	std::vector<BlockRequirementValue> getBlockRequirements(const std::shared_ptr<const CardToken>& blocker) const;
+	CostValue getCostReduction(const std::shared_ptr<const HasCost> costed) const;
 	
 	template<typename Effect>
 	bool hasStaticEffect(xg::Guid guid, ZoneType zone) const {

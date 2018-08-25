@@ -67,7 +67,10 @@ std::optional<CostValue> HasCost::canPlay(const Player& player, const Environmen
 	if (!inGoodZone) return std::nullopt;
 	// CodeReview: Figure out timing for abilities
 
-    for(const CostValue& cost : this->costs) {
+	// CodeReview: Do cost increases and sets
+	CostValue costReduction = env.getCostReduction(this->shared_from_this());
+    for(CostValue cost : this->costs) {
+		cost -= costReduction;
         if(cost.value().canPay(player, env, source)) return cost;
     }
     return std::nullopt;

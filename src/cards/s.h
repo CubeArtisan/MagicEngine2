@@ -7,12 +7,15 @@
 #include "../replacementeffects/entersWithCounters.h"
 #include "../propositions/raid.h"
 #include "../triggeredeffects/combatDamageTrigger.h"
+#include "../staticeffects/conditionalCostReduction.h"
 
 #include "cardManager.h"
 
 Card SirenLookout = newCard("Siren Lookout", 3, {}, { CREATURE }, { SIREN, PIRATE }, 1, 2, 0, { BLUE }, Mana(2, { BLUE }), {}, {},
 	{}, { std::shared_ptr<TriggerHandler>(new EtbTriggerHandler([](std::shared_ptr<CardToken> card, std::optional<xg::Guid>) ->
 			std::shared_ptr<Ability> { return std::make_shared<Ability>(LambdaEffects(ExploreAbility(card->id)), std::shared_ptr<TargetingRestriction>(new NoTargets())); }, true)) });
+Card SirenReaver = newCard("Siren Reaver", 4, {}, { CREATURE }, { SIREN, PIRATE }, 3, 2, 0, { BLUE }, Mana(3, { BLUE }), {}, {},
+	{}, {}, { std::make_shared<ConditionalCostReduction>(RaidProposition(), ManaCost(Mana(1, {}))) });
 Card SkyshipPlunderer = newCard("Skyship Plunderer", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 2, 1, 0, { BLUE }, Mana(1, { BLUE }), {}, {}, {},
 	{ std::shared_ptr<TriggerHandler>(new CombatDamageTrigger(toPlayerProp, [](DamageToTarget) {return std::make_shared<Ability>(LambdaEffects(SingleProliferateAbility()), std::shared_ptr<TargetingRestriction>(new PermanentOrPlayerTarget())); }))});
 Card StormFleetAerialist = newCard("Storm Fleet Aerialist", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 1, 2, 0, { BLUE }, Mana(1, { BLUE }), {},

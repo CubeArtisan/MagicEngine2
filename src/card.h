@@ -35,7 +35,7 @@ struct HasEffect : public clone_inherit<abstract_method<HasEffect>, Targetable> 
 };
 
 // All subclasses of this class must inherit from Targetable as well
-struct HasCost : public clone_inherit<abstract_method<HasCost>> {
+struct HasCost : public clone_inherit<abstract_method<HasCost>>, public std::enable_shared_from_this<HasCost> {
 	const std::vector<CostValue> costs;
     const std::vector<CostValue> additionalCosts;
 	const std::shared_ptr<const std::set<ZoneType>> playableFrom;

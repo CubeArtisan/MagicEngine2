@@ -278,5 +278,8 @@
     <ClInclude Include="src\abilities\createTimedEffect.h">
       <Filter>Header Files\abilities</Filter>
     </ClInclude>
+    <ClInclude Include="src\staticeffects\conditionalCostReduction.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

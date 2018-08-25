@@ -207,6 +207,7 @@
     <ClInclude Include="src\runner.h" />
     <ClInclude Include="src\stateQuery.h" />
     <ClInclude Include="src\staticeffects\auraEffect.h" />
+    <ClInclude Include="src\staticeffects\conditionalCostReduction.h" />
     <ClInclude Include="src\staticeffects\flying.h" />
     <ClInclude Include="src\staticeffects\lordEffect.h" />
     <ClInclude Include="src\staticeffects\plusForEachEffect.h" />

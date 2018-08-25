@@ -8,6 +8,7 @@
 #include "mana.h"
 struct ActivatedAbility;
 struct CardToken;
+struct CostValue;
 struct HasCost;
 struct Targetable;
 struct HasAbilities;
@@ -226,11 +227,20 @@ struct BlockRequirementQuery {
 	}
 };
 
+struct CostReductionQuery {
+	const HasCost& costed;
+
+	std::shared_ptr<CostValue> reduction;
+	bool operator==(const CostReductionQuery& other) {
+		return this->reduction == other.reduction;
+	}
+};
+
 // CodeReview: Add cost calculation, can tap, valid attackers, valid blockers
 using StaticEffectQuery = std::variant<PowerQuery, ToughnessQuery, TimingQuery, SuperTypesQuery, TypesQuery, SubTypesQuery,
                                        ColorsQuery, ControllerQuery, ActivatedAbilitiesQuery, LandPlaysQuery, ReplacementEffectsQuery,
 								       TriggerEffectsQuery, StaticEffectsQuery, SelfReplacementEffectsQuery, CanAttackQuery,
 									   CanBlockQuery, LethalDamageQuery, AttackRestrictionQuery, AttackRequirementQuery,
 									   BlockRestrictionQuery, BlockRequirementQuery, ActiveReplacementEffectsQuery, ActiveTriggerEffectsQuery,
-									   ActiveStaticEffectsQuery>;
+									   ActiveStaticEffectsQuery, CostReductionQuery>;
 #endif
