@@ -275,5 +275,8 @@
     <ClInclude Include="src\triggeredeffects\lambdaTrigger.h">
       <Filter>Header Files\triggeredeffects</Filter>
     </ClInclude>
+    <ClInclude Include="src\abilities\createTimedEffect.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

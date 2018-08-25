@@ -154,6 +154,7 @@
     <ClCompile Include="src\tokens\tokenManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\abilities\createTimedEffect.h" />
     <ClInclude Include="src\abilities\createToken.h" />
     <ClInclude Include="src\abilities\damageAbility.h" />
     <ClInclude Include="src\abilities\explore.h" />

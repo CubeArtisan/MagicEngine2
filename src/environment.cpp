@@ -338,7 +338,15 @@ StaticEffectQuery& Environment::executeStateQuery(StaticEffectQuery&& query) con
 	// CodeReview 107.1b If a calculation yields a negative value use 0 instead, with exceptions
 	// CodeReview: 107.2 some calculations can't complete what should we do then
 	// CodeReview: If layer 7 or nonexistent get static effects
-	for (std::shared_ptr<StaticEffectHandler> sqh : this->stateQueryHandlers) {
+	// Should order the indexes of StaticEffectQuery by layers to simplify this process
+	std::vector<std::shared_ptr<StaticEffectHandler>> effects;
+	if (!std::holds_alternative<ActiveStaticEffectsQuery>(query)) {
+		effects = this->getActiveStaticEffects();
+	}
+	else {
+		effects = this->stateQueryHandlers;
+	}
+	for (std::shared_ptr<StaticEffectHandler> sqh : effects) {
 		sqh->handleEvent(query, *this);
 	}
 	return query;

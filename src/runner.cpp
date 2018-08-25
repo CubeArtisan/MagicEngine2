@@ -318,7 +318,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 
 bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied) {
 	// CodeReview: Allow strategy to specify order to evaluate in
-	for (std::shared_ptr<EventHandler> eh : this->env.replacementEffects) {
+	for (std::shared_ptr<EventHandler> eh : this->env.getActiveReplacementEffects()) {
 		if (applied.find(eh->id) != applied.end()) continue;
 		auto result = eh->handleEvent(changeset, this->env);
 		if (result) {
@@ -903,7 +903,8 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 
 	bool apply = false;
 	Changeset triggers;
-	for (std::shared_ptr<TriggerHandler> eh : this->env.triggerHandlers) {
+	std::vector<std::shared_ptr<TriggerHandler>> handlers = env.getActiveTriggerEffects();
+	for (std::shared_ptr<TriggerHandler> eh : handlers) {
 		auto changePrelim = eh->handleEvent(changeset, this->env);
 		if (changePrelim) {
 			std::vector<Changeset>& changes = *changePrelim;
