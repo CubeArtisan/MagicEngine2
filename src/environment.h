@@ -110,9 +110,9 @@ struct Environment {
 
 	std::map<xg::Guid, std::vector<xg::Guid>> targets;
 
-    std::vector<std::shared_ptr<TriggerHandler>> triggerHandlers;
-    std::vector<std::shared_ptr<EventHandler>> replacementEffects;
-    std::vector<std::shared_ptr<StaticEffectHandler>> stateQueryHandlers;
+    std::vector<std::shared_ptr<const TriggerHandler>> triggerHandlers;
+    std::vector<std::shared_ptr<const EventHandler>> replacementEffects;
+    std::vector<std::shared_ptr<const StaticEffectHandler>> stateQueryHandlers;
 	std::vector<QueueTrigger> triggers;
 
     std::vector<Changeset> changes;
@@ -147,13 +147,13 @@ struct Environment {
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(xg::Guid target) const;
 	std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> getActivatedAbilities(const std::shared_ptr<const CardToken>& target) const;
 	unsigned int getLandPlays(xg::Guid player) const;
-	std::vector<std::shared_ptr<EventHandler>> getReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
-	std::vector<std::shared_ptr<EventHandler>> getActiveReplacementEffects() const;
-	std::vector<std::shared_ptr<TriggerHandler>> getTriggerEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
-	std::vector<std::shared_ptr<TriggerHandler>> getActiveTriggerEffects() const;
-	std::vector<std::shared_ptr<StaticEffectHandler>> getStaticEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
-	std::vector<std::shared_ptr<StaticEffectHandler>> getActiveStaticEffects() const;
-	std::vector<std::shared_ptr<EventHandler>> getSelfReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<const EventHandler>> getReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<const EventHandler>> getActiveReplacementEffects() const;
+	std::vector<std::shared_ptr<const TriggerHandler>> getTriggerEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<const TriggerHandler>> getActiveTriggerEffects() const;
+	std::vector<std::shared_ptr<const StaticEffectHandler>> getStaticEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
+	std::vector<std::shared_ptr<const StaticEffectHandler>> getActiveStaticEffects() const;
+	std::vector<std::shared_ptr<const EventHandler>> getSelfReplacementEffects(const std::shared_ptr<const CardToken>& target, ZoneType destinationZone, std::optional<ZoneType> sourceZone = std::nullopt) const;
 	bool canAttack(xg::Guid target) const;
 	bool canAttack(const std::shared_ptr<const CardToken>& target) const;
 	bool canBlock(xg::Guid target) const;
@@ -177,9 +177,9 @@ struct Environment {
 	}
 	template<typename Effect>
 	bool hasStaticEffect(const std::shared_ptr<const CardToken>& card, ZoneType zone) const {
-		std::vector<std::shared_ptr<StaticEffectHandler>> effects = this->getStaticEffects(card, zone);
+		std::vector<std::shared_ptr<const StaticEffectHandler>> effects = this->getStaticEffects(card, zone);
 		for (auto& effect : effects) {
-			if (std::dynamic_pointer_cast<Effect>(effect)) return true;
+			if (std::dynamic_pointer_cast<const Effect>(effect)) return true;
 		}
 		return false;
 	}

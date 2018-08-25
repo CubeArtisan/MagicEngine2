@@ -105,7 +105,7 @@ struct ReplacementEffectsQuery {
 	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
-	std::vector<std::shared_ptr<EventHandler>> effects;
+	std::vector<std::shared_ptr<const EventHandler>> effects;
 	bool operator==(const ReplacementEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -113,7 +113,7 @@ struct ReplacementEffectsQuery {
 };
 
 struct ActiveReplacementEffectsQuery {
-	std::vector<std::shared_ptr<EventHandler>> effects;
+	std::vector<std::shared_ptr<const EventHandler>> effects;
 	bool operator==(const ActiveReplacementEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -124,7 +124,7 @@ struct TriggerEffectsQuery {
 	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
-	std::vector<std::shared_ptr<TriggerHandler>> effects;
+	std::vector<std::shared_ptr<const TriggerHandler>> effects;
 	bool operator==(const TriggerEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -132,7 +132,7 @@ struct TriggerEffectsQuery {
 };
 
 struct ActiveTriggerEffectsQuery {
-	std::vector<std::shared_ptr<TriggerHandler>> effects;
+	std::vector<std::shared_ptr<const TriggerHandler>> effects;
 	bool operator==(const ActiveTriggerEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -143,7 +143,7 @@ struct StaticEffectsQuery {
 	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
-	std::vector<std::shared_ptr<StaticEffectHandler>> effects;
+	std::vector<std::shared_ptr<const StaticEffectHandler>> effects;
 	bool operator==(const StaticEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -151,7 +151,7 @@ struct StaticEffectsQuery {
 };
 
 struct ActiveStaticEffectsQuery {
-	std::vector<std::shared_ptr<StaticEffectHandler>> effects;
+	std::vector<std::shared_ptr<const StaticEffectHandler>> effects;
 	bool operator==(const ActiveStaticEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;
@@ -162,7 +162,7 @@ struct SelfReplacementEffectsQuery {
 	const HasAbilities& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;
-	std::vector<std::shared_ptr<EventHandler>> effects;
+	std::vector<std::shared_ptr<const EventHandler>> effects;
 	bool operator==(const SelfReplacementEffectsQuery& other) {
 		// CodeReview: Should this dereference the effects for comparison?
 		return this->effects == other.effects;

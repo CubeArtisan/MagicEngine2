@@ -122,12 +122,12 @@ struct Changeset {
     std::vector<ObjectCreation> create;
     std::vector<RemoveObject> remove;
     std::vector<LifeTotalChange> lifeTotalChanges;
-    std::vector<std::shared_ptr<EventHandler>> effectsToAdd;
-    std::vector<std::shared_ptr<EventHandler>> effectsToRemove;
-	std::vector<std::shared_ptr<TriggerHandler>> triggersToAdd;
-	std::vector<std::shared_ptr<TriggerHandler>> triggersToRemove;
-    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToAdd;
-    std::vector<std::shared_ptr<StaticEffectHandler>> propertiesToRemove;
+    std::vector<std::shared_ptr<const EventHandler>> effectsToAdd;
+    std::vector<std::shared_ptr<const EventHandler>> effectsToRemove;
+	std::vector<std::shared_ptr<const TriggerHandler>> triggersToAdd;
+	std::vector<std::shared_ptr<const TriggerHandler>> triggersToRemove;
+    std::vector<std::shared_ptr<const StaticEffectHandler>> propertiesToAdd;
+    std::vector<std::shared_ptr<const StaticEffectHandler>> propertiesToRemove;
     std::vector<xg::Guid> loseTheGame;
     std::vector<AddMana> addMana;
     std::vector<RemoveMana> removeMana;

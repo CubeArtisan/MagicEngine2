@@ -5,11 +5,12 @@
 #include "../effect.h"
 #include "../propositions/proposition.h"
 
-class EndEffectHandler : public clone_inherit<EndEffectHandler, EventHandler> {
+class EndEffectHandler : public clone_inherit<EndEffectHandler, EventHandler>, public std::enable_shared_from_this<EndEffectHandler> {
 public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const override {
 		if (prop(changeset)) {
 			changeset.propertiesToRemove.push_back(this->effect);
+			changeset.effectsToRemove.push_back(this->shared_from_this());
 			return std::vector<Changeset>{ changeset };
 		}
 		return std::nullopt;

@@ -291,7 +291,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 	bool apply = false;
 	Changeset addStatic;
 	for (auto& object : objects) {
-		std::vector<std::shared_ptr<StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
+		std::vector<std::shared_ptr<const StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
 		if (!handlers.empty()) {
 			for (const auto& h : handlers) addStatic.propertiesToAdd.push_back(h);
 			apply = true;
@@ -307,7 +307,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 	Changeset addReplacement;
 	for (auto& object : objects) {
 		if (std::get<1>(object) != BATTLEFIELD) continue;
-		std::vector<std::shared_ptr<EventHandler>> handlers = env.getSelfReplacementEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
+		std::vector<std::shared_ptr<const EventHandler>> handlers = env.getSelfReplacementEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
 		if (!handlers.empty()) {
 			for (auto& h : handlers) addReplacement.effectsToAdd.push_back(h);
 			apply = true;
@@ -318,7 +318,7 @@ void Runner::applyMoveRules(Changeset& changeset) {
 
 bool Runner::applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied) {
 	// CodeReview: Allow strategy to specify order to evaluate in
-	for (std::shared_ptr<EventHandler> eh : this->env.getActiveReplacementEffects()) {
+	for (std::shared_ptr<const EventHandler> eh : this->env.getActiveReplacementEffects()) {
 		if (applied.find(eh->id) != applied.end()) continue;
 		auto result = eh->handleEvent(changeset, this->env);
 		if (result) {
@@ -373,12 +373,24 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         zone->addObject(oc.created, oc.index);
         this->env.gameObjects[id] = oc.created;
 		if (std::shared_ptr<CardToken> abilities = std::dynamic_pointer_cast<CardToken>(oc.created)) {
-			std::vector<std::shared_ptr<EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
-			for (auto& r : replacement) r->owner = oc.created->id;
-			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacement.begin(), replacement.end());
-			std::vector<std::shared_ptr<TriggerHandler>> trigger = this->env.getTriggerEffects(abilities, zone->type);
-			for (auto& t : trigger) t->owner = oc.created->id;
-			this->env.triggerHandlers.insert(this->env.triggerHandlers.end(), trigger.begin(), trigger.end());
+			std::vector<std::shared_ptr<const EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
+			std::vector<std::shared_ptr<const EventHandler>> replacements;
+			replacements.reserve(replacement.size());
+			for (auto& r : replacement) {
+				std::shared_ptr<EventHandler> res = r->clone();
+				res->owner = oc.created->id;
+				replacements.push_back(res);
+			}
+			this->env.replacementEffects.insert(this->env.replacementEffects.end(), replacements.begin(), replacements.end());
+			std::vector<std::shared_ptr<const TriggerHandler>> trigger = this->env.getTriggerEffects(abilities, zone->type);
+			std::vector<std::shared_ptr<const TriggerHandler>> triggers;
+			triggers.reserve(trigger.size());
+			for (auto& t : trigger) {
+				std::shared_ptr<TriggerHandler> trig = t->clone();
+				trig->owner = oc.created->id;
+				triggers.push_back(trig);
+			}
+			this->env.triggerHandlers.insert(this->env.triggerHandlers.end(), triggers.begin(), triggers.end());
 		}
     }
     for(RemoveObject& ro : changeset.remove) {
@@ -389,9 +401,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 #endif
 		zone->removeObject(ro.object);
 		this->env.gameObjects.erase(ro.object);
-		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
-		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
-		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<StaticEffectHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
+		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<const TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
+		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<const EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
+		this->env.stateQueryHandlers.erase(std::remove_if(this->env.stateQueryHandlers.begin(), this->env.stateQueryHandlers.end(), [&](std::shared_ptr<const StaticEffectHandler>& a) -> bool { return a->owner == ro.object; }), this->env.stateQueryHandlers.end());
     }
     for(LifeTotalChange& ltc : changeset.lifeTotalChanges) {
 #ifdef DEBUG
@@ -400,32 +412,32 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         ltc.oldValue = this->env.lifeTotals[ltc.player];
         this->env.lifeTotals[ltc.player] = ltc.newValue;
     }
-	for (std::shared_ptr<EventHandler> eh : changeset.effectsToAdd) {
+	for (std::shared_ptr<const EventHandler> eh : changeset.effectsToAdd) {
 		this->env.replacementEffects.push_back(eh);
 	}
-	for (std::shared_ptr<EventHandler> eh : changeset.effectsToRemove) {
-		std::vector<std::shared_ptr<EventHandler>>& list = this->env.replacementEffects;
-		list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<EventHandler> e) ->
+	for (std::shared_ptr<const EventHandler> eh : changeset.effectsToRemove) {
+		std::vector<std::shared_ptr<const EventHandler>>& list = this->env.replacementEffects;
+		list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<const EventHandler> e) ->
 			bool { return *e == *eh; }), list.end());
 	}
-    for(std::shared_ptr<TriggerHandler> th : changeset.triggersToAdd){
+    for(std::shared_ptr<const TriggerHandler> th : changeset.triggersToAdd){
         this->env.triggerHandlers.push_back(th);
     }
-    for(std::shared_ptr<TriggerHandler> th : changeset.triggersToRemove){
-        std::vector<std::shared_ptr<TriggerHandler>>& list = this->env.triggerHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<TriggerHandler> e) ->
+    for(std::shared_ptr<const TriggerHandler> th : changeset.triggersToRemove){
+        std::vector<std::shared_ptr<const TriggerHandler>>& list = this->env.triggerHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<const TriggerHandler> e) ->
                                                             bool { return *e == *th; }), list.end());
     }
-    for(std::shared_ptr<StaticEffectHandler> sqh : changeset.propertiesToAdd){
+    for(std::shared_ptr<const StaticEffectHandler> sqh : changeset.propertiesToAdd){
 		// CodeReview: if sqh is a ControlChangeHandler check if the target is not under the new controller's
 		// control if so fire control change event for the target
         this->env.stateQueryHandlers.push_back(sqh);
     }
-    for(std::shared_ptr<StaticEffectHandler> sqh : changeset.propertiesToRemove){
+    for(std::shared_ptr<const StaticEffectHandler> sqh : changeset.propertiesToRemove){
 		// CodeReview: if sqh is a ControlChangeHandler get the current controller with that handler
 		// Then after removing the handler check again if the controllers are different fire a control change event
-        std::vector<std::shared_ptr<StaticEffectHandler>>& list = this->env.stateQueryHandlers;
-        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<StaticEffectHandler> e) ->
+        std::vector<std::shared_ptr<const StaticEffectHandler>>& list = this->env.stateQueryHandlers;
+        list.erase(std::remove_if(list.begin(), list.end(), [&](std::shared_ptr<const StaticEffectHandler> e) ->
                                                             bool { return *e == *sqh; }), list.end());
     }
     for(AddMana& am : changeset.addMana) {
@@ -903,8 +915,8 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 
 	bool apply = false;
 	Changeset triggers;
-	std::vector<std::shared_ptr<TriggerHandler>> handlers = env.getActiveTriggerEffects();
-	for (std::shared_ptr<TriggerHandler> eh : handlers) {
+	std::vector<std::shared_ptr<const TriggerHandler>> handlers = env.getActiveTriggerEffects();
+	for (std::shared_ptr<const TriggerHandler> eh : handlers) {
 		auto changePrelim = eh->handleEvent(changeset, this->env);
 		if (changePrelim) {
 			std::vector<Changeset>& changes = *changePrelim;
