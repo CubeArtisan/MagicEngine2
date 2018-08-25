@@ -203,4 +203,46 @@ public:
 
 using PermanentOrPlayerTarget = OrTarget<PlayerTarget, PermanentTarget>;
 
+class TargetsYouTarget : public TargetingRestriction {
+public:
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const noexcept override {
+		if (index != 0) return false;
+		
+		std::vector<xg::Guid> targets = tryAtMap(env.targets, target, {});
+		return std::find(targets.begin(), targets.end(), env.getController(source.id)) != targets.end();
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
+	}
+
+	TargetsYouTarget() noexcept
+		: TargetingRestriction(1, 1)
+	{}
+};
+
+class TargetsPermanentYouControlTarget : public TargetingRestriction {
+public:
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const noexcept override {
+		if (index != 0) return false;
+
+		std::vector<xg::Guid> targets = tryAtMap(env.targets, target, {});
+		xg::Guid controller = env.getController(source.id);
+		for (const xg::Guid& guid : targets) {
+			if (env.getController(guid) == controller) return true;
+		}
+		return false;
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
+	}
+
+	TargetsPermanentYouControlTarget() noexcept
+		: TargetingRestriction(1, 1)
+	{}
+};
+
+using TargetsYouOrPermanentYouControlTarget = OrTarget<TargetsYouTarget, TargetsPermanentYouControlTarget>;
+
 #endif

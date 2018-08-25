@@ -109,16 +109,17 @@ enum ZoneType {
 	EXILE,
 	COMMAND
 };
-
-enum MovementType {
-	CAST,
-	COUNTER,
-	DEFAULTMOVEMENTTYPE,
-	DESTROY,
-	DISCARD,
-	DRAWCARD,
-	SACRIFICE
-};
 std::ostream& operator<<(std::ostream& os, const ZoneType& step);
+
+enum MovementType : std::uint32_t {
+	CAST = 1 << 0,
+	COUNTER = 1 << 1,
+	CYCLING = 1 << 2 | 1 << 5,
+	DEFAULTMOVEMENTTYPE = 1 << 3,
+	DESTROY = 1 << 4,
+	DISCARD = 1 << 5,
+	DRAWCARD = 1 << 6,
+	SACRIFICE = 1 << 7
+};
 
 #endif

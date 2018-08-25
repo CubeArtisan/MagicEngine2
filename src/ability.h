@@ -18,7 +18,7 @@ struct Ability : public clone_inherit<Ability, HasEffect> {
 
 struct AbilityWithCost : public Ability, public HasCost {
 	AbilityWithCost(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting, std::vector<CostValue> costs,
-					std::vector<CostValue> additionalCosts = {});
+					std::vector<CostValue> additionalCosts = {}, std::shared_ptr<const std::set<ZoneType>> playableFrom = std::shared_ptr<const std::set<ZoneType>>(new std::set{ BATTLEFIELD }));
 };
 
 struct ActivatedAbility : public clone_inherit<ActivatedAbility, AbilityWithCost> {
@@ -28,7 +28,8 @@ struct ActivatedAbility : public clone_inherit<ActivatedAbility, AbilityWithCost
 struct ManaAbility : public clone_inherit<ManaAbility, ActivatedAbility> {
     Changeset applyEffect(const Environment& env) const;
 
-    ManaAbility(Mana mana, std::vector<CostValue> costs, std::vector<CostValue> additionalCosts={});
+    ManaAbility(Mana mana, std::vector<CostValue> costs, std::vector<CostValue> additionalCosts={},
+				std::shared_ptr<const std::set<ZoneType>> playableFrom = std::shared_ptr<const std::set<ZoneType>>(new std::set{ BATTLEFIELD }));
 
 private:
     const Mana mana;

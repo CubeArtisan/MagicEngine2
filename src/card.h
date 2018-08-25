@@ -38,10 +38,11 @@ struct HasEffect : public clone_inherit<abstract_method<HasEffect>, Targetable> 
 struct HasCost : public clone_inherit<abstract_method<HasCost>> {
 	const std::vector<CostValue> costs;
     const std::vector<CostValue> additionalCosts;
+	const std::shared_ptr<const std::set<ZoneType>> playableFrom;
 	virtual std::optional<CostValue> canPlay(const Player& player, const Environment& env) const;
 
 	HasCost();
-    HasCost(std::vector<CostValue> costs, std::vector<CostValue> additionalCosts);
+    HasCost(std::vector<CostValue> costs, std::vector<CostValue> additionalCosts, std::shared_ptr<const std::set<ZoneType>> playableFrom);
 };
 
 struct HasAbilities : public clone_inherit<abstract_method<HasAbilities>> {
@@ -98,7 +99,7 @@ struct CardTokenWithCost : public CardToken, public HasCost {
 					  int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 					  std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
 					  EffectValue effect,
-					  std::shared_ptr<const TargetingRestriction> targeting,
+					  std::shared_ptr<const TargetingRestriction> targeting, std::shared_ptr<const std::set<ZoneType>>,
 					  std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 					  std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
 					  std::vector<CostValue> costs, std::vector<CostValue> additionalCosts);
@@ -106,15 +107,13 @@ struct CardTokenWithCost : public CardToken, public HasCost {
 
 struct Card : public clone_inherit<Card, CardTokenWithCost> {
 	using clone_inherit<Card, CardTokenWithCost>::clone_inherit;
-
-	// std::shared_ptr<Token> createTokenCopy();
 };
 
 struct Token : public clone_inherit<Token, CardToken> {
 	using clone_inherit<Token, CardToken>::clone_inherit;
 };
 
-struct Emblem : public Targetable, public HasAbilities {
+struct Emblem : public clone_inherit<Emblem, HasAbilities, Targetable> {
 	Emblem(std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 		   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes);
 };

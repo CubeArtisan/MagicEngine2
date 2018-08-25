@@ -77,7 +77,7 @@ Card newCard(std::string name, unsigned int cmc, std::set<CardSuperType> superTy
 
 	return Card(std::make_shared<std::set<CardSuperType>>(superTypes), std::make_shared<std::set<CardType>>(types), std::make_shared<std::set<CardSubType>>(subTypes),
 				power, toughness, loyalty, name, cmc, colors, std::make_shared<std::vector<std::shared_ptr<const ActivatedAbility>>>(activatedAbilities2), LambdaEffects(applyAbilities),
-				targeting, replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes, costs, additionalCosts);
+				targeting, std::shared_ptr<const std::set<ZoneType>>(new std::set{ BATTLEFIELD }), replacementEffects, triggerEffects, staticEffects, thisOnlyReplacementIndexes, costs, additionalCosts);
 }
 
 void insertCard(std::map<std::string, Card>& cards, Card card) {

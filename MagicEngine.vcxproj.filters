@@ -84,9 +84,6 @@
     <ClCompile Include="src\tokens\tokenManager.cpp">
       <Filter>Source Files\tokens</Filter>
     </ClCompile>
-    <ClCompile Include="src\createConcat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ability.h">
