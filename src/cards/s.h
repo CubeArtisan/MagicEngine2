@@ -33,6 +33,7 @@ public:
 	void getCards(std::map<std::string, Card>& cards, std::map<int, std::string>&)
 	{
 		insertCard(cards, SirenLookout);
+		insertCard(cards, SirenReaver);
 		insertCard(cards, SkyshipPlunderer);
 		insertCard(cards, StormFleetAerialist);
 		insertCard(cards, Swamp);

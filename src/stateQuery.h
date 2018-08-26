@@ -141,6 +141,7 @@ struct ActiveTriggerEffectsQuery {
 };
 
 struct StaticEffectsQuery {
+	// CodeReview: Emblems can have static effects
 	const CardToken& target;
 	const ZoneType destinationZone;
 	const std::optional<ZoneType> originZone;

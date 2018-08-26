@@ -55,14 +55,14 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 			}
 			this->replacementEffects.insert(this->replacementEffects.end(), replacements.begin(), replacements.end());
 			std::vector<std::shared_ptr<const TriggerHandler>> trigger = this->getTriggerEffects(copy, LIBRARY);
-			std::vector<std::shared_ptr<const TriggerHandler>> triggers;
-			triggers.reserve(trigger.size());
+			std::vector<std::shared_ptr<const TriggerHandler>> triggers2;
+			triggers2.reserve(trigger.size());
 			for (auto& t : trigger) {
 				std::shared_ptr<TriggerHandler> trig = t->clone();
 				trig->owner = copy->id;
-				triggers.push_back(trig);
+				triggers2.push_back(trig);
 			}
-			this->triggerHandlers.insert(this->triggerHandlers.end(), triggers.begin(), triggers.end());
+			this->triggerHandlers.insert(this->triggerHandlers.end(), triggers2.begin(), triggers2.end());
 			std::vector<std::shared_ptr<const StaticEffectHandler>> state = this->getStaticEffects(copy, LIBRARY);
 			std::vector<std::shared_ptr<const StaticEffectHandler>> states;
 			states.reserve(state.size());

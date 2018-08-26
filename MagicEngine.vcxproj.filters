@@ -281,5 +281,8 @@
     <ClInclude Include="src\staticeffects\conditionalCostReduction.h">
       <Filter>Header Files\staticeffects</Filter>
     </ClInclude>
+    <ClInclude Include="src\staticeffects\conditionalEffect.h">
+      <Filter>Header Files\staticeffects</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

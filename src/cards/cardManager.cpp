@@ -11,6 +11,7 @@
 #include "f.h"
 #include "g.h"
 #include "i.h"
+#include "k.h"
 #include "l.h"
 #include "m.h"
 #include "o.h"
@@ -27,6 +28,7 @@ CardManager::CardManager(){
 	FManager().getCards(this->cards, this->mvids);
 	GManager().getCards(this->cards, this->mvids);
     IManager().getCards(this->cards, this->mvids);
+	KManager().getCards(this->cards, this->mvids);
 	LManager().getCards(this->cards, this->mvids);
 	MManager().getCards(this->cards, this->mvids);
 	OManager().getCards(this->cards, this->mvids);
