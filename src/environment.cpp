@@ -24,6 +24,7 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 		players.push_back(player.clone());
 	}
     for(unsigned int i=0; i < players.size(); i++) {
+		players[i]->owner = players[i]->id;
         this->gameObjects[players[i]->id] = players[i];
         this->hands[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(HAND));
 		this->hands[players[i]->id]->objects.reserve(8);

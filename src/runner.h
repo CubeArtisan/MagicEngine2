@@ -14,8 +14,8 @@ private:
 	const std::vector<Player> players;
     Environment env;
 
-	std::variant<std::monostate, Changeset> checkStateBasedActions() const;
-	std::variant<Changeset, PassPriority> executeStep() const;
+	std::optional<Changeset> checkStateBasedActions() const;
+	std::optional<Changeset> executeStep() const;
 	void applyMoveRules(Changeset& changeset);
 	bool applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied = {});
 	void applyChangeset(Changeset& changeset, bool replacementEffects=true);

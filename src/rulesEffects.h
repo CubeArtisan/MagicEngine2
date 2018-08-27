@@ -11,7 +11,7 @@ public:
 		std::vector<size_t> toRemove;
 		size_t i = 0;
 		for (auto& move : changeset.moves) {
-			if (move.sourceZone != env.battlefield->id && move.sourceZone != env.stack->id &&std::dynamic_pointer_cast<Token>(env.gameObjects.at(move.object))) {
+			if (move.sourceZone != env.battlefield->id && move.sourceZone != env.stack->id && std::dynamic_pointer_cast<Token>(env.gameObjects.at(move.object))) {
 				toRemove.push_back(i);
 			}
 			i++;

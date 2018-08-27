@@ -3,7 +3,7 @@
 #include "runner.h"
 #include "targeting.h"
 
-std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
+std::optional<Changeset> Runner::checkStateBasedActions() const {
 	bool apply = false;
 	Changeset stateBasedAction;
 	for (const std::shared_ptr<Player>& player : this->env.players) {
@@ -58,10 +58,21 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 			// 704.5g.If a creature has toughness greater than 0, and the total damage marked on it is greater than or equal to its toughness, that creature has been dealt lethal damage and is destroyed.Regeneration can replace this event.	
 			else if (toughness <= tryAtMap(this->env.damage, card->id, 0)) {
 				// CodeReview: Make a destroy change
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id, DESTROY });
 				apply = true;
 			}
 			// CodeReview: Deal with deathtouch
+		}
+		else {
+			std::shared_ptr<const std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
+			// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
+			// CodeReview: Bestow
+			if (subtypes->find(AURA) != subtypes->end()) {
+				if (!card->targeting->validTargets(this->env.targets.at(card->id), *card, this->env)) {
+					stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
+					apply = true;
+				}
+			}
 		}
 		if (types->find(PLANESWALKER) != types->end()) {
 			// 704.5i. If a planeswalker has loyalty 0, it's put into its owner's graveyard.
@@ -71,14 +82,7 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 				apply = true;
 			}
 		}
-		std::shared_ptr<const std::set<CardSubType>> subtypes = this->env.getSubTypes(card);
-		// 704.5m. If an Aura is attached to an illegal object or player, or is not attached to an object or player, that Aura is put into its owner's graveyard.
-		if (subtypes->find(AURA) != subtypes->end()) {
-			if (!card->targeting->validTargets(this->env.targets.at(card->id), *card, this->env)) {
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id });
-				apply = true;
-			}
-		}
+		
 		// CodeReview: Handle equipment being attached illegally
 		// CodeReview: Handle removing things that aren't Aura's, Equipment, Fortifications that are attached or are creatures
 		// CodeReview: Handle the Rasputin ability(704.5r)
@@ -99,18 +103,18 @@ std::variant<std::monostate, Changeset> Runner::checkStateBasedActions() const {
 	}
 
 	if (apply)  return stateBasedAction;
-	return {};
+	return std::nullopt;
 }
 
-std::variant<Changeset, PassPriority> Runner::executeStep() const {
+std::optional<Changeset> Runner::executeStep() const {
 	// 116.5. Each time a player would get priority, the game first performs all applicable state-based actions as a
 	// single event (see rule 704, "State-Based Actions"), then repeats this process until no state-based actions are
 	// performed. Then triggered abilities are put on the stack (see rule 603, "Handling Triggered Abilities"). These
 	// steps repeat in order until no further state-based actions are performed and no abilities trigger. Then the
 	// player who would have received priority does so.
-	std::variant<std::monostate, Changeset> actions = this->checkStateBasedActions();
-	if(Changeset* sba = std::get_if<Changeset>(&actions)) {
-		return *sba;
+	std::optional<Changeset> actions = this->checkStateBasedActions();
+	if(actions) {
+		return *actions;
 	}
 
 	if (!this->env.triggers.empty()) {
@@ -187,7 +191,7 @@ std::variant<Changeset, PassPriority> Runner::executeStep() const {
     }
 
     if(std::get_if<PassPriority>(&action)){
-        return PassPriority();
+        return std::nullopt;
     }
 
     return Changeset();
@@ -202,13 +206,14 @@ void Runner::runGame(){
 	this->applyChangeset(startDraw);
 	// CodeReview: Handle mulligans
 
-    int firstPlayerToPass = -1;
+	const int UNSET_PLAYER_PASS = -1;
+    int firstPlayerToPass = UNSET_PLAYER_PASS;
     while(this->env.players.size() > 1) {
-        std::variant<Changeset, PassPriority> step = this->executeStep();
+        std::optional<Changeset> step = this->executeStep();
 
-        if(Changeset* pChangeset = std::get_if<Changeset>(&step)){
-            this->applyChangeset(*pChangeset);
-            firstPlayerToPass = -1;
+        if(step){
+            this->applyChangeset(*step);
+            firstPlayerToPass = UNSET_PLAYER_PASS;
         }
         else {
             int nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
@@ -270,7 +275,7 @@ void Runner::runGame(){
 				this->env.currentPlayer = this->env.turnPlayer;
             }
             else {
-				if (firstPlayerToPass == -1) {
+				if (firstPlayerToPass == UNSET_PLAYER_PASS) {
 					firstPlayerToPass = this->env.currentPlayer;
 				}
 				this->env.currentPlayer = nextPlayer;
@@ -825,10 +830,10 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			// are put on the stack, then the active player gets priority. Players may cast spells and activate abilities.
 			// Once the stack is empty and all players pass in succession, another cleanup step begins.
 			bool repeat = false;
-			std::variant<std::monostate, Changeset> sba = this->checkStateBasedActions();
-			while (Changeset* pChangeset = std::get_if<Changeset>(&sba)) {
+			std::optional<Changeset> sba = this->checkStateBasedActions();
+			while (sba) {
 				repeat = true;
-				this->applyChangeset(*pChangeset);
+				this->applyChangeset(*sba);
 				sba = this->checkStateBasedActions();
 			}
 			if (!env.triggers.empty()) {
