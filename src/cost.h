@@ -108,6 +108,16 @@ protected:
 	bool applies;
 };
 
+struct SacrificeCost : public virtual CostImpl<SacrificeCost> {
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+
+	SacrificeCost& operator+=(const Cost&) { return *this; }
+	SacrificeCost& operator-=(const Cost&) { return *this; }
+
+	CostValue createCostValue() const { return CostValue(*this); }
+};
+
 struct CombineCost : public virtual Cost {
 	bool canPay(const Player& player, const Environment& env, const SourceType& source) const {
 		bool result = true;

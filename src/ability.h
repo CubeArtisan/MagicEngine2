@@ -7,13 +7,16 @@
 
 #include "card.h"
 #include "changeset.h"
-#include "targeting.h"
+
+class TargetingRestriction;
 
 struct Ability : public clone_inherit<Ability, HasEffect> {
     std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>, std::shared_ptr<const Emblem>> source;
     const std::set<Color> colors;
 
-	Ability(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting = std::make_shared<const NoTargets>());
+	Ability(EffectValue effect);
+
+	Ability(EffectValue effect, std::shared_ptr<const TargetingRestriction> targeting);
 };
 
 struct AbilityWithCost : public Ability, public HasCost {

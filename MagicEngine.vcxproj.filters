@@ -284,5 +284,14 @@
     <ClInclude Include="src\staticeffects\conditionalEffect.h">
       <Filter>Header Files\staticeffects</Filter>
     </ClInclude>
+    <ClInclude Include="src\propositions\attacking.h">
+      <Filter>Header Files\propositions</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\cycling.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\abilities\counterUnless.h">
+      <Filter>Header Files\abilities</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

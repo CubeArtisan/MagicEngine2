@@ -111,7 +111,7 @@ CardTokenWithCost::CardTokenWithCost(std::shared_ptr<const std::set<CardSuperTyp
            int toughness, int loyalty, std::string name, unsigned int cmc, std::set<Color> colors,
 		   std::shared_ptr<const std::vector<std::shared_ptr<const ActivatedAbility>>> activatedAbilities,
 		   EffectValue effect,
-		   std::shared_ptr<const TargetingRestriction> targeting, std::shared_ptr<const std::set<ZoneType>>,
+		   std::shared_ptr<const TargetingRestriction> targeting, std::shared_ptr<const std::set<ZoneType>> playableFrom,
 		   std::vector<std::shared_ptr<EventHandler>> replacementEffects, std::vector<std::shared_ptr<TriggerHandler>> triggerEffects,
 		   std::vector<std::shared_ptr<StaticEffectHandler>> staticEffects, std::vector<size_t> thisOnlyReplacementIndexes,
            std::vector<CostValue> costs, std::vector<CostValue> additionalCosts)

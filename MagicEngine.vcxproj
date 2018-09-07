@@ -154,8 +154,10 @@
     <ClCompile Include="src\tokens\tokenManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\abilities\counterUnless.h" />
     <ClInclude Include="src\abilities\createTimedEffect.h" />
     <ClInclude Include="src\abilities\createToken.h" />
+    <ClInclude Include="src\abilities\cycling.h" />
     <ClInclude Include="src\abilities\damageAbility.h" />
     <ClInclude Include="src\abilities\explore.h" />
     <ClInclude Include="src\abilities\singleProliferate.h" />
@@ -199,6 +201,7 @@
     <ClInclude Include="src\handlers.h" />
     <ClInclude Include="src\mana.h" />
     <ClInclude Include="src\player.h" />
+    <ClInclude Include="src\propositions\attacking.h" />
     <ClInclude Include="src\propositions\proposition.h" />
     <ClInclude Include="src\propositions\raid.h" />
     <ClInclude Include="src\replacementeffects\entersWithCounters.h" />

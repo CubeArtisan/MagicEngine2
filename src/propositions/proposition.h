@@ -91,7 +91,7 @@ public:
 		: PropositionValue(UpcastProposition<Prop, Args...>(other))
 	{}
 
-	template<typename Prop, typename Enable = std::enable_if_t<can_upcast_proposition<Prop, Proposition<Args...>>::value>>
+	template<typename Prop, typename Enable = std::enable_if_t<can_upcast_proposition<ParentOfForm<Prop, Proposition>, Proposition<Args...>>::value>>
 	PropositionValue& operator=(const Prop& other) {
 		*this = UpcastProposition<Prop, Args...>(other);
 	}
@@ -186,8 +186,11 @@ OrPropositionImpl(Args...)->OrPropositionImpl<void, ParentOfForm<NthTypeOf<0, Ar
 template<typename ArgsTuple, typename... Args>
 using OrProposition = OrPropositionImpl<void, ArgsTuple, Args...>;
 
+template<typename Prop>
+class LambdaProposition;
+
 template<typename... Args>
-class LambdaProposition : public Proposition<Args...> {
+class LambdaProposition<Proposition<Args...>> : public Proposition<Args...> {
 public:
 	using functionType = std::function<bool(const Args&...)>;
 
@@ -195,13 +198,17 @@ public:
 		return this->prop(args...);
 	}
 
-	LambdaProposition(functionType prop)
+	template<typename T>
+	LambdaProposition(T prop)
 		: prop(prop)
 	{}
 
 private:
 	functionType prop;
 };
+
+template<typename T>
+LambdaProposition(T)->LambdaProposition<filter_pack_t<std::decay, FunctionToPack_t<T, Proposition>>>;
 
 using EnvProposition = Proposition<Environment>;
 using EnvPropositionValue = PropositionValue<Environment>;

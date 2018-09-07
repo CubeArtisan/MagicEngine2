@@ -215,6 +215,7 @@ std::vector<std::pair<std::vector<T>, std::vector<T>>> createCombinations(std::v
 
 template<typename T>
 std::vector<std::vector<T>> createPermutations(std::vector<T> vec) {
+	if (vec.empty()) return { {} };
 	std::vector<std::vector<T>> result;
 	for (int i = 0; i < vec.size(); i++) {
 		std::vector<T> vec2 = vec;

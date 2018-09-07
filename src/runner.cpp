@@ -58,7 +58,7 @@ std::optional<Changeset> Runner::checkStateBasedActions() const {
 			// 704.5g.If a creature has toughness greater than 0, and the total damage marked on it is greater than or equal to its toughness, that creature has been dealt lethal damage and is destroyed.Regeneration can replace this event.	
 			else if (toughness <= tryAtMap(this->env.damage, card->id, 0)) {
 				// CodeReview: Make a destroy change
-				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id, DESTROY });
+				stateBasedAction.moves.push_back(ObjectMovement{ card->id, this->env.battlefield->id, this->env.graveyards.at(card->owner)->id, 0, DESTROY });
 				apply = true;
 			}
 			// CodeReview: Deal with deathtouch
@@ -252,7 +252,9 @@ void Runner::runGame(){
 									isPermanent = true;
 									std::shared_ptr<const std::set<CardSubType>> subtypes = env.getSubTypes(card);
 									if (subtypes->find(AURA) != subtypes->end()) {
-										resolveSpellAbility.target.push_back(CreateTargets{ move.newObject, env.targets.at(card->id) });
+										Changeset applyTargets;
+										applyTargets.target.push_back(CreateTargets{ move.newObject, env.targets.at(card->id) });
+										this->applyChangeset(applyTargets);
 									}
 									break;
 								}

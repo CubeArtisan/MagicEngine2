@@ -13,6 +13,7 @@
 
 #include "guid.hpp"
 
+#include "ability.h"
 #include "changeset.h"
 #include "combat.h"
 #include "player.h"
@@ -35,7 +36,9 @@ struct ZoneInterface : public clone_inherit<abstract_method<ZoneInterface>>{
 
 template<typename... Args>
 struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
-    std::vector<std::variant<std::shared_ptr<const Args>...>> objects;
+	using variantType = std::variant<std::shared_ptr<const Args>...>;
+	std::vector<variantType> objects;
+
 
 	template<typename T, typename... Extra, typename... Args2>
 	friend void addObjectInternal(Zone<Args2...>& zone, const std::shared_ptr<const Targetable>& object, int index);
@@ -59,10 +62,10 @@ struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
 #endif
         throw "Failed to find object for removal";
     }
-	std::shared_ptr<const Targetable> findObject(xg::Guid object) const override {
-		for (auto iter = objects.rbegin(); iter != objects.rend(); iter++) {
-			std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(*iter);
-			if (val->id == object) {
+	std::shared_ptr<const Targetable> findObject(xg::Guid target) const override {
+		for (const variantType& object : reverse(this->objects)) {
+			std::shared_ptr<const Targetable> val = getBaseClassPtr<const Targetable>(object);
+			if (val->id == target) {
 				return val;
 			}
 		}
@@ -72,7 +75,7 @@ struct Zone : public clone_inherit<Zone<Args...>, ZoneInterface, Targetable> {
 	std::vector<std::shared_ptr<const Targetable>> getObjects() const override {
 		std::vector<std::shared_ptr<const Targetable>> result;
 		result.reserve(objects.size());
-		for (auto& object : objects) {
+		for (const variantType& object : objects) {
 			result.push_back(getBaseClassPtr<const Targetable>(object));
 		}
 		return result;

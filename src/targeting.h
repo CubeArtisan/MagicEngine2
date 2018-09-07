@@ -8,6 +8,7 @@
 
 #include "guid.hpp"
 
+#include "ability.h"
 #include "environment.h"
 
 template<typename T>
@@ -114,6 +115,30 @@ private:
 };
 
 template<typename Target1, typename Target2>
+class AndTarget : public TargetingRestriction {
+public:
+	bool validFirstN(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return target1.validFirstN(targets, source, env) && target2.validFirstN(targets, source, env);
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return target1.validTargets(targets, source, env) && target2.validTargets(targets, source, env);
+	}
+
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const noexcept override {
+		return target1.validTarget(target, index, source, env) && target2.validTarget(target, index, source, env);
+	}
+
+	AndTarget() noexcept
+		: TargetingRestriction(target1.minTargets, target1.maxTargets)
+	{}
+
+private:
+	Target1 target1;
+	Target2 target2;
+};
+
+template<typename Target1, typename Target2>
 class OrTarget : public TargetingRestriction {
 public:
 	bool validFirstN(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
@@ -125,7 +150,7 @@ public:
 	}
 
 	bool validTarget(const xg::Guid& target, size_t index, const HasEffect& source, const Environment& env) const noexcept override {
-		return target1.validTarget(target, index, source, env), target2.validTarget(target, index, source, env);
+		return target1.validTarget(target, index, source, env) && target2.validTarget(target, index, source, env);
 	}
 
 	OrTarget() noexcept
@@ -244,5 +269,70 @@ public:
 };
 
 using TargetsYouOrPermanentYouControlTarget = OrTarget<TargetsYouTarget, TargetsPermanentYouControlTarget>;
+
+class NonCreatureTarget : public TargetingRestriction {
+public:
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const noexcept override {
+		if (index != 0) return false;
+
+		if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(target))) {
+			std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
+			if (types->find(CREATURE) != types->end()) return false;
+			else return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
+	}
+
+	NonCreatureTarget() noexcept
+		: TargetingRestriction(1, 1)
+	{}
+};
+
+class CreatureTarget : public TargetingRestriction {
+public:
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const noexcept override {
+		if (index != 0) return false;
+
+		if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(target))) {
+			std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
+			if (types->find(CREATURE) != types->end()) return true;
+			else return false;
+		}
+		else {
+			return false;
+		}
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
+	}
+
+	CreatureTarget() noexcept
+		: TargetingRestriction(1, 1)
+	{}
+};
+
+class SpellTarget : public TargetingRestriction {
+public:
+	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const noexcept override {
+		if (index != 0) return false;
+
+		return (bool)env.stack->findObject(target);
+	}
+
+	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
+		return targets.size() == 1 && this->validFirstN(targets, source, env);
+	}
+
+	SpellTarget() noexcept
+		: TargetingRestriction(1, 1)
+	{}
+};
 
 #endif

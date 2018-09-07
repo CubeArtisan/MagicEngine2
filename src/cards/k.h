@@ -5,7 +5,7 @@
 #include "../staticeffects/flying.h"
 
 Card KitesailCorsair = newCard("Kitesail Corsair", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 2, 1, 0, { BLUE },
-	Mana(1, { BLUE }), {}, {}, {}, {}, { std::make_shared<ConditionalEffectHandler>(AttackingProposition(), FlyingHandler()) });
+	Mana(1, { BLUE }), {}, {}, {}, {}, { std::make_shared<ConditionalEffectHandler>(AttackingProposition(), std::make_shared<FlyingHandler>()) });
 
 class KManager : public LetterManager {
 public:

@@ -20,18 +20,6 @@ struct ManaAbility;
 
 struct QueueTrigger;
 
-template<typename T, typename Variant>
-T& getBaseClass(Variant& variant){
-    auto visitor = [](T& base) -> T&{ return base; };
-    return std::visit(visitor, variant);
-}
-
-template<typename T, typename Variant>
-std::shared_ptr<T> getBaseClassPtr(Variant& variant){
-    auto visitor = [](auto base) -> std::shared_ptr<T>{ return std::dynamic_pointer_cast<T>(base); };
-    return std::visit(visitor, variant);
-}
-
 // These can't be const because that removes the copy assignment operator
 // which is needed to be stored in a vector
 struct ObjectMovement {

@@ -23,9 +23,10 @@ public:
 				staticEffects->effects.push_back(handler);
 			}
 		}
+		return query;
 	}
 
-	bool appliesTo(StaticEffectQuery& query, const Environment&) const override {
+	bool appliesTo(StaticEffectQuery& query, const Environment& env) const override {
 		if (StaticEffectsQuery* staticEffect = std::get_if<StaticEffectsQuery>(&query)) {
 			if (staticEffect->target.id == this->owner && this->prop(env, this->owner)) {
 				return true;

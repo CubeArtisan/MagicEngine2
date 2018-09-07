@@ -56,6 +56,18 @@ U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 	}
 }
 
+template<typename T, typename Variant>
+T& getBaseClass(Variant& variant) {
+	auto visitor = [](T& base) -> T& { return base; };
+	return std::visit(visitor, variant);
+}
+
+template<typename T, typename Variant>
+std::shared_ptr<T> getBaseClassPtr(const Variant& variant) {
+	auto visitor = [](auto base) -> std::shared_ptr<T> { return std::dynamic_pointer_cast<T>(base); };
+	return std::visit(visitor, variant);
+}
+
 template<template <typename...> typename A>
 struct RefMap {
 	template<typename... Args>
@@ -67,9 +79,6 @@ using ParentOfForm = std::remove_const_t<std::remove_reference_t<std::invoke_res
 
 template<int N, typename... Ts> using NthTypeOf =
 typename std::tuple_element<N, std::tuple<Ts...>>::type;
-
-template<typename T>
-using FunctionEquivalent = std::function<decltype(T::operator())>;
 
 template<template<typename> typename Pack, typename T>
 struct ExtractParameterIfPack {
@@ -293,6 +302,46 @@ template<template<typename...> typename Pack>
 struct unique_pack_impl<Pack<>, void> {
 	using type = Pack<>;
 };
+
+template<typename T>
+struct FunctionType {
+	using type = decltype(&T::operator());
+};
+
+template<typename Result, typename... Args>
+struct FunctionType<Result(*)(Args...)> {
+	using type = Result(Args...);
+};
+
+template<typename T>
+using FunctionType_t = typename FunctionType<T>::type;
+
+template<typename Func, template<typename...> typename Pack>
+struct FunctionToPack {
+	using type = typename FunctionToPack<FunctionType_t<Func>, Pack>::type;
+	using returnType = typename FunctionToPack<FunctionType_t<Func>, Pack>::returnType;
+};
+
+template<typename Result, typename T, typename... Args, template<typename...> typename Pack>
+struct FunctionToPack<Result(T::*)(Args...) const, Pack> {
+	using type = Pack<Args...>;
+	using returnType = Result;
+};
+
+template<typename Result, typename T, typename... Args, template<typename...> typename Pack>
+struct FunctionToPack<Result(T::*)(Args...), Pack> {
+	using type = Pack<Args...>;
+	using returnType = Result;
+};
+
+template<typename Result, typename... Args, template<typename...> typename Pack>
+struct FunctionToPack<Result(*)(Args...), Pack> {
+	using type = Pack<Args...>;
+	using returnType = Result;
+};
+
+template<typename T, template <typename...> typename Pack>
+using FunctionToPack_t = typename FunctionToPack<T, Pack>::type;
 
 // -------------------------------------------------------------------
 // --- Reversed iterable

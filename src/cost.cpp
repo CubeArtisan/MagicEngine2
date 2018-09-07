@@ -102,3 +102,14 @@ TapCost& TapCost::operator-=(const Cost& other) {
 	}
 	return *this;
 }
+
+bool SacrificeCost::canPay(const Player&, const Environment& env, const SourceType& source) const {
+	return (bool)env.battlefield->findObject(getBaseClassPtr<const Targetable>(source)->id);
+}
+
+Changeset SacrificeCost::payCost(const Player&, const Environment& env, const SourceType& source) const {
+	Changeset res;
+	std::shared_ptr<const Targetable> target = getBaseClassPtr<const Targetable>(source);
+	res.moves.push_back(ObjectMovement{ target->id, env.battlefield->id, env.graveyards.at(target->owner)->id, 0, SACRIFICE });
+	return res;
+}

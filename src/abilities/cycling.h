@@ -7,15 +7,15 @@
 #include "../enum.h"
 
 struct CyclingCost : public Cost {
-	bool canPay(const Player& player, const Environment& env, const SourceType& source) const {
-		xg::Guid id = getBaseClassPtr<const Targetable>(source).id;
-		return env.hands.at(player.id).findObject(id);
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const override {
+		xg::Guid id = getBaseClassPtr<const Targetable>(source)->id;
+		return (bool)env.hands.at(player.id)->findObject(id);
 	}
-	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) {
-		xg::Guid id = getBaseClassPtr<const Targetable>(source).id;
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const override {
+		xg::Guid id = getBaseClassPtr<const Targetable>(source)->id;
 		Changeset changes;
-		if (env.hands.at(player.id).findObject(id)) {
-			changes.moves.push_back(ObjectMovement{id, env.hands.at(player.id).id, env.graveyards.at(player.id).id, CYCLE})
+		if (env.hands.at(player.id)->findObject(id)) {
+			changes.moves.push_back(ObjectMovement{ id, env.hands.at(player.id)->id, env.graveyards.at(player.id)->id, 0, CYCLING });
 		}
 	}
 

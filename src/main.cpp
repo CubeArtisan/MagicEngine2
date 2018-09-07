@@ -6,7 +6,16 @@ int main(){
     CardManager cardManager;
 	libraries[0].reserve(60);
 	libraries[1].reserve(60);
-    for(int i=0; i < 40; i++) libraries[0].push_back(cardManager.getCard("Ancestral Recall"));
+    for(int i=0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Siren Stormtamer"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Siren Reaver"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Kitesail Corsair"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Favorable Winds"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Chart a Course"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Opt"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Storm Fleet Aerialist"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Skyship Plunderer"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Tempest Djinn"));
+	for (int i = 0; i < 4; i++) libraries[0].push_back(cardManager.getCard("Curious Obsession"));
     for(int i=0; i < 20; i++) libraries[0].push_back(cardManager.getCard("Island"));
     for(int i=0; i < 25; i++) libraries[1].push_back(cardManager.getCard("Goblin Instigator"));
 	for(int i=0; i < 5; i++) libraries[1].push_back(cardManager.getCard("Impact Tremors"));
