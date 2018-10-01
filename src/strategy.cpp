@@ -112,7 +112,7 @@ std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::c
 			possibilities.push_back(make_pair(possibleAttacker, possibleDefender));
 		}
 	}
-	possibilities.push_back(std::nullopt);
+	if(possibilities.empty()) possibilities.push_back(std::nullopt);
 	return select_randomly(possibilities);
 }
 

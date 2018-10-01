@@ -154,8 +154,15 @@ public:
 	}
 
 	OrTarget() noexcept
-		: TargetingRestriction(std::min(target1.minTargets, target2.minTargets), std::max(target1.maxTargets, target2.maxTargets))
-	{}
+		: TargetingRestriction(1, 1)
+	{
+/*
+		assert(target1.minTargets == target2.minTargets);
+		assert(target1.minTargets == 1);
+		assert(target1.maxTargets == target2.maxTargets);
+		assert(target1.maxTargets == 1);
+*/
+	}
 
 private:
 	Target1 target1;
@@ -234,7 +241,7 @@ public:
 		if (index != 0) return false;
 		
 		std::vector<xg::Guid> targets = tryAtMap(env.targets, target, {});
-		return std::find(targets.begin(), targets.end(), env.getController(source.id)) != targets.end();
+		return std::find(targets.begin(), targets.end(), env.getController(source.clone())) != targets.end();
 	}
 
 	bool validTargets(const std::vector<xg::Guid>& targets, const HasEffect& source, const Environment& env) const noexcept override {
@@ -252,9 +259,10 @@ public:
 		if (index != 0) return false;
 
 		std::vector<xg::Guid> targets = tryAtMap(env.targets, target, {});
-		xg::Guid controller = env.getController(source.id);
+		xg::Guid controller = env.getController(source.clone());
 		for (const xg::Guid& guid : targets) {
-			if (env.getController(guid) == controller) return true;
+			if (env.gameObjects.find(guid) != env.gameObjects.end())
+				if (env.getController(guid) == controller) return true;
 		}
 		return false;
 	}
@@ -299,6 +307,7 @@ public:
 	bool validTarget(const xg::Guid& target, size_t index, const HasEffect&, const Environment& env) const noexcept override {
 		if (index != 0) return false;
 
+		if (env.gameObjects.find(target) != env.gameObjects.end()) return false;
 		if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(target))) {
 			std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 			if (types->find(CREATURE) != types->end()) return true;

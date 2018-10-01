@@ -26,8 +26,10 @@ Card CuriousObsession = newCard("Curious Obsession", 1, {}, { ENCHANTMENT }, { A
 									  res.push_back(QueueTrigger{ info.player, info.source, cause,
 											std::make_shared<Ability>(LambdaEffects([](xg::Guid source, const Environment& env) -> std::optional<Changeset>
 												{ Changeset res;
-												  xg::Guid owner = env.gameObjects.at(source)->owner;
-												  res.moves.push_back(ObjectMovement{source, env.battlefield->id, env.graveyards.at(owner)->id, 0, SACRIFICE});
+												  std::shared_ptr<Ability> ability = std::dynamic_pointer_cast<Ability>(env.gameObjects.at(source));
+												  xg::Guid owner = ability->owner;
+												  xg::Guid trueSource = getBaseClassPtr<const Targetable>(ability->source)->id;
+												  res.moves.push_back(ObjectMovement{trueSource, env.battlefield->id, env.graveyards.at(owner)->id, 0, SACRIFICE});
 												  return res; })) });
 									  return res; }) }, { std::shared_ptr<StaticEffectHandler>(new AuraEffect(1, 1, {}, { std::make_shared<CombatDamageTrigger>(toPlayerProp, [](DamageToTarget)
 															{ return std::make_shared<Ability>(LambdaEffects([](xg::Guid source, const Environment& env)

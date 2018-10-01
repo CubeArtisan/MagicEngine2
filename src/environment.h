@@ -123,6 +123,7 @@ struct Environment {
     StepOrPhase currentPhase;
     unsigned int currentPlayer;
     unsigned int turnPlayer;
+	size_t turnNumber = 1;
 
 	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredAttacks;
 	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>> declaredBlocks;

@@ -10,7 +10,7 @@ public:
 	std::optional<Changeset> operator()(xg::Guid source, const Environment& env) const {
 		Changeset changes;
 		xg::Guid target = env.targets.at(source)[0];
-		if (env.gameObjects.find(target) != env.gameObjects.end()) {
+		if (env.gameObjects.find(target) != env.gameObjects.end()) { // Should always be true due to fizzling rules
 			if(env.permanentCounters.find(target) != env.permanentCounters.end())
 				for (const auto& counter : env.permanentCounters.at(target)) {
 					changes.permanentCounters.push_back(AddPermanentCounter{ target, counter.first, 1 });

@@ -27,10 +27,10 @@ int main(){
 #if DEBUG
 	const int count = 1;
 #else
-	const int count = 10'000;
+	const int count = 1'000;
 #endif
 	for (int i = 0; i < count; i++) {
 		runner.runGame();
-		// std::cout << i << std::endl;
+		std::cout << i << std::endl;
 	}
 }

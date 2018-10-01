@@ -272,7 +272,13 @@ void Runner::runGame(){
 					}
 					else {
 						Changeset countered;
-						countered.moves.push_back(ObjectMovement{ hasEffect->id, stack->id, this->env.graveyards.at(hasEffect->owner)->id });
+						if (std::dynamic_pointer_cast<CardToken>(hasEffect)) {
+							countered.moves.push_back(ObjectMovement{ hasEffect->id, stack->id, this->env.graveyards.at(hasEffect->owner)->id });
+						}
+						else {
+							countered.remove.push_back(RemoveObject{ hasEffect->id, stack->id });
+						}
+						this->applyChangeset(countered);
 					}
                 }
 				this->env.currentPlayer = this->env.turnPlayer;
@@ -285,6 +291,7 @@ void Runner::runGame(){
 			}
         }
     }
+	std::cout << "Turn number " << this->env.turnNumber << std::endl;
 }
 
 void Runner::applyMoveRules(Changeset& changeset) {
@@ -416,7 +423,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		}
 		else {
 			std::cout << "Tried to remove a nonexistent object from zone" << std::endl;
-			continue;
+			throw "Failed to remove object";
 		}
 		this->env.gameObjects.erase(ro.object);
 		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<const TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
@@ -515,7 +522,9 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		pObject->isTapped = tt.tap;
 	}
 	for (CreateTargets& ct : changeset.target) {
+#ifdef DEBUG
 		std::cout << "Creating targets for " << ct.object << " as " << ct.targets << std::endl;
+#endif
 		this->env.targets[ct.object] = ct.targets;
 	}
     if(changeset.phaseChange.changed){
@@ -543,6 +552,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			this->env.currentPlayer = nextPlayer;
             this->env.turnPlayer = nextPlayer;
             this->env.currentPhase = UNTAP;
+			this->env.turnNumber++;
 			xg::Guid turnPlayerId = this->env.players[this->env.turnPlayer]->id;
 			this->env.landPlays[turnPlayerId] = 0;
 			
