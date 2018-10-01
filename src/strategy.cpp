@@ -55,7 +55,9 @@ GameAction RandomStrategy::chooseGameAction(const Player& player, const Environm
 			SourceType upshifted = convertVariant<SourceType>(cardWrapper);
 			ability->source = upshifted;
             if(std::optional<CostValue> pCost = ability->canPlay(player, env)) {
-                possibilities.push_back(ActivateAnAbility{upshifted, ability, std::vector<xg::Guid>(), *pCost, 0});
+				std::vector<xg::Guid> targets = this->chooseTargets(ability, player, env);
+				if (targets.size() < ability->targeting->minTargets) continue;
+                possibilities.push_back(ActivateAnAbility{upshifted, ability, targets, *pCost, 0});
             }
         }
     }
@@ -78,10 +80,12 @@ std::vector<xg::Guid> RandomStrategy::chooseTargets(const std::shared_ptr<const 
 			}
 		}
 	}
+	/*
 	// CodeReview: Handle this case
 	if (targets.size() < effect->targeting->minTargets) {
 		throw "Can't choose targets";
 	}
+	*/
 
 	return targets;
 }

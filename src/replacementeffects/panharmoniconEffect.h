@@ -15,6 +15,7 @@ public:
 			for (ObjectCreation& create : trigger.triggered.create) {
 				if (create.zone != env.battlefield->id) continue;
 				std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create.created);
+				if (!card) continue;
 				std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 				if (types->find(CREATURE) != types->end() || types->find(ARTIFACT) != types->end()) {
 					toAdd.push_back(trigger);

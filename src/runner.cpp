@@ -1,5 +1,6 @@
 #include "ability.h"
 #include "card.h"
+#include "guid.hpp"
 #include "runner.h"
 #include "targeting.h"
 
@@ -300,7 +301,11 @@ void Runner::applyMoveRules(Changeset& changeset) {
 	for (auto& object : objects) {
 		std::vector<std::shared_ptr<const StaticEffectHandler>> handlers = env.getStaticEffects(std::get<0>(object), std::get<1>(object), std::nullopt);
 		if (!handlers.empty()) {
-			for (const auto& h : handlers) addStatic.propertiesToAdd.push_back(h);
+			for (const auto& h : handlers) {
+				std::shared_ptr<StaticEffectHandler> hd = h->clone();
+				hd->owner = std::get<0>(object)->id;
+				addStatic.propertiesToAdd.push_back(hd);
+			}
 			apply = true;
 		}
 	}
@@ -406,7 +411,13 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		// CodeReview: If is CardToken show name
 		std::cout << "Removing " << ro.object << " from " << zone->type << std::endl;
 #endif
-		zone->removeObject(ro.object);
+		if (zone->findObject(ro.object)) {
+			zone->removeObject(ro.object);
+		}
+		else {
+			std::cout << "Tried to remove a nonexistent object from zone" << std::endl;
+			continue;
+		}
 		this->env.gameObjects.erase(ro.object);
 		this->env.triggerHandlers.erase(std::remove_if(this->env.triggerHandlers.begin(), this->env.triggerHandlers.end(), [&](std::shared_ptr<const TriggerHandler>& a) -> bool { return a->owner == ro.object; }), this->env.triggerHandlers.end());
 		this->env.replacementEffects.erase(std::remove_if(this->env.replacementEffects.begin(), this->env.replacementEffects.end(), [&](std::shared_ptr<const EventHandler>& a) -> bool { return a->owner == ro.object; }), this->env.replacementEffects.end());
@@ -504,6 +515,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 		pObject->isTapped = tt.tap;
 	}
 	for (CreateTargets& ct : changeset.target) {
+		std::cout << "Creating targets for " << ct.object << " as " << ct.targets << std::endl;
 		this->env.targets[ct.object] = ct.targets;
 	}
     if(changeset.phaseChange.changed){
