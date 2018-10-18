@@ -40,6 +40,9 @@
     <Filter Include="Header Files\triggeredeffects">
       <UniqueIdentifier>{66499c2e-54ce-4dba-a7ac-20d748193004}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\strategies">
+      <UniqueIdentifier>{49d58974-fc4d-49b0-9f1b-70a5c3dfba06}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ability.cpp">
@@ -292,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="src\abilities\counterUnless.h">
       <Filter>Header Files\abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\strategies\fliers.h">
+      <Filter>Header Files\strategies</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

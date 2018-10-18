@@ -14,24 +14,24 @@ struct Emblem;
 // CodeReview: Only handles casting from hand currently
 // CodeReview: Implement Modes
 struct CastSpell {
-	const xg::Guid spell;
-	const std::vector<xg::Guid> targets;
-	const CostValue cost;
-	const std::vector<CostValue> additionalCosts;
-	const unsigned int x;
+	xg::Guid spell;
+	std::vector<xg::Guid> targets;
+	CostValue cost;
+	std::vector<CostValue> additionalCosts;
+	unsigned int x;
 };
 
 // CodeReview: Support playing lands from other zones
 struct PlayLand {
-	const xg::Guid land;
+	xg::Guid land;
 };
 
 struct ActivateAnAbility {
-	const std::variant<std::shared_ptr<const Card>, std::shared_ptr<const Token>, std::shared_ptr<const Emblem>> source;
-	const std::shared_ptr<ActivatedAbility> ability;
-	const std::vector<xg::Guid> targets;
-	const CostValue cost;
-	const unsigned int x;
+	SourceType source;
+	std::shared_ptr<ActivatedAbility> ability;
+	std::vector<xg::Guid> targets;
+	CostValue cost;
+	unsigned int x;
 };
 
 struct PassPriority {};

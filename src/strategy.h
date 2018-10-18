@@ -45,6 +45,8 @@ public:
 	virtual int chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid blocker, int minDamage, int maxDamage, const Environment& env);
 	virtual std::optional<Changeset> chooseUpToOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env);
 	virtual Changeset chooseOne(const std::vector<Changeset>& changes, const Player& player, const Environment& env);
+
+	std::vector<GameAction> generateGameOptions(const Player& player, const Environment& env);
 };
 
 #endif

@@ -392,6 +392,7 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
         zone->addObject(oc.created, oc.index);
         this->env.gameObjects[id] = oc.created;
 		if (std::shared_ptr<CardToken> abilities = std::dynamic_pointer_cast<CardToken>(oc.created)) {
+			abilities->isSummoningSick = true;
 			std::vector<std::shared_ptr<const EventHandler>> replacement = this->env.getReplacementEffects(abilities, zone->type);
 			std::vector<std::shared_ptr<const EventHandler>> replacements;
 			replacements.reserve(replacement.size());
@@ -569,8 +570,11 @@ void Runner::applyChangeset(Changeset& changeset, bool replacementEffects) {
 			untap.tap.reserve(this->env.battlefield->objects.size());
 			for (auto& object : this->env.battlefield->objects) {
 				std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(object);
-				if (this->env.getController(card->id) == turnPlayerId && card->isTapped) {
-					untap.tap.push_back(TapTarget{ card->id, false });
+				if (this->env.getController(card->id) == turnPlayerId) {
+					std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(card->id))->isSummoningSick = false;
+					if (card->isTapped) {
+						untap.tap.push_back(TapTarget{ card->id, false });
+					}
 				}
 			}
 

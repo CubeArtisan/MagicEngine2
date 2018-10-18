@@ -215,6 +215,7 @@
     <ClInclude Include="src\staticeffects\flying.h" />
     <ClInclude Include="src\staticeffects\lordEffect.h" />
     <ClInclude Include="src\staticeffects\plusForEachEffect.h" />
+    <ClInclude Include="src\strategies\fliers.h" />
     <ClInclude Include="src\strategy.h" />
     <ClInclude Include="src\targeting.h" />
     <ClInclude Include="src\tokens\g.h" />

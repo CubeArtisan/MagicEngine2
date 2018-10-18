@@ -129,6 +129,22 @@ struct ExtractParameterIfPack<Pack, Pack<T>> {
 	using type = T;
 };
 
+template<typename State, typename Variant, typename Enable>
+struct index_of_impl;
+
+template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
+struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<!std::is_same_v<Variant, State>>> {
+	constexpr static size_t value = 1 + index_of_impl<State, Pack<Variants...>, void>::value;
+};
+
+template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
+struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<std::is_same_v<Variant, State>>> {
+	constexpr static size_t value = 0;
+};
+
+template<typename State, typename Variant>
+constexpr size_t index_of_v = index_of_impl<State, Variant, void>::value;
+
 template<template<typename> typename Pack, typename T>
 using extract_parameter_if_pack_t = typename ExtractParameterIfPack<Pack, T>::type;
 
@@ -607,7 +623,7 @@ public:
 	
 	template<typename U>
 		polyValue<T>& operator=(polyValue<U>&& other) noexcept {
-		this->val->free(*this);
+		if(this->val) this->val->free(*this);
 		this->val = other.val->move(*this, other.val);
 		return *this;
 	}

@@ -1,5 +1,6 @@
 #include "cards/cardManager.h"
 #include "runner.h"
+#include "strategies/fliers.h"
 
 int main(){
 	std::vector<std::vector<Card>> libraries{ std::vector<Card>(), std::vector<Card>() };
@@ -21,7 +22,7 @@ int main(){
 	for(int i=0; i < 5; i++) libraries[1].push_back(cardManager.getCard("Impact Tremors"));
 	for(int i=0; i < 5; i++) libraries[1].push_back(cardManager.getCard("Panharmonicon"));
     for(int i=0; i < 25; i++) libraries[1].push_back(cardManager.getCard("Mountain"));
-    std::vector<Player> players{Player(std::shared_ptr<Strategy>(new RandomStrategy())),
+    std::vector<Player> players{Player(std::shared_ptr<Strategy>(new FliersStrategy())),
                                 Player(std::shared_ptr<Strategy>(new RandomStrategy()))};
     Runner runner(libraries, players);
 #if DEBUG
