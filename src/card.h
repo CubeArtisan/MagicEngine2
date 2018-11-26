@@ -65,8 +65,8 @@ struct HasEffectsAndAbilities : public HasEffect, public HasAbilities {
 
 struct CardToken : public clone_inherit<abstract_method<CardToken>, HasEffectsAndAbilities> {
     bool isTapped;
-	bool isSummoningSick;
-	// Implement phased out
+	bool isSummoningSick = true;
+	// CodeReview: Implement phased out
 
     const std::shared_ptr<const std::set<CardSuperType>> baseSuperTypes;
     const std::shared_ptr<const std::set<CardType>> baseTypes;

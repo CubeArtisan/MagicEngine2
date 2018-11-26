@@ -25,44 +25,50 @@ T select_randomly(Container<T, Alloc> cont) {
 	return *select_randomly(cont.begin(), cont.end());
 }
 
-GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env) 
-{
-	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
-    std::vector<GameAction> possibilities;
-    for(auto& cardWrapper : env.hands.at(player.id)->objects) {
-        if(const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&cardWrapper)) {
-            std::shared_ptr<const Card> card = *pCard;
-            if(std::optional<CostValue> pCost = card->canPlay(player, env)) {
+std::vector<GameAction> RandomStrategy::generateGameOptions(const Player& player, const Environment& env) {
+	std::vector<GameAction> possibilities;
+	for (auto& cardWrapper : env.hands.at(player.id)->objects) {
+		if (const std::shared_ptr<const Card>* pCard = std::get_if<std::shared_ptr<const Card>>(&cardWrapper)) {
+			std::shared_ptr<const Card> card = *pCard;
+			if (std::optional<CostValue> pCost = card->canPlay(player, env)) {
 				std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
-                if(types->find(LAND) != types->end()) {
-                    possibilities.push_back(PlayLand{card->id});
-                }
-                else {
+				if (types->find(LAND) != types->end()) {
+					possibilities.push_back(PlayLand{ card->id });
+				}
+				else {
 					std::vector<xg::Guid> targets = this->chooseTargets(card, player, env);
 					if (targets.size() < card->targeting->minTargets) continue;
-                    possibilities.push_back(CastSpell{card->id, targets, *pCost,
+					possibilities.push_back(CastSpell{ card->id, targets, *pCost,
 													  {}, 0 });
-                }
-            }
-        }
-    }
+				}
+			}
+		}
+	}
 
-    for(auto& cardWrapper : env.battlefield->objects){
-        std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(cardWrapper);
+	for (auto& cardWrapper : env.battlefield->objects) {
+		std::shared_ptr<const CardToken> card = getBaseClassPtr<const CardToken>(cardWrapper);
 		if (player.id != card->owner) continue;
-		for(std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
+		for (std::shared_ptr<const ActivatedAbility> pAbility : *env.getActivatedAbilities(card)) {
 			std::shared_ptr<ActivatedAbility> ability = std::dynamic_pointer_cast<ActivatedAbility>(pAbility->clone());
 			SourceType upshifted = convertVariant<SourceType>(cardWrapper);
 			ability->source = upshifted;
-            if(std::optional<CostValue> pCost = ability->canPlay(player, env)) {
+			if (std::optional<CostValue> pCost = ability->canPlay(player, env)) {
 				std::vector<xg::Guid> targets = this->chooseTargets(ability, player, env);
 				if (targets.size() < ability->targeting->minTargets) continue;
-                possibilities.push_back(ActivateAnAbility{upshifted, ability, targets, *pCost, 0});
-            }
-        }
-    }
+				possibilities.push_back(ActivateAnAbility{ upshifted, ability, targets, *pCost, 0 });
+			}
+		}
+	}
 
-    if(possibilities.empty()) possibilities.push_back(PassPriority());
+	if (possibilities.empty()) possibilities.push_back(PassPriority());
+
+	return possibilities;
+}
+
+GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env) 
+{
+	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
+	std::vector<GameAction> possibilities = generateGameOptions(player, env);
 
     return select_randomly(possibilities);
 }
