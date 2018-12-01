@@ -8,16 +8,16 @@
 
 template<typename Iter, typename RandomGenerator>
 Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
-    std::uniform_int_distribution<> dis(0, (int)std::distance(start, end) - 1);
-    std::advance(start, dis(g));
-    return start;
+	std::uniform_int_distribution<> dis(0, (int)std::distance(start, end) - 1);
+	std::advance(start, dis(g));
+	return start;
 }
 
 template<typename Iter>
 Iter select_randomly(Iter start, Iter end) {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    return select_randomly(start, end, gen);
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	return select_randomly(start, end, gen);
 }
 
 template<template<class, class> class Container, typename T, typename Alloc>
@@ -65,12 +65,12 @@ std::vector<GameAction> RandomStrategy::generateGameOptions(const Player& player
 	return possibilities;
 }
 
-GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env) 
+GameAction RandomStrategy::chooseGameAction(const Player& player, const Environment& env)
 {
 	if (env.currentPhase != PRECOMBATMAIN) return PassPriority();
 	std::vector<GameAction> possibilities = generateGameOptions(player, env);
 
-    return select_randomly(possibilities);
+	return select_randomly(possibilities);
 }
 
 std::vector<xg::Guid> RandomStrategy::chooseTargets(const std::shared_ptr<const HasEffect> effect, const Player&, const Environment& env) {
@@ -107,25 +107,24 @@ std::vector<xg::Guid> RandomStrategy::chooseDiscards(size_t amount, const Player
 	return result;
 }
 
-
 std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::chooseAttacker(std::vector<std::shared_ptr<CardToken>>& possibleAttackers,
-																							  std::map<xg::Guid, std::set<xg::Guid>>& possibleAttacks,
-																							  std::map<xg::Guid, std::multiset<xg::Guid>>&,
-																							  std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&) {
+	std::map<xg::Guid, std::set<xg::Guid>>& possibleAttacks,
+	std::map<xg::Guid, std::multiset<xg::Guid>>&,
+	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&) {
 	std::vector<std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>>> possibilities;
 	for (auto& possibleAttacker : possibleAttackers) {
 		for (auto& possibleDefender : possibleAttacks[possibleAttacker->id]) {
 			possibilities.push_back(make_pair(possibleAttacker, possibleDefender));
 		}
 	}
-	if(possibilities.empty()) possibilities.push_back(std::nullopt);
+	if (possibilities.empty()) possibilities.push_back(std::nullopt);
 	return select_randomly(possibilities);
 }
 
 std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>> RandomStrategy::chooseBlocker(std::vector<std::shared_ptr<CardToken>>& possibleBlockers,
-																							 std::map<xg::Guid, std::set<xg::Guid>>& possibleBlocks,
-																							 std::map<xg::Guid, std::multiset<xg::Guid>>&,
-																							 std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&) {
+	std::map<xg::Guid, std::set<xg::Guid>>& possibleBlocks,
+	std::map<xg::Guid, std::multiset<xg::Guid>>&,
+	std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&) {
 	std::vector<std::optional<std::pair<std::shared_ptr<CardToken>, xg::Guid>>> possibilities;
 	for (auto& possibleBlocker : possibleBlockers) {
 		for (auto& possibleAttacker : possibleBlocks[possibleBlocker->id]) {
@@ -144,7 +143,7 @@ std::vector<xg::Guid> RandomStrategy::chooseBlockingOrder(std::shared_ptr<CardTo
 	return result;
 }
 
-int RandomStrategy::chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid, int minDamage, int maxDamage, const Environment&) {
+unsigned int RandomStrategy::chooseDamageAmount(std::shared_ptr<CardToken> attacker, xg::Guid, int minDamage, int maxDamage, const Environment&) {
 	return (rand() % (maxDamage - minDamage + 1)) + minDamage;
 }
 

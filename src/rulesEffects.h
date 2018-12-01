@@ -8,16 +8,14 @@ class TokenMovementEffect : public clone_inherit<TokenMovementEffect, EventHandl
 public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
-		std::vector<size_t> toRemove;
-		size_t i = 0;
-		for (auto& move : changeset.moves) {
-			if (move.sourceZone != env.battlefield->id && move.sourceZone != env.stack->id && std::dynamic_pointer_cast<Token>(env.gameObjects.at(move.object))) {
-				toRemove.push_back(i);
+		std::vector<std::shared_ptr<ObjectMovement>> toRemove;
+		for (std::shared_ptr<ObjectMovement> move : changeset.ofType<ObjectMovement>()) {
+			if (move->sourceZone != env.battlefield->id && move->sourceZone != env.stack->id && std::dynamic_pointer_cast<Token>(env.gameObjects.at(move->object))) {
+				toRemove.push_back(move);
 			}
-			i++;
 		}
-		for (size_t j = toRemove.size(); j > 0; j--) {
-			changeset.moves.erase(changeset.moves.begin() + toRemove[j-1]);
+		for (std::shared_ptr<ObjectMovement>& removed : reverse(toRemove)) {
+			changeset.changes.erase(std::remove(changeset.changes.begin(), changeset.changes.end(), removed), changeset.changes.end());
 		}
 		if (toRemove.empty()) return std::nullopt;
 		else return std::vector<Changeset>{ changeset };
@@ -32,16 +30,14 @@ class ZeroDamageEffect : public clone_inherit<ZeroDamageEffect, EventHandler> {
 public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment&) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
-		std::vector<size_t> toRemove;
-		size_t i = 0;
-		for (auto& damage : changeset.damage) {
-			if (damage.amount <= 0) {
-				toRemove.push_back(i);
+		std::vector<std::shared_ptr<DamageToTarget>> toRemove;
+		for (std::shared_ptr<DamageToTarget> damage : cast<GameChange, DamageToTarget>(changeset.changes)) {
+			if (damage->amount <= 0) {
+				toRemove.push_back(damage);
 			}
-			i++;
 		}
-		for (size_t j = toRemove.size(); j > 0; j--) {
-			changeset.damage.erase(changeset.damage.begin() + toRemove[j - 1]);
+		for (std::shared_ptr<DamageToTarget>& removed : reverse(toRemove)) {
+			changeset.changes.erase(std::remove(changeset.changes.begin(), changeset.changes.end(), removed), changeset.changes.end());
 		}
 		if (toRemove.empty()) return std::nullopt;
 		else return std::vector<Changeset>{ changeset };
@@ -88,7 +84,7 @@ public:
 	}
 
 	bool dependsOn(StaticEffectQuery&, StaticEffectQuery&, const Environment&) const override { return false; }
-	
+
 	CounterPowerToughnessEffect()
 		: clone_inherit({}, {})
 	{}

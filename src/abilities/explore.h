@@ -21,16 +21,14 @@ public:
 		xg::Guid cardId = card->id;
 		Changeset result;
 		if (types->find(LAND) != types->end()) {
-			result.moves.push_back(ObjectMovement{ cardId, library->id, hand->id });
+			result.push_back(ObjectMovement{ cardId, library->id, hand->id });
 		}
 		else {
-			Changeset toLibrary;
-			toLibrary.moves.push_back(ObjectMovement{ cardId, library->id, library->id });
-			Changeset toGraveyard;
-			toGraveyard.moves.push_back(ObjectMovement{ cardId, library->id, graveyard->id });
+			Changeset toLibrary(ObjectMovement{ cardId, library->id, library->id });
+			Changeset toGraveyard(ObjectMovement{ cardId, library->id, graveyard->id });
 			result = player->strategy->chooseOne({ toLibrary, toGraveyard }, *player, env);
 			// CodeReview: Only if still on the battlefield
-			result.permanentCounters.push_back(AddPermanentCounter{ explorer, PLUSONEPLUSONECOUNTER, 1 });
+			result.push_back(AddPermanentCounter{ explorer, PLUSONEPLUSONECOUNTER, 1 });
 		}
 		return result;
 	}

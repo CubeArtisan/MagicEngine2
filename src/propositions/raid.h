@@ -9,9 +9,13 @@ public:
 	bool operator()(const Environment& env) const override {
 		if (controller.isValid() && env.players[env.turnPlayer]->id != controller) return false;
 
-		for (const auto& change : reverse(env.changes)) {
-			if (!change.attacks.empty()) return true;
-			else if (change.phaseChange.changed && change.phaseChange.starting == PRECOMBATMAIN) return false;
+		for (const Changeset& change : reverse(env.changes)) {
+			cast<GameChange, DeclareAttack> attacks(change.changes);
+			if (attacks.begin() != attacks.end()) return true;
+			else {
+				cast<GameChange, StepOrPhaseChange> stepChanges(change.changes);
+				if (stepChanges.begin() != stepChanges.end() && (*stepChanges.begin())->starting == PRECOMBATMAIN) return false;
+			}
 		}
 		return false;
 	}

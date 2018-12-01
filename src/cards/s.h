@@ -22,26 +22,26 @@ Card SirenStormtamer = newCard("Siren Stormtamer", 1, {}, { CREATURE }, { SIREN,
 		Changeset change;
 		std::shared_ptr<Targetable> target = env.gameObjects.at(env.targets.at(source)[0]);
 		if (std::dynamic_pointer_cast<Card>(target)) {
-			change.moves.push_back(ObjectMovement{ target->id, env.stack->id, env.graveyards.at(target->owner)->id, COUNTER });
+			change.push_back(ObjectMovement{ target->id, env.stack->id, env.graveyards.at(target->owner)->id, COUNTER });
 		}
 		else {
-			change.remove.push_back(RemoveObject{ target->id, env.stack->id });
+			change.push_back(RemoveObject{ target->id, env.stack->id });
 		}
 		return change;
 	}), std::make_shared<TargetsYouOrPermanentYouControlTarget>(), std::vector<CostValue>{ CombineCost(ManaCost(Mana({BLUE})), SacrificeCost()) }) });
 Card SkyshipPlunderer = newCard("Skyship Plunderer", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 2, 1, 0, { BLUE }, Mana(1, { BLUE }), {}, {}, {},
-	{ std::shared_ptr<TriggerHandler>(new CombatDamageTrigger(toPlayerProp, [](DamageToTarget) {return std::make_shared<Ability>(LambdaEffects(SingleProliferateAbility()), std::shared_ptr<TargetingRestriction>(new PermanentOrPlayerTarget())); }))});
+	{ std::shared_ptr<TriggerHandler>(new CombatDamageTrigger(toPlayerProp, [](CombatDamageToTarget&) {return std::make_shared<Ability>(LambdaEffects(SingleProliferateAbility()), std::shared_ptr<TargetingRestriction>(new PermanentOrPlayerTarget())); })) });
 Card SpellPierce = newCard("Spell Pierce", 1, {}, { INSTANT }, {}, 0, 0, 0, { BLUE }, std::make_shared<AndTarget<NonCreatureTarget, SpellTarget>>(), { ManaCost(Mana({ BLUE })) }, {},
 	{ CounterUnlessAbility(ManaCost(Mana(2, {})), {}) });
 Card StormFleetAerialist = newCard("Storm Fleet Aerialist", 2, {}, { CREATURE }, { HUMAN, PIRATE }, 1, 2, 0, { BLUE }, Mana(1, { BLUE }), {},
 	{}, { std::shared_ptr<EventHandler>(new EntersWithCounters(1, RaidProposition())) }, {}, {}, { 0 });
 Card Swamp = newCard("Swamp", 0, std::set<CardSuperType>{BASIC}, std::set<CardType>{LAND}, std::set<CardSubType>{SWAMP}, 0, 0, 0,
-				     std::set<Color>{}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
-					 { LandPlayCost() }, {},
-				     {},
-				     std::vector<std::shared_ptr<ActivatedAbility>>{
-				  	     std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{BLACK}),
-							 {TapCost()}))});
+	std::set<Color>{}, std::shared_ptr<TargetingRestriction>(new NoTargets()),
+	{ LandPlayCost() }, {},
+	{},
+	std::vector<std::shared_ptr<ActivatedAbility>>{
+	std::shared_ptr<ActivatedAbility>(new ManaAbility(Mana(std::multiset<Color>{BLACK}),
+		{ TapCost() }))});
 
 class SManager : public LetterManager {
 public:

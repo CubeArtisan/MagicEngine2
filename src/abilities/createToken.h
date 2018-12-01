@@ -15,7 +15,7 @@ struct CreateTokensAbility {
 			created->id = xg::newGuid();
 			// 110.5a. The player who creates a token is its owner. The token enters the battlefield under that player's control.
 			created->owner = env.getController(source);
-			createTokens.create.push_back(ObjectCreation{ env.battlefield->id, created });
+			createTokens.push_back(CreateObject{ env.battlefield->id, created });
 		}
 		return createTokens;
 	}

@@ -6,33 +6,33 @@
 
 struct DamageAbility : public clone_inherit<abstract_method<DamageAbility>> {
 	std::optional<Changeset> operator()(xg::Guid source, const Environment& env) const {
-		std::vector<std::pair<xg::Guid, int>> targets = this->getTargets(source, env);
+		std::vector<std::pair<xg::Guid, unsigned int>> targets = this->getTargets(source, env);
 		Changeset damage;
-		for (const std::pair<xg::Guid, int>& target : targets) {
+		for (const std::pair<xg::Guid, unsigned int>& target : targets) {
 			std::shared_ptr<Targetable> sourcePtr = env.gameObjects.at(source);
 			xg::Guid origin = source;
 			if (std::shared_ptr<Ability> aSource = std::dynamic_pointer_cast<Ability>(sourcePtr)) {
 				origin = getBaseClassPtr<const Targetable>(aSource->source)->id;
 			}
-			damage.damage.push_back(DamageToTarget{ target.first, target.second, origin });
+			damage.push_back(DamageToTarget{ target.first, target.second, origin });
 		}
 		return damage;
 	}
 
 protected:
-	virtual std::vector<std::pair<xg::Guid, int>> getTargets(xg::Guid source, const Environment& env) const = 0;
+	virtual std::vector<std::pair<xg::Guid, unsigned int>> getTargets(xg::Guid source, const Environment& env) const = 0;
 };
 
 struct EqualDamageAbility : public clone_inherit<abstract_method<EqualDamageAbility>, DamageAbility> {
-	EqualDamageAbility(int amount)
+	EqualDamageAbility(unsigned int amount)
 		: amount(amount)
 	{}
 
 protected:
-	int amount;
+	unsigned int amount;
 
-	std::vector<std::pair<xg::Guid, int>> getTargets(xg::Guid source, const Environment& env) const override {
-		std::vector<std::pair<xg::Guid, int>> result;
+	std::vector<std::pair<xg::Guid, unsigned int>> getTargets(xg::Guid source, const Environment& env) const override {
+		std::vector<std::pair<xg::Guid, unsigned int>> result;
 		for (const xg::Guid& target : this->getTargetSet(source, env)) {
 			result.push_back(std::make_pair(target, amount));
 		}
@@ -42,7 +42,7 @@ protected:
 };
 
 struct EqualDamageEachOpponentAbility : public clone_inherit<EqualDamageEachOpponentAbility, EqualDamageAbility> {
-	EqualDamageEachOpponentAbility(int amount)
+	EqualDamageEachOpponentAbility(unsigned int amount)
 		: clone_inherit(amount)
 	{}
 

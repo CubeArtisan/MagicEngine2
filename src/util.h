@@ -20,7 +20,6 @@ bool intersect(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2)
 	return false;
 }
 
-
 template<class T, class U>
 U tryAtMap(const std::map<T, U>& map, const T& key, const U& def) noexcept {
 	auto iter = map.find(key);
@@ -39,7 +38,7 @@ U convertToVariant(const std::shared_ptr<T>& t) {
 	return convertToVariantRecursive<U>(t);
 }
 
-template<typename U, typename T, size_t i=0>
+template<typename U, typename T, size_t i = 0>
 U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 	using V = std::variant_alternative_t<i, U>;
 	using VT = typename V::element_type;
@@ -47,11 +46,11 @@ U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 		return U(v);
 	}
 	else {
-		if constexpr(i+1 == std::variant_size_v<U>) {
+		if constexpr (i + 1 == std::variant_size_v<U>) {
 			throw "Could not convert to the given type";
 		}
 		else {
-			return convertToVariantRecursive<U, T, i+1>(t);
+			return convertToVariantRecursive<U, T, i + 1>(t);
 		}
 	}
 }
@@ -63,10 +62,187 @@ T& getBaseClass(Variant& variant) {
 }
 
 template<typename T, typename Variant>
+const T* getConstPtr(Variant& variant) {
+	auto visitor = [](const T* base) -> const T* { return base; };
+	return std::visit(visitor, variant);
+}
+
+template<typename T, typename Variant>
 std::shared_ptr<T> getBaseClassPtr(const Variant& variant) {
 	auto visitor = [](auto base) -> std::shared_ptr<T> { return std::dynamic_pointer_cast<T>(base); };
 	return std::visit(visitor, variant);
 }
+
+/// https://stackoverflow.com/a/5423637/3300171
+
+template<typename T>
+struct is_const_pointer { static const bool value = false; };
+
+template<typename T>
+struct is_const_pointer<const T*> { static const bool value = true; };
+
+template <typename TIterator>
+struct is_const_iterator
+{
+	using pointer = typename std::iterator_traits<TIterator>::pointer;
+	static const bool value = is_const_pointer<pointer>::value;
+};
+
+/// END
+
+template<typename T>
+class filter {
+public:
+	template<typename Iter>
+	class filter_iterator {
+	public:
+		using iterator_category = typename std::iterator_traits<Iter>::iterator_category;
+		using value_type = T;
+		using difference_type = typename std::iterator_traits<Iter>::difference_type;
+		using pointer = typename std::iterator_traits<Iter>::pointer;
+		using reference = typename std::iterator_traits<Iter>::reference;
+
+		std::conditional_t<is_const_iterator<Iter>::value, const T&, T&> operator*() {
+			return *current;
+		}
+
+		filter_iterator<Iter> operator++() {
+			filter_iterator<Iter> result = *this;
+			do {
+				if (this->current == this->end) break;
+				++this->current;
+			} while (!filter(*this->current));
+			return result;
+		}
+
+		bool operator!=(filter_iterator<Iter> other) {
+			// CodeReview: Doesn't check that filters are the same
+			return this->current != other.current;
+		}
+
+		bool operator==(filter_iterator<Iter> other) {
+			// CodeReview: Doesn't check that filters are the same
+			return this->current == other.current;
+		}
+
+		filter_iterator(Iter current, Iter end, std::function<bool(T&)> filter)
+			: current(current), end(end), filter(filter)
+		{}
+
+	private:
+		Iter current;
+		Iter end;
+		std::function<bool(T&)> filter;
+	};
+
+	using iterator = filter_iterator<typename std::vector<T>::iterator>;
+	using const_iterator = filter_iterator<typename std::vector<T>::const_iterator>;
+
+	iterator begin() {
+		if (index_of_v<std::vector<T>*, decltype(this->backing)> != this->backing.index()) {
+			throw "Tried to invoke non const iterator functions on a const instance";
+		}
+		std::vector<T>& backingUnwrapped = *std::get<std::vector<T>*>(this->backing);
+		return iterator(backingUnwrapped.begin(), backingUnwrapped.end(), this->function);
+	}
+	const_iterator begin() const {
+		const std::vector<T>& backingUnwrapped = *getConstPtr<std::vector<T>>(this->backing);
+		return const_iterator(backingUnwrapped.cbegin(), backingUnwrapped.cend(), this->function);
+	}
+	iterator end() {
+		if (index_of_v<std::vector<T>*, decltype(this->backing)> != this->backing.index()) {
+			throw "Tried to invoke non const iterator functions on a const instance";
+		}
+		std::vector<T>& backingUnwrapped = *std::get<std::vector<T>*>(this->backing);
+		return iterator(backingUnwrapped.end(), backingUnwrapped.end(), this->function);
+	}
+	const_iterator end() const {
+		const std::vector<T>& backingUnwrapped = *getConstPtr<std::vector<T>>(this->backing);
+		return const_iterator(backingUnwrapped.cend(), backingUnwrapped.cend(), this->function);
+	}
+
+	bool empty() const {
+		return this->begin() == this->end();
+	}
+
+	filter(std::vector<T>& backing, std::function<bool(T&)> filter)
+		: backing(&backing), function(filter)
+	{}
+
+	filter(const std::vector<T>& backing, std::function<bool(T&)> filter)
+		: backing(&backing), function(filter)
+	{}
+
+private:
+	std::variant<std::vector<T>*, const std::vector<T>*> backing;
+	std::function<bool(T&)> function;
+};
+
+template<typename T, typename U>
+class cast {
+public:
+	template<typename Iter>
+	class cast_iterator {
+	public:
+		typename std::conditional<is_const_iterator<Iter>::value, const std::shared_ptr<U>, std::shared_ptr<U>>::type operator*() {
+			return std::dynamic_pointer_cast<U>(*current);
+		}
+
+		cast_iterator<Iter> operator++() {
+			cast_iterator<Iter> result = *this;
+			++this->current;
+			return result;
+		}
+
+		bool operator!=(cast_iterator<Iter> other) {
+			return this->current != other.current;
+		}
+
+		bool operator==(cast_iterator<Iter> other) {
+			return this->current == other.current;
+		}
+
+		cast_iterator(Iter current)
+			: current(current)
+		{}
+
+	private:
+		Iter current;
+	};
+
+	using iterator = cast_iterator<typename filter<std::shared_ptr<T>>::iterator>;
+	using const_iterator = cast_iterator<typename filter<std::shared_ptr<T>>::const_iterator>;
+
+	iterator begin() {
+		return iterator(filtered.begin());
+	}
+	const_iterator begin() const {
+		return const_iterator(((const filter<std::shared_ptr<T>>)filtered).begin());
+	}
+	iterator end() {
+		return iterator(filtered.end());
+	}
+	const_iterator end() const {
+		return const_iterator(((const filter<std::shared_ptr<T>>)filtered).end());
+	}
+
+	bool empty() const {
+		return this->begin() == this->end();
+	}
+
+	cast(std::vector<std::shared_ptr<T>>& backing)
+		: filtered(backing, filter_func)
+	{}
+
+	cast(const std::vector<std::shared_ptr<T>>& backing)
+		: filtered(backing, filter_func)
+	{
+	}
+
+private:
+	const std::function<bool(std::shared_ptr<T>&)> filter_func = [](std::shared_ptr<T>& t) { return (bool)std::dynamic_pointer_cast<U>(t); };
+	filter<std::shared_ptr<T>> filtered;
+};
 
 /// https://stackoverflow.com/a/29634934/3300171
 
@@ -87,7 +263,6 @@ namespace detail
 
 	template <typename T>
 	std::false_type is_iterable_impl(...);
-
 }
 
 template <typename T>
@@ -96,9 +271,9 @@ using is_iterable = decltype(detail::is_iterable_impl<T>(0));
 /// END
 
 template<template <typename...> typename Container, typename... Args,
-		 typename Enable = std::enable_if_t<is_iterable<Container<Args...>>::value
-											&& !std::is_same_v<std::decay_t<Container<Args...>>, std::string>>>
-std::ostream& operator<<(std::ostream& os, const Container<Args...>& t) {
+	typename Enable = std::enable_if_t<is_iterable<Container<Args...>>::value
+	&& !std::is_same_v<std::decay_t<Container<Args...>>, std::string>>>
+	std::ostream& operator<<(std::ostream& os, const Container<Args...>& t) {
 	os << "( ";
 	for (auto& val : t) {
 		std::cout << val << " ";
@@ -175,7 +350,7 @@ template<typename, typename>
 struct pack_contains : std::false_type {};
 
 template<template <typename...> typename Pack, typename T, typename... Args>
-struct pack_contains<T, Pack<Args...>> : contains<T, Args...>{};
+struct pack_contains<T, Pack<Args...>> : contains<T, Args...> {};
 
 template<typename T, typename U>
 constexpr bool pack_contains_v = pack_contains<T, U>::value;
@@ -313,7 +488,7 @@ struct filter_pack<Filter, Pack<Args...>> {
 template<template<typename> typename Filter, typename T>
 using filter_pack_t = typename filter_pack<Filter, T>::type;
 
-template<template<typename...> typename, typename, typename=void>
+template<template<typename...> typename, typename, typename = void>
 struct flatten_pack_impl;
 
 template<template<typename...> typename Pack, typename... Args>
@@ -337,7 +512,7 @@ struct switch_pack<Pack2, Pack1<Args...>> {
 	using type = Pack2<Args...>;
 };
 
-template<typename T, typename=void>
+template<typename T, typename = void>
 struct unique_pack_impl;
 
 template<typename T>
@@ -448,7 +623,7 @@ protected:
 private:
 	virtual clone_inherit * clone_impl() const noexcept override
 	{
-		return new Derived(static_cast<const Derived & >(*this));
+		return new Derived(static_cast<const Derived &>(*this));
 	}
 };
 
@@ -488,7 +663,7 @@ public:
 private:
 	virtual clone_inherit * clone_impl() const noexcept override
 	{
-		return new Derived(static_cast<const Derived & >(*this));
+		return new Derived(static_cast<const Derived &>(*this));
 	}
 };
 
@@ -524,8 +699,8 @@ public:
 	template<typename D, typename V>
 	D *copy(V &&v) noexcept(noexcept(D(std::forward<V>(v))))
 	{
-		return fits<D> ? new(space) D( std::forward<V>(v) ) :
-			new        D( std::forward<V>(v) );
+		return fits<D> ? new(space) D(std::forward<V>(v)) :
+			new        D(std::forward<V>(v));
 	}
 
 	template<typename D, typename V, typename B>
@@ -562,10 +737,10 @@ class polyValue : Store {
 	} *val;
 
 	template<typename U>
-	struct data final : base  {
+	struct data final : base {
 		using type = std::remove_const_t<std::remove_reference_t<U>>;
 		type val;
-		
+
 		type& get() noexcept { return val; }
 		const type& get() const noexcept { return val; }
 
@@ -583,7 +758,7 @@ class polyValue : Store {
 		void free(Store& store) const noexcept override {
 			store.free(this);
 		}
-		
+
 		template<typename V>
 		data(V&& val) noexcept
 			: val(std::forward<V>(val))
@@ -599,13 +774,13 @@ class polyValue : Store {
 	};
 
 public:
-	template<typename U, typename Enable=std::enable_if_t<std::conjunction_v<std::is_base_of<T, std::decay_t<U>>,
-																			 std::negation<std::is_base_of<polyValue<T>, std::decay_t<U>>>>>>
-	polyValue(U&& val) noexcept
+	template<typename U, typename Enable = std::enable_if_t<std::conjunction_v<std::is_base_of<T, std::decay_t<U>>,
+		std::negation<std::is_base_of<polyValue<T>, std::decay_t<U>>>>>>
+		polyValue(U&& val) noexcept
 		: val(new data<U>(std::forward<U>(val)))
 	{}
 
-	template<typename U, typename Enable=std::enable_if_t<std::is_base_of<T, U>::value>>
+	template<typename U, typename Enable = std::enable_if_t<std::is_base_of<T, U>::value>>
 	polyValue(const polyValue<U>& other) noexcept
 		: val(other.val->copy(*this))
 	{}
@@ -620,10 +795,10 @@ public:
 		this->val->free(*this);
 		this->val = other.val->copy(*this);
 	}
-	
+
 	template<typename U>
-		polyValue<T>& operator=(polyValue<U>&& other) noexcept {
-		if(this->val) this->val->free(*this);
+	polyValue<T>& operator=(polyValue<U>&& other) noexcept {
+		if (this->val) this->val->free(*this);
 		this->val = other.val->move(*this, other.val);
 		return *this;
 	}
@@ -632,7 +807,7 @@ public:
 
 	T& value()  noexcept { return val->getValue(); }
 	const T& value() const  noexcept { return val->getValue(); }
-	
+
 	template<typename U>
 	bool isCastable()  noexcept {
 		return val->poly_cast<U>();
@@ -646,7 +821,7 @@ public:
 	T* operator->()  noexcept {
 		return val->getValPtr();
 	}
-	
+
 	const T* operator->() const noexcept {
 		return val->getValPtr();
 	}

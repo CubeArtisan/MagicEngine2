@@ -11,15 +11,14 @@ class EtbTriggerHandler : public clone_inherit<EtbTriggerHandler, TriggerHandler
 public:
 	std::vector<QueueTrigger> operator()(const Changeset& changes, const Environment& env) const {
 		std::vector<QueueTrigger> result;
-		for (const ObjectCreation& create : changes.create) {
-			if (create.zone == env.battlefield->id) {
-				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create.created)) {
+		for (const std::shared_ptr<CreateObject>& create : cast<GameChange, CreateObject>(changes.changes)) {
+			if (create->zone == env.battlefield->id) {
+				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create->created)) {
 					if (selfOnly && card->id != this->owner) continue;
 					std::shared_ptr<const std::set<CardType>> types = env.getTypes(card);
 					if (controlled && env.getController(card) != env.getController(this->owner)) continue;
 					if (intersect(watchFor.begin(), watchFor.end(), types->begin(), types->end())) {
-						Changeset triggered;
-						triggered.create.push_back(create);
+						Changeset triggered(*create);
 						// CodeReview: Have trigger controlled by correct player
 						result.push_back(QueueTrigger{ env.getController(card), this->owner, triggered, this->createAbility(card, std::nullopt) });
 					}
@@ -30,7 +29,7 @@ public:
 	}
 
 	template<typename Trigger>
-	EtbTriggerHandler(Trigger func, bool selfOnly=false)
+	EtbTriggerHandler(Trigger func, bool selfOnly = false)
 		: clone_inherit(std::set<ZoneType>{}, std::set<ZoneType>{ BATTLEFIELD }), watchFor{ CREATURE }, controlled(true), selfOnly(selfOnly), createAbility(func)
 	{}
 

@@ -20,17 +20,17 @@ Cost& CostValue::operator-=(const Cost& other) {
 }
 
 ManaCost::ManaCost(Mana mana)
-    : mana(mana)
+	: mana(mana)
 {}
 
 bool ManaCost::canPay(const Player& player, const Environment& env, const SourceType&)  const {
-    return env.manaPools.at(player.id).contains(this->mana);
+	return env.manaPools.at(player.id).contains(this->mana);
 }
 
 Changeset ManaCost::payCost(const Player& player, const Environment&, const SourceType&)  const {
-    Changeset changes;
-    changes.removeMana.push_back(RemoveMana{player.id, this->mana});
-    return changes;
+	Changeset changes;
+	changes.push_back(RemoveMana{ player.id, this->mana });
+	return changes;
 }
 
 ManaCost& ManaCost::operator+=(const Cost& other) {
@@ -60,21 +60,20 @@ ManaCost& ManaCost::operator-=(const Cost& other) {
 }
 
 bool LandPlayCost::canPay(const Player& player, const Environment& env, const SourceType&)  const {
-    return env.landPlays.at(player.id) < env.getLandPlays(player.id);
+	return env.landPlays.at(player.id) < env.getLandPlays(player.id);
 }
 
 Changeset LandPlayCost::payCost(const Player&, const Environment&, const SourceType&)  const {
-    return Changeset();
+	return Changeset();
 }
 
 bool TapCost::canPay(const Player&, const Environment&, const SourceType& source)  const {
-    return !getBaseClassPtr<const CardToken>(source)->isTapped;
+	return !getBaseClassPtr<const CardToken>(source)->isTapped;
 }
 
 Changeset TapCost::payCost(const Player&, const Environment&, const SourceType& source)  const {
-    Changeset tap;
-    tap.tap.push_back(TapTarget{getBaseClassPtr<const Targetable>(source)->id, true});
-    return tap;
+	Changeset tap(TapTarget{ getBaseClassPtr<const Targetable>(source)->id, true });
+	return tap;
 }
 
 TapCost& TapCost::operator+=(const Cost& other) {
@@ -110,6 +109,6 @@ bool SacrificeCost::canPay(const Player&, const Environment& env, const SourceTy
 Changeset SacrificeCost::payCost(const Player&, const Environment& env, const SourceType& source) const {
 	Changeset res;
 	std::shared_ptr<const Targetable> target = getBaseClassPtr<const Targetable>(source);
-	res.moves.push_back(ObjectMovement{ target->id, env.battlefield->id, env.graveyards.at(target->owner)->id, 0, SACRIFICE });
+	res.push_back(ObjectMovement{ target->id, env.battlefield->id, env.graveyards.at(target->owner)->id, 0, SACRIFICE });
 	return res;
 }
