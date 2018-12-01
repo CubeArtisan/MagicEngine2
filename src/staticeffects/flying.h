@@ -10,10 +10,10 @@ bool canBlockFlying(std::shared_ptr<CardToken> card, const Environment& env);
 class FlyingRestriction : public BlockRestriction {
 public:
 	virtual std::set<xg::Guid> canBlock(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
-		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>&,
+		const std::multimap<std::shared_ptr<CardToken>, xg::Guid>&,
 		const Environment& env) const override {
 		std::set<xg::Guid> result;
-		for(auto& possibility : possibleBlocks){
+		for (auto& possibility : possibleBlocks) {
 			if (possibility == this->flyer && !canBlockFlying(card, env)) continue;
 			result.insert(possibility);
 		}

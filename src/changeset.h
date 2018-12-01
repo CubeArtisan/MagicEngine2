@@ -246,15 +246,19 @@ struct CreateTargets : public GameChange {
 };
 
 struct StepOrPhaseChange : public GameChange {
-	StepOrPhase starting{ UNTAP };
+public:
+	StepOrPhaseId starting{ UNTAP };
 
 	bool ApplyTo(Environment& env, Runner& runner) override;
 
 	std::string ToString() const override;
 
-	StepOrPhaseChange(StepOrPhase starting)
+	StepOrPhaseChange(StepOrPhaseId starting)
 		: starting(starting)
 	{}
+
+private:
+	StepOrPhaseId nextStepOrPhase(Environment& env) const;
 };
 
 struct ClearTriggers : public GameChange {

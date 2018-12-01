@@ -1,3 +1,6 @@
+#ifndef _RUNNER_H_
+#define _RUNNER_H_
+
 #include <variant>
 
 #include "changeset.h"
@@ -21,3 +24,5 @@ private:
 	void applyMoveRules(Changeset& changeset);
 	bool applyReplacementEffects(Changeset& changeset, std::set<xg::Guid> applied = {});
 };
+
+#endif

@@ -10,8 +10,8 @@
 class AttackRestriction {
 public:
 	virtual std::set<xg::Guid> canAttack(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
-										 const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
-										 const Environment& env) const = 0;
+		const std::map<std::shared_ptr<CardToken>, xg::Guid>& declaredAttacks,
+		const Environment& env) const = 0;
 
 	virtual bool operator==(const AttackRestriction& other) {
 		return typeid(*this) == typeid(other);
@@ -21,7 +21,7 @@ public:
 class AttackRestrictionValue : public polyValue<AttackRestriction>, public AttackRestriction {
 public:
 	std::set<xg::Guid> canAttack(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
-		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
+		const std::map<std::shared_ptr<CardToken>, xg::Guid>& declaredAttacks,
 		const Environment& env) const override {
 		return this->value().canAttack(card, possibleAttacks, declaredAttacks, env);
 	}
@@ -36,15 +36,15 @@ public:
 class AttackRequirement {
 public:
 	virtual std::set<xg::Guid> getRequiredAttacks(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
-										          const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
-										          const Environment& env) const = 0;
+		const std::map<std::shared_ptr<CardToken>, xg::Guid>& declaredAttacks,
+		const Environment& env) const = 0;
 };
 
 class AttackRequirementValue : public polyValue<AttackRequirement>, public AttackRequirement {
 public:
 	virtual std::set<xg::Guid> getRequiredAttacks(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleAttacks,
-		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredAttacks,
-		const Environment& env) const {
+		const std::map<std::shared_ptr<CardToken>, xg::Guid>& declaredAttacks,
+		const Environment& env) const override {
 		return this->value().getRequiredAttacks(card, possibleAttacks, declaredAttacks, env);
 	}
 
@@ -58,14 +58,14 @@ public:
 class BlockRestriction {
 public:
 	virtual std::set<xg::Guid> canBlock(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
-										const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks,
-										const Environment& env) const = 0;
+		const std::multimap<std::shared_ptr<CardToken>, xg::Guid>& declaredBlocks,
+		const Environment& env) const = 0;
 };
 
 class BlockRestrictionValue : public polyValue<BlockRestriction>, public BlockRestriction {
 public:
 	virtual std::set<xg::Guid> canBlock(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
-		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks,
+		const std::multimap<std::shared_ptr<CardToken>, xg::Guid>& declaredBlocks,
 		const Environment& env) const override {
 		return this->value().canBlock(card, possibleBlocks, declaredBlocks, env);
 	}
@@ -80,14 +80,14 @@ public:
 class BlockRequirement {
 public:
 	virtual std::set<xg::Guid> getRequiredBlocks(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
-												 const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks,
-												 const Environment& env) const = 0;
+		const std::multimap<std::shared_ptr<CardToken>, xg::Guid>& declaredBlocks,
+		const Environment& env) const = 0;
 };
 
 class BlockRequirementValue : public polyValue<BlockRequirement>, public BlockRequirement {
 public:
 	virtual std::set<xg::Guid> getRequiredBlocks(const std::shared_ptr<CardToken>& card, const std::set<xg::Guid>& possibleBlocks,
-		const std::vector<std::pair<std::shared_ptr<CardToken>, xg::Guid>>& declaredBlocks,
+		const std::multimap<std::shared_ptr<CardToken>, xg::Guid>& declaredBlocks,
 		const Environment& env) const override {
 		return this->value().getRequiredBlocks(card, possibleBlocks, declaredBlocks, env);
 	}

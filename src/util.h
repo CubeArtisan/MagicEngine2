@@ -33,11 +33,6 @@ U convertVariant(const std::variant<Ts...>& variant) noexcept
 	return std::visit([](auto& x) { return U{ x }; }, variant);
 }
 
-template<typename U, typename T>
-U convertToVariant(const std::shared_ptr<T>& t) {
-	return convertToVariantRecursive<U>(t);
-}
-
 template<typename U, typename T, size_t i = 0>
 U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 	using V = std::variant_alternative_t<i, U>;
@@ -53,6 +48,11 @@ U convertToVariantRecursive(const std::shared_ptr<T>& t) {
 			return convertToVariantRecursive<U, T, i + 1>(t);
 		}
 	}
+}
+
+template<typename U, typename T>
+U convertToVariant(const std::shared_ptr<T>& t) {
+	return convertToVariantRecursive<U>(t);
 }
 
 template<typename T, typename Variant>
@@ -72,6 +72,22 @@ std::shared_ptr<T> getBaseClassPtr(const Variant& variant) {
 	auto visitor = [](auto base) -> std::shared_ptr<T> { return std::dynamic_pointer_cast<T>(base); };
 	return std::visit(visitor, variant);
 }
+
+template<typename State, typename Variant, typename Enable>
+struct index_of_impl;
+
+template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
+struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<!std::is_same_v<Variant, State>>> {
+	constexpr static size_t value = 1 + index_of_impl<State, Pack<Variants...>, void>::value;
+};
+
+template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
+struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<std::is_same_v<Variant, State>>> {
+	constexpr static size_t value = 0;
+};
+
+template<typename State, typename Variant>
+constexpr size_t index_of_v = index_of_impl<State, Variant, void>::value;
 
 /// https://stackoverflow.com/a/5423637/3300171
 
@@ -184,6 +200,12 @@ public:
 	template<typename Iter>
 	class cast_iterator {
 	public:
+		using iterator_category = typename std::iterator_traits<Iter>::iterator_category;
+		using value_type = T;
+		using difference_type = typename std::iterator_traits<Iter>::difference_type;
+		using pointer = U * ;
+		using reference = U & ;
+
 		typename std::conditional<is_const_iterator<Iter>::value, const std::shared_ptr<U>, std::shared_ptr<U>>::type operator*() {
 			return std::dynamic_pointer_cast<U>(*current);
 		}
@@ -228,6 +250,10 @@ public:
 
 	bool empty() const {
 		return this->begin() == this->end();
+	}
+
+	std::vector<std::shared_ptr<U>> toVector() const {
+		return std::vector(this->begin(), this->end());
 	}
 
 	cast(std::vector<std::shared_ptr<T>>& backing)
@@ -303,22 +329,6 @@ template<template<typename> typename Pack, typename T>
 struct ExtractParameterIfPack<Pack, Pack<T>> {
 	using type = T;
 };
-
-template<typename State, typename Variant, typename Enable>
-struct index_of_impl;
-
-template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
-struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<!std::is_same_v<Variant, State>>> {
-	constexpr static size_t value = 1 + index_of_impl<State, Pack<Variants...>, void>::value;
-};
-
-template<typename State, template<typename...> typename Pack, typename Variant, typename... Variants>
-struct index_of_impl<State, Pack<Variant, Variants...>, std::enable_if_t<std::is_same_v<Variant, State>>> {
-	constexpr static size_t value = 0;
-};
-
-template<typename State, typename Variant>
-constexpr size_t index_of_v = index_of_impl<State, Variant, void>::value;
 
 template<template<typename> typename Pack, typename T>
 using extract_parameter_if_pack_t = typename ExtractParameterIfPack<Pack, T>::type;

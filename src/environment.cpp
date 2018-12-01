@@ -6,9 +6,9 @@
 #include "rulesEffects.h"
 
 Environment::Environment(const std::vector<Player>& prelimPlayers, const std::vector<std::vector<Card>>& libraries)
-: battlefield(new Zone<Card, Token>(BATTLEFIELD)), stack(new Zone<Card, Token, Ability>(STACK)),
-  exile(new Zone<Card, Token>(EXILE)), command(new Zone<Card, Emblem>(COMMAND)), currentPhase(UPKEEP),
-  currentPlayer(0), turnPlayer(0)
+	: battlefield(new Zone<Card, Token>(BATTLEFIELD)), stack(new Zone<Card, Token, Ability>(STACK)),
+	exile(new Zone<Card, Token>(EXILE)), command(new Zone<Card, Emblem>(COMMAND)), currentPhase(UPKEEP),
+	currentPlayer(0), turnPlayer(0)
 {
 	this->changes.reserve(1024);
 	// CodeReview: Holding pointers to class members causes crashes on destruction
@@ -23,10 +23,10 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 	for (const Player& player : prelimPlayers) {
 		players.push_back(player.clone());
 	}
-    for(unsigned int i=0; i < players.size(); i++) {
+	for (unsigned int i = 0; i < players.size(); i++) {
 		players[i]->owner = players[i]->id;
-        this->gameObjects[players[i]->id] = players[i];
-        this->hands[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(HAND));
+		this->gameObjects[players[i]->id] = players[i];
+		this->hands[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(HAND));
 		this->hands[players[i]->id]->objects.reserve(8);
 		this->gameObjects[this->hands[players[i]->id]->id] = this->hands[players[i]->id];
 		this->libraries[players[i]->id] = std::shared_ptr<Zone<Card, Token>>(new Zone<Card, Token>(LIBRARY));
@@ -40,12 +40,12 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 		this->lifeTotals[players[i]->id] = 20;
 		this->manaPools[players[i]->id] = Mana();
 		this->playerCounters[players[i]->id] = { {POISONCOUNTER, 0} };
-        for(const Card& card : libraries[i]) {
+		for (const Card& card : libraries[i]) {
 			std::shared_ptr<Card> copy(card.clone());
 			copy->owner = players[i]->id;
 			copy->id = xg::newGuid();
 			this->libraries[players[i]->id]->addObject(copy);
-            this->gameObjects[copy->id] = copy;
+			this->gameObjects[copy->id] = copy;
 			std::vector<std::shared_ptr<const EventHandler>> replacement = this->getReplacementEffects(copy, LIBRARY);
 			std::vector<std::shared_ptr<const EventHandler>> replacements;
 			replacements.reserve(replacement.size());
@@ -74,7 +74,7 @@ Environment::Environment(const std::vector<Player>& prelimPlayers, const std::ve
 			}
 			this->stateQueryHandlers.insert(this->stateQueryHandlers.end(), state.begin(), state.end());
 		}
-        
+
 		std::random_device rd;
 		std::mt19937 g(rd());
 		std::shuffle(this->libraries[players[i]->id]->objects.begin(), this->libraries[players[i]->id]->objects.end(), g);
@@ -113,7 +113,7 @@ int Environment::getPower(xg::Guid target)  const {
 	return this->getPower(card);
 }
 
-int Environment::getPower(const std::shared_ptr<const CardToken>& target) const{
+int Environment::getPower(const std::shared_ptr<const CardToken>& target) const {
 	PowerQuery query{ *target, target->basePower };
 	return std::get<PowerQuery>(executeStateQuery(query)).power;
 }
@@ -215,7 +215,7 @@ std::vector<std::shared_ptr<const EventHandler>> Environment::getReplacementEffe
 	std::vector<std::shared_ptr<const EventHandler>> handlers;
 	for (const auto& h : target->replacementEffects) {
 		if ((sourceZone && h->activeSourceZones.find(sourceZone.value()) != h->activeSourceZones.end())
-				|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
+			|| h->activeDestinationZones.find(destinationZone) != h->activeDestinationZones.end())
 			handlers.push_back(h);
 	}
 	ReplacementEffectsQuery query{ *target, destinationZone, sourceZone, handlers };
@@ -305,6 +305,11 @@ int Environment::getLethalDamage(xg::Guid attacker, xg::Guid blocker)  const {
 int Environment::getLethalDamage(const std::shared_ptr<const CardToken>& attacker, xg::Guid blocker)  const {
 	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(blocker));
 	return this->getLethalDamage(attacker, card);
+}
+
+int Environment::getLethalDamage(xg::Guid attacker, const std::shared_ptr<const CardToken>& blocker)  const {
+	std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(gameObjects.at(attacker));
+	return this->getLethalDamage(card, blocker);
 }
 
 int Environment::getLethalDamage(const std::shared_ptr<const CardToken>& attacker, const std::shared_ptr<const CardToken>& blocker) const {

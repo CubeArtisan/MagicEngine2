@@ -1,8 +1,8 @@
 #include <map>
 #include "enum.h"
 
-std::ostream& operator<<(std::ostream& os, const StepOrPhase& step) {
-	static std::map<StepOrPhase, std::string> StepOrPhaseMapping{
+std::ostream& operator<<(std::ostream& os, const StepOrPhaseId& step) {
+	static std::map<StepOrPhaseId, std::string> StepOrPhaseMapping{
 		{ UNTAP, "Untap" },{ UPKEEP, "Upkeep" },{ DRAW, "Draw" },{ PRECOMBATMAIN, "Precombat Main" },
 		{ BEGINCOMBAT, "Begin Combat" },{ DECLAREATTACKERS, "Declare Attackers" },{ DECLAREBLOCKERS, "Declare Blockers" },
 		{ FIRSTSTRIKEDAMAGE, "First Strike Damage" },{ COMBATDAMAGE, "Combat Damage" },{ ENDCOMBAT, "End Combat" },
