@@ -11,7 +11,7 @@ class EtbTriggerHandler : public clone_inherit<EtbTriggerHandler, TriggerHandler
 public:
 	std::vector<QueueTrigger> operator()(const Changeset& changes, const Environment& env) const {
 		std::vector<QueueTrigger> result;
-		for (const std::shared_ptr<CreateObject>& create : cast<GameChange, CreateObject>(changes.changes)) {
+		for (const std::shared_ptr<CreateObject>& create : changes.ofType<CreateObject>()) {
 			if (create->zone == env.battlefield->id) {
 				if (std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create->created)) {
 					if (selfOnly && card->id != this->owner) continue;

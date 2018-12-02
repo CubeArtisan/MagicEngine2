@@ -20,10 +20,10 @@ Card ChartACourse = newCard("Chart a Course", 1, {}, { SORCERY }, {},
 
 Card CuriousObsession = newCard("Curious Obsession", 1, {}, { ENCHANTMENT }, { AURA }, 0, 0, 0, { BLUE }, std::shared_ptr<TargetingRestriction>(new CreatureTarget()), { ManaCost(Mana({ BLUE })) },
 	{}, {}, {}, {}, { std::make_shared<LambdaTriggerHandler>(AndPropositionImpl(LambdaProposition([](const Changeset& c, const Environment&)
-		{ cast<GameChange, StepOrPhaseChange> phaseChangeFilter(c.changes);
-			return !phaseChangeFilter.empty() && (*phaseChangeFilter.begin())->starting == POSTCOMBATMAIN; }), NotProposition(RaidProposition())),
-		[](const TriggerInfo& info) { cast<GameChange, StepOrPhaseChange> phaseChangeFilter(info.change.changes);
-									  std::vector<QueueTrigger> res; Changeset cause(**phaseChangeFilter.begin());
+		{ auto phaseChangeFilter = c.ofType<StepOrPhaseChange>();
+			return !phaseChangeFilter.empty() && phaseChangeFilter.first()->starting == POSTCOMBATMAIN; }), NotProposition(RaidProposition())),
+		[](const TriggerInfo& info) { auto phaseChangeFilter = info.change.ofType<StepOrPhaseChange>();
+									  std::vector<QueueTrigger> res; Changeset cause(*phaseChangeFilter.first());
 									  res.push_back(QueueTrigger{ info.player, info.source, cause,
 											std::make_shared<Ability>(LambdaEffects([](xg::Guid source, const Environment& env) -> std::optional<Changeset>
 												{ Changeset res;

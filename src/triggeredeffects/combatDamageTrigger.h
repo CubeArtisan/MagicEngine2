@@ -14,7 +14,7 @@ public:
 protected:
 	std::vector<QueueTrigger> createTriggers(const Changeset& changes, const Environment& env) const override {
 		std::vector<QueueTrigger> results;
-		for (const std::shared_ptr<CombatDamageToTarget>& cdamage : cast<GameChange, CombatDamageToTarget>(changes.changes)) {
+		for (const std::shared_ptr<CombatDamageToTarget>& cdamage : changes.ofType<CombatDamageToTarget>()) {
 			if (cdamage->amount <= 0) continue;
 			if ((!this->justOwner || cdamage->source == this->owner) && prop(*cdamage, env)) {
 				Changeset triggered(*cdamage);

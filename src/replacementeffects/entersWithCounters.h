@@ -8,12 +8,12 @@ class EntersWithCounters : public clone_inherit<EntersWithCounters, EventHandler
 public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changes, const Environment& env) const {
 		bool replaced = false;
-		for (const std::shared_ptr<CreateObject>& create : cast<GameChange, CreateObject>(changes.changes)) {
+		for (const std::shared_ptr<CreateObject>& create : changes.ofType<CreateObject>()) {
 			if (create->created->id == this->owner) {
 				if (!prop(env)) return std::nullopt;
 				replaced = true;
 				bool existing = false;
-				for (std::shared_ptr<AddPermanentCounter> counter : cast<GameChange, AddPermanentCounter>(changes.changes)) {
+				for (const std::shared_ptr<AddPermanentCounter>& counter : changes.ofType<AddPermanentCounter>()) {
 					if (counter->target == this->owner && counter->counterType == PLUSONEPLUSONECOUNTER) {
 						existing = true;
 						counter->amount += this->amount;

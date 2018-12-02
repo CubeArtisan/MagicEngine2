@@ -9,7 +9,7 @@ public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
 		std::vector<std::shared_ptr<ObjectMovement>> toRemove;
-		for (std::shared_ptr<ObjectMovement> move : changeset.ofType<ObjectMovement>()) {
+		for (const std::shared_ptr<ObjectMovement>& move : changeset.ofType<ObjectMovement>()) {
 			if (move->sourceZone != env.battlefield->id && move->sourceZone != env.stack->id && std::dynamic_pointer_cast<Token>(env.gameObjects.at(move->object))) {
 				toRemove.push_back(move);
 			}
@@ -31,7 +31,7 @@ public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment&) const {
 		// 110.5g. A token that has left the battlefield can't move to another zone or come back onto the battlefield. If such a token would change zones, it remains in its current zone instead. It ceases to exist the next time state-based actions are checked; see rule 704.
 		std::vector<std::shared_ptr<DamageToTarget>> toRemove;
-		for (std::shared_ptr<DamageToTarget> damage : cast<GameChange, DamageToTarget>(changeset.changes)) {
+		for (const std::shared_ptr<DamageToTarget>& damage : changeset.ofType<DamageToTarget>()) {
 			if (damage->amount <= 0) {
 				toRemove.push_back(damage);
 			}

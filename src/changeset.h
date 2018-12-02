@@ -9,6 +9,7 @@
 
 #include "enum.h"
 #include "handlers.h"
+#include "linq.h"
 #include "mana.h"
 #include "stateQuery.h"
 #include "util.h"
@@ -372,8 +373,24 @@ struct Changeset {
 		return *this;
 	}
 
+	using iterator = std::vector<std::shared_ptr<GameChange>>::iterator;
+	using const_iterator = std::vector<std::shared_ptr<GameChange>>::const_iterator;
+
+	template<typename U>
+	linq::cast<iterator, U, std::shared_ptr> ofType() {
+		return { this->changes };
+	}
+
 	template<typename T>
-	cast<GameChange, T> ofType() {
+	linq::cast<std::vector<std::shared_ptr<GameChange>>::const_iterator, T> ofType() const {
+		return { this->changes };
+	}
+
+	linq::id<iterator> linq() {
+		return { this->changes };
+	}
+
+	linq::id<const_iterator> linq() const {
 		return { this->changes };
 	}
 

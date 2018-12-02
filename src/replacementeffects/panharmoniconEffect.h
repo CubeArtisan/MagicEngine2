@@ -10,9 +10,9 @@ public:
 	std::optional<std::vector<Changeset>> handleEvent(Changeset& changeset, const Environment& env) const {
 		std::vector<std::shared_ptr<QueueTrigger>> toAdd;
 		// CodeReview: Currently doubles instead of just adding one
-		for (std::shared_ptr<QueueTrigger> trigger : cast<GameChange, QueueTrigger>(changeset.changes)) {
+		for (const std::shared_ptr<QueueTrigger>& trigger : changeset.ofType<QueueTrigger>()) {
 			if (env.getController(this->owner) != trigger->player) continue;
-			for (std::shared_ptr<CreateObject> create : cast<GameChange, CreateObject>(trigger->triggered.changes)) {
+			for (const std::shared_ptr<CreateObject>& create : trigger->triggered.ofType<CreateObject>()) {
 				if (create->zone != env.battlefield->id) continue;
 				std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(create->created);
 				if (!card) continue;

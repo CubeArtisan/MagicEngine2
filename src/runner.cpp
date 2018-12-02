@@ -296,7 +296,7 @@ void Runner::runGame() {
 
 void Runner::applyMoveRules(Changeset& changeset) {
 	std::vector<std::tuple<std::shared_ptr<CardToken>, ZoneType>> objects;
-	for (std::shared_ptr<CreateObject> create : cast<GameChange, CreateObject>(changeset.changes)) {
+	for (const std::shared_ptr<CreateObject>& create : changeset.ofType<CreateObject>()) {
 		if (std::shared_ptr<CardToken> object = std::dynamic_pointer_cast<CardToken>(create->created)) {
 			std::shared_ptr<ZoneInterface> destination = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects.at(create->zone));
 			objects.push_back(std::make_tuple(object, destination->type));

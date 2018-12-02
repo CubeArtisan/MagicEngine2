@@ -107,168 +107,32 @@ struct is_const_iterator
 /// END
 
 template<typename T>
-class filter {
-public:
-	template<typename Iter>
-	class filter_iterator {
-	public:
-		using iterator_category = typename std::iterator_traits<Iter>::iterator_category;
-		using value_type = T;
-		using difference_type = typename std::iterator_traits<Iter>::difference_type;
-		using pointer = typename std::iterator_traits<Iter>::pointer;
-		using reference = typename std::iterator_traits<Iter>::reference;
-
-		std::conditional_t<is_const_iterator<Iter>::value, const T&, T&> operator*() {
-			return *current;
-		}
-
-		filter_iterator<Iter> operator++() {
-			filter_iterator<Iter> result = *this;
-			do {
-				if (this->current == this->end) break;
-				++this->current;
-			} while (!filter(*this->current));
-			return result;
-		}
-
-		bool operator!=(filter_iterator<Iter> other) {
-			// CodeReview: Doesn't check that filters are the same
-			return this->current != other.current;
-		}
-
-		bool operator==(filter_iterator<Iter> other) {
-			// CodeReview: Doesn't check that filters are the same
-			return this->current == other.current;
-		}
-
-		filter_iterator(Iter current, Iter end, std::function<bool(T&)> filter)
-			: current(current), end(end), filter(filter)
-		{}
-
-	private:
-		Iter current;
-		Iter end;
-		std::function<bool(T&)> filter;
-	};
-
-	using iterator = filter_iterator<typename std::vector<T>::iterator>;
-	using const_iterator = filter_iterator<typename std::vector<T>::const_iterator>;
-
-	iterator begin() {
-		if (index_of_v<std::vector<T>*, decltype(this->backing)> != this->backing.index()) {
-			throw "Tried to invoke non const iterator functions on a const instance";
-		}
-		std::vector<T>& backingUnwrapped = *std::get<std::vector<T>*>(this->backing);
-		return iterator(backingUnwrapped.begin(), backingUnwrapped.end(), this->function);
-	}
-	const_iterator begin() const {
-		const std::vector<T>& backingUnwrapped = *getConstPtr<std::vector<T>>(this->backing);
-		return const_iterator(backingUnwrapped.cbegin(), backingUnwrapped.cend(), this->function);
-	}
-	iterator end() {
-		if (index_of_v<std::vector<T>*, decltype(this->backing)> != this->backing.index()) {
-			throw "Tried to invoke non const iterator functions on a const instance";
-		}
-		std::vector<T>& backingUnwrapped = *std::get<std::vector<T>*>(this->backing);
-		return iterator(backingUnwrapped.end(), backingUnwrapped.end(), this->function);
-	}
-	const_iterator end() const {
-		const std::vector<T>& backingUnwrapped = *getConstPtr<std::vector<T>>(this->backing);
-		return const_iterator(backingUnwrapped.cend(), backingUnwrapped.cend(), this->function);
-	}
-
-	bool empty() const {
-		return this->begin() == this->end();
-	}
-
-	filter(std::vector<T>& backing, std::function<bool(T&)> filter)
-		: backing(&backing), function(filter)
-	{}
-
-	filter(const std::vector<T>& backing, std::function<bool(T&)> filter)
-		: backing(&backing), function(filter)
-	{}
-
-private:
-	std::variant<std::vector<T>*, const std::vector<T>*> backing;
-	std::function<bool(T&)> function;
+struct consted {
+	using type = const T;
 };
 
-template<typename T, typename U>
-class cast {
-public:
-	template<typename Iter>
-	class cast_iterator {
-	public:
-		using iterator_category = typename std::iterator_traits<Iter>::iterator_category;
-		using value_type = T;
-		using difference_type = typename std::iterator_traits<Iter>::difference_type;
-		using pointer = U * ;
-		using reference = U & ;
-
-		typename std::conditional<is_const_iterator<Iter>::value, const std::shared_ptr<U>, std::shared_ptr<U>>::type operator*() {
-			return std::dynamic_pointer_cast<U>(*current);
-		}
-
-		cast_iterator<Iter> operator++() {
-			cast_iterator<Iter> result = *this;
-			++this->current;
-			return result;
-		}
-
-		bool operator!=(cast_iterator<Iter> other) {
-			return this->current != other.current;
-		}
-
-		bool operator==(cast_iterator<Iter> other) {
-			return this->current == other.current;
-		}
-
-		cast_iterator(Iter current)
-			: current(current)
-		{}
-
-	private:
-		Iter current;
-	};
-
-	using iterator = cast_iterator<typename filter<std::shared_ptr<T>>::iterator>;
-	using const_iterator = cast_iterator<typename filter<std::shared_ptr<T>>::const_iterator>;
-
-	iterator begin() {
-		return iterator(filtered.begin());
-	}
-	const_iterator begin() const {
-		return const_iterator(((const filter<std::shared_ptr<T>>)filtered).begin());
-	}
-	iterator end() {
-		return iterator(filtered.end());
-	}
-	const_iterator end() const {
-		return const_iterator(((const filter<std::shared_ptr<T>>)filtered).end());
-	}
-
-	bool empty() const {
-		return this->begin() == this->end();
-	}
-
-	std::vector<std::shared_ptr<U>> toVector() const {
-		return std::vector(this->begin(), this->end());
-	}
-
-	cast(std::vector<std::shared_ptr<T>>& backing)
-		: filtered(backing, filter_func)
-	{}
-
-	cast(const std::vector<std::shared_ptr<T>>& backing)
-		: filtered(backing, filter_func)
-	{
-	}
-
-private:
-	const std::function<bool(std::shared_ptr<T>&)> filter_func = [](std::shared_ptr<T>& t) { return (bool)std::dynamic_pointer_cast<U>(t); };
-	filter<std::shared_ptr<T>> filtered;
+template<typename T>
+struct consted<T*> {
+	using type = const T*;
 };
+
+template<typename T>
+struct consted<const T*> {
+	using type = const T*;
+};
+
+template<typename T>
+struct consted<T&> {
+	using type = const T&;
+};
+
+template<typename T>
+struct consted<const T&> {
+	using type = const T&;
+};
+
+template<typename T>
+using consted_t = typename consted<T>::type;
 
 /// https://stackoverflow.com/a/29634934/3300171
 

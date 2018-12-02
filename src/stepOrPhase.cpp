@@ -64,8 +64,8 @@ bool DrawStep::applyEnter(Environment& env, Runner& runner) const {
 	// CodeReview: Handle first turn don't draw
 	Changeset drawCard = Changeset::drawCards(turnPlayerId, 1, env);
 #ifdef DEBUG
-	cast<GameChange, ObjectMovement> moves(drawCard.changes);
-	for (std::shared_ptr<ObjectMovement> move : moves) {
+	auto moves = drawCard.ofType<ObjectMovement>();
+	for (const std::shared_ptr<ObjectMovement>& move : moves) {
 		if (move->sourceZone != env.libraries.at(turnPlayerId)->id || move->destinationZone != env.hands.at(turnPlayerId)->id) continue;
 		std::shared_ptr<CardToken> card = std::dynamic_pointer_cast<CardToken>(env.gameObjects.at(move->object));
 		std::cout << env.players[env.turnPlayer]->id << "is drawing " << card->name << std::endl;

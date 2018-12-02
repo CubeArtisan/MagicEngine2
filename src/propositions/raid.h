@@ -1,6 +1,7 @@
 #ifndef _RAID_H_
 #define _RAID_H_
 
+#include "../linq.h"
 #include "../util.h"
 #include "proposition.h"
 
@@ -10,11 +11,11 @@ public:
 		if (controller.isValid() && env.players[env.turnPlayer]->id != controller) return false;
 
 		for (const Changeset& change : reverse(env.changes)) {
-			cast<GameChange, DeclareAttack> attacks(change.changes);
+			auto attacks = change.ofType<DeclareAttack>();
 			if (attacks.begin() != attacks.end()) return true;
 			else {
-				cast<GameChange, StepOrPhaseChange> stepChanges(change.changes);
-				if (stepChanges.begin() != stepChanges.end() && (*stepChanges.begin())->starting == PRECOMBATMAIN) return false;
+				auto stepChanges = change.ofType<StepOrPhaseChange>();
+				if (!stepChanges.empty() && stepChanges.first()->starting == PRECOMBATMAIN) return false;
 			}
 		}
 		return false;
