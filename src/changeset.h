@@ -377,13 +377,13 @@ struct Changeset {
 	using const_iterator = std::vector<std::shared_ptr<GameChange>>::const_iterator;
 
 	template<typename U>
-	linq::cast<iterator, U, std::shared_ptr> ofType() {
-		return { this->changes };
+	auto ofType() {
+		return linq::id(this->changes).ofType<U>();
 	}
 
-	template<typename T>
-	linq::cast<std::vector<std::shared_ptr<GameChange>>::const_iterator, T> ofType() const {
-		return { this->changes };
+	template<typename U>
+	auto ofType() const {
+		return linq::id(this->changes).ofType<U>();
 	}
 
 	linq::id<iterator> linq() {

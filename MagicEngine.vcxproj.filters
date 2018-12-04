@@ -87,6 +87,9 @@
     <ClCompile Include="src\tokens\tokenManager.cpp">
       <Filter>Source Files\tokens</Filter>
     </ClCompile>
+    <ClCompile Include="src\stepOrPhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ability.h">
@@ -298,6 +301,12 @@
     </ClInclude>
     <ClInclude Include="src\strategies\fliers.h">
       <Filter>Header Files\strategies</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stepOrPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\linq.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

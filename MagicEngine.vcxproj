@@ -88,12 +88,12 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <ConformanceMode>false</ConformanceMode>
+      <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>DEBUG;_MBCS;GUID_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
-      <ExceptionHandling>false</ExceptionHandling>
+      <ExceptionHandling>Sync</ExceptionHandling>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <EnableModules>true</EnableModules>
     </ClCompile>
@@ -150,6 +150,7 @@
     <ClCompile Include="src\mana.cpp" />
     <ClCompile Include="src\player.cpp" />
     <ClCompile Include="src\runner.cpp" />
+    <ClCompile Include="src\stepOrPhase.cpp" />
     <ClCompile Include="src\strategy.cpp" />
     <ClCompile Include="src\tokens\tokenManager.cpp" />
   </ItemGroup>
@@ -199,6 +200,7 @@
     <ClInclude Include="src\gameAction.h" />
     <ClInclude Include="src\guid.hpp" />
     <ClInclude Include="src\handlers.h" />
+    <ClInclude Include="src\linq.h" />
     <ClInclude Include="src\mana.h" />
     <ClInclude Include="src\player.h" />
     <ClInclude Include="src\propositions\attacking.h" />
@@ -215,6 +217,7 @@
     <ClInclude Include="src\staticeffects\flying.h" />
     <ClInclude Include="src\staticeffects\lordEffect.h" />
     <ClInclude Include="src\staticeffects\plusForEachEffect.h" />
+    <ClInclude Include="src\stepOrPhase.h" />
     <ClInclude Include="src\strategies\fliers.h" />
     <ClInclude Include="src\strategy.h" />
     <ClInclude Include="src\targeting.h" />

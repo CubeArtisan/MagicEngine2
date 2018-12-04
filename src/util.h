@@ -134,6 +134,41 @@ struct consted<const T&> {
 template<typename T>
 using consted_t = typename consted<T>::type;
 
+template<typename T>
+struct is_pointer_or_reference {
+	constexpr static bool value = false;
+};
+
+template<typename T>
+struct is_pointer_or_reference<T*> {
+	constexpr static bool value = true;
+};
+
+template<typename T>
+struct is_pointer_or_reference<T&> {
+	constexpr static bool value = true;
+};
+
+template<typename T>
+struct is_pointer {
+	constexpr static bool value = false;
+};
+
+template<typename T>
+struct is_pointer<T*> {
+	constexpr static bool value = true;
+};
+
+template<typename T>
+struct is_reference {
+	constexpr static bool value = false;
+};
+
+template<typename T>
+struct is_reference<T&> {
+	constexpr static bool value = true;
+};
+
 /// https://stackoverflow.com/a/29634934/3300171
 
 namespace detail
@@ -567,7 +602,7 @@ class store
 
 	template<typename T>
 	static constexpr bool
-		fits = sizeof(typename std::decay<T>::type) <= N;
+		fits = sizeof(std::decay_t<T>) <= N;
 
 public:
 	template<typename D, typename V>
@@ -591,12 +626,13 @@ public:
 
 template<typename T, typename Store = store<sizeof(T) + 16>>
 class polyValue : Store {
+private:
 	struct base {
 		virtual ~base() {}
 		virtual T& getValue() noexcept = 0;
 		virtual const T& getValue() const noexcept = 0;
 		virtual base* copy(Store& store) const noexcept = 0;
-		virtual base* move(Store& store, base*& other) const noexcept = 0;
+		virtual base* move(Store& store, base*& other) noexcept = 0;
 		virtual void free(Store& store) const noexcept = 0;
 		virtual T* getValPtr() noexcept = 0;
 		virtual const T* getValPtr() const noexcept = 0;
@@ -625,7 +661,7 @@ class polyValue : Store {
 			return store.template copy<data<U>>(get());
 		}
 
-		base* move(Store& store, base*& other) const noexcept override {
+		base* move(Store& store, base*& other) noexcept override {
 			return store.template move<data<U>>(std::move(get()), other);
 		}
 
@@ -665,9 +701,10 @@ public:
 	{}
 
 	template<typename U>
-	polyValue<T> operator=(const polyValue<U>& other) noexcept {
+	polyValue<T>& operator=(const polyValue<U>& other) noexcept {
 		this->val->free(*this);
 		this->val = other.val->copy(*this);
+		return *this;
 	}
 
 	template<typename U>
