@@ -482,6 +482,11 @@ struct FunctionToPack<Result(*)(Args...), Pack> {
 template<typename T, template <typename...> typename Pack>
 using FunctionToPack_t = typename FunctionToPack<T, Pack>::type;
 
+template<template<typename...> typename Pack, typename... Args>
+struct DeductionGuideEvaluate {
+	using type = decltype(Pack(std::declval<Args>()...));
+};
+
 // -------------------------------------------------------------------
 // --- Reversed iterable
 // --- https://stackoverflow.com/a/28139075/3300171

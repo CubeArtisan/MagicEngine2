@@ -4,14 +4,15 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 #include "util.h"
 
 namespace linq {
 	template<typename Container>
-	using iterType = decltype(Container().begin());
+	using iterType = decltype(std::declval<Container>().begin());
 	template<typename Container>
-	using constIterType = decltype(Container().cbegin());
+	using constIterType = decltype(std::declval<Container>().cbegin());
 
 	template<typename Iter>
 	class id;
@@ -23,13 +24,13 @@ namespace linq {
 	id(Iter, Iter)->id<Iter>;
 
 	template<typename Iter>
-	class filter;
+	class where;
 	template<typename Container, typename Func>
-	filter(Container&, Func)->filter<iterType<Container>>;
+	where(Container&, Func)->where<iterType<Container>>;
 	template<typename Container, typename Func>
-	filter(const Container&, Func)->filter<constIterType<Container>>;
+	where(const Container&, Func)->where<constIterType<Container>>;
 	template<typename Iter, typename Func>
-	filter(Iter, Iter, Func)->filter<Iter>;
+	where(Iter, Iter, Func)->where<Iter>;
 
 	template<typename Iter>
 	class append;
@@ -39,21 +40,44 @@ namespace linq {
 	append(const Container&, value_type)->append<constIterType<Container>>;
 	template<typename Iter, typename value_type>
 	append(Iter, Iter, value_type)->append<Iter>;
-
-	template<typename Iter, typename Iter2>
-	class concat;
-	template<typename Iter, typename Iter2>
-	class distinct;
-	template<typename Iter, typename Iter2>
-	class removeAll;
-	template<typename Iter, typename T>
+	template<typename Iter>
 	class removeFirst;
+	template<typename Container, typename value_type>
+	removeFirst(Container&, value_type)->removeFirst<iterType<Container>>;
+	template<typename Container, typename value_type>
+	removeFirst(const Container&, value_type)->removeFirst<constIterType<Container>>;
+	template<typename Iter, typename value_type>
+	removeFirst(Iter, Iter, value_type)->removeFirst<Iter>;
+
+	template<typename Iter>
+	class concat;
+	template<typename Container>
+	concat(Container&, Container&)->concat<iterType<Container>>;
+	template<typename Container>
+	concat(const Container&, Container&)->concat<constIterType<Container>>;
+	template<typename Iter>
+	concat(Iter, Iter, Iter, Iter)->concat<Iter>;
+
+	template<typename Iter>
+	class distinct;
 	// group
 	// join
-	template<typename Iter, typename Iter2>
+	template<typename Iter>
 	class intersect;
 	template<typename Iter>
 	class orderBy;
+	template<typename Iter>
+	class flatten;
+	template<typename Iter>
+	class skip;
+	template<typename Iter>
+	class skipWhile;
+	template<typename Iter>
+	class take;
+	template<typename Iter>
+	class takeWhile;
+	template<typename Iter, typename Iter2>
+	class zip;
 
 	template<typename Iter>
 	class prepend;
@@ -74,30 +98,13 @@ namespace linq {
 	reverse(Iter, Iter)->reverse<Iter>;
 
 	template<typename Iter, typename U>
-	class select_impl;
+	class select;
 	template<typename Container, typename Func>
-	select_impl(Container&, Func)->select_impl<iterType<Container>, std::invoke_result_t<Func, const typename std::iterator_traits<iterType<Container>>::value_type&>>;
+	select(Container&, Func)->select<iterType<Container>, std::invoke_result_t<Func, const typename std::iterator_traits<iterType<Container>>::value_type&>>;
 	template<typename Container, typename Func>
-	select_impl(const Container&, Func)->select_impl<iterType<Container>, std::invoke_result_t<Func, const typename std::iterator_traits<constIterType<Container>>::value_type&>>;
+	select(const Container&, Func)->select<iterType<Container>, std::invoke_result_t<Func, const typename std::iterator_traits<constIterType<Container>>::value_type&>>;
 	template<typename Iter, typename Func>
-	select_impl(Iter, Iter, Func)->select_impl<Iter, std::invoke_result_t<Func(const typename std::iterator_traits<Iter>::value_type&)>>;
-
-	template<typename Iter>
-	class flatten;
-	template<typename Iter, typename Container>
-	class selectMany;
-	template<typename Iter>
-	class skip;
-	template<typename Iter>
-	class skipWhile;
-	template<typename Iter>
-	class take;
-	template<typename Iter>
-	class takeWhile;
-	template<typename Iter, typename Iter2>
-	class set_union;
-	template<typename Iter, typename Iter2>
-	class zip;
+	select(Iter, Iter, Func)->select<Iter, std::invoke_result_t<Func(const typename std::iterator_traits<Iter>::value_type&)>>;
 
 	// Can't use store because of a bug in Visual Studio, compiles fine in gcc/clang.
 	constexpr size_t iteratorStoreSize = 16;
@@ -434,12 +441,12 @@ namespace linq {
 		}
 
 		auto where(std::function<bool(const value_type&)> prop) {
-			return linq::filter{ *this, prop };
+			return linq::where{ this->begin(), this->end(), prop };
 		}
 
 		template<typename U, template <typename> typename Ptr = std::shared_ptr, typename Enable = std::enable_if_t<std::is_same_v<std::shared_ptr<U>, Ptr<U>>>>
-		decltype(auto) ofType() {
-			return this->select([](const value_type& v) { return std::dynamic_pointer_cast<U>(v); }).where([](const Ptr<U> u) { return (bool)u; });
+		auto ofType() {
+			return this->select([](const value_type& v) { return std::dynamic_pointer_cast<U>(v); }).where([](const Ptr<U>& u) { return (bool)u; });
 		}
 
 		/*
@@ -455,7 +462,7 @@ namespace linq {
 		*/
 
 		auto append(value_type appended) {
-			return linq::append{ *this, appended };
+			return linq::append(*this, appended);
 		}
 
 		auto prepend(value_type prepended) {
@@ -468,10 +475,40 @@ namespace linq {
 
 		template<typename Func>
 		auto select(Func func) {
-			return linq::select_impl<iterator, std::invoke_result_t<Func, const value_type&>>(*this, func);
+			return linq::select<iterator, std::invoke_result_t<Func, const value_type&>>(*this, func);
 		}
 
-		abstract_linq() {}
+		// set_union (concat then distinct)
+		// selectMany (select then flatten)
+
+		auto removeFirst(value_type toRemove) {
+			return linq::removeFirst(*this, toRemove);
+		}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<typename std::iterator_traits<iterType<Container>>::value_type, value_type>>>
+		auto removeAll(const Container& container) {
+			auto linqed = linq::id(container);
+			return linq::where([&linqed](const value_type& val) { return !linqed.contains(val); });
+		}
+
+		auto removeAll(Iter begin, Iter end) {
+			auto linqed = linq::id(begin, end);
+			return linq::where([&begin, &end](const value_type& val) {return !linqed.contains(val); });
+		}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<typename std::iterator_traits<iterType<Container>>::value_type, value_type>>>
+		auto concat(Container& container) {
+			return linq::concat(*this, container);
+		}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<typename std::iterator_traits<iterType<Container>>::value_type, value_type>>>
+		auto concat(const Container& container) {
+			return linq::concat(*this, container);
+		}
+
+		auto concat(iterator iter1, iterator iter2) {
+			return linq::concat(this->begin(), this->end(), iter1, iter2);
+		}
 	};
 
 	template<typename Iter, bool cons = is_const_iterator<Iter>::value,
@@ -545,12 +582,12 @@ namespace linq {
 	template<typename Iter>
 	class id : public abstract_linq<id_iterator<Iter>, id_iterator<Iter, true>, Iter> {
 	public:
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().begin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
 		id(Container& backing)
 			: abstract_linq<id_iterator<Iter>, id_iterator<Iter, true>, Iter>(backing.begin(), backing.end())
 		{}
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().cbegin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
 		id(const Container& backing)
 			: abstract_linq<id_iterator<Iter>, id_iterator<Iter, true>, Iter>(backing.cbegin(), backing.cend())
 		{}
@@ -569,6 +606,8 @@ namespace linq {
 			} while (!filter(*this->current) && this->current != this->end);
 			return *this;
 		}
+
+		// CodeReview: Implement operator--
 
 		virtual consted_t<typename std::iterator_traits<Iter>::reference> operator*() {
 			return *this->current;
@@ -591,21 +630,24 @@ namespace linq {
 	};
 
 	template<typename Iter>
-	class filter : public abstract_linq<filter_iterator<Iter>, filter_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&)>> {
+	class where : public abstract_linq<filter_iterator<Iter>, filter_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&)>> {
 	public:
 		using value_type = typename std::iterator_traits<Iter>::value_type;
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().begin()), Iter>>>
-		filter(Container& backing, std::function<bool(const value_type&)> filter)
+		// Visual Studio refuses to compile these constructors
+		/*
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		where(Container& backing, std::function<bool(const value_type&)> filter)
 			: abstract_linq<filter_iterator<Iter>, filter_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&)>>(backing.begin(), backing.end(), backing.end(), filter)
 		{}
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().cbegin()), Iter>>>
-		filter(const Container& backing, std::function<bool(const value_type&)> filter)
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		where(const Container& backing, std::function<bool(const value_type&)> filter)
 			: abstract_linq<filter_iterator<Iter>, filter_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&)>>(backing.cbegin(), backing.cend(), backing.cend(), filter)
 		{}
+		*/
 
-		filter(Iter beginning, Iter ending, std::function<bool(const value_type&)> filter)
+		where(Iter beginning, Iter ending, std::function<bool(const value_type&)> filter)
 			: abstract_linq<filter_iterator<Iter>, filter_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&)>>(beginning, ending, ending, filter)
 		{}
 
@@ -616,12 +658,12 @@ namespace linq {
 	template<typename Iter>
 	class reverse : public abstract_linq<std::reverse_iterator<Iter>, std::reverse_iterator<Iter>, Iter> {
 	public:
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().begin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
 		reverse(Container& backing)
 			: abstract_linq<std::reverse_iterator<Iter>, std::reverse_iterator<Iter>, Iter>(backing.end(), backing.begin())
 		{}
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().cbegin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
 		reverse(const Container& backing)
 			: abstract_linq<std::reverse_iterator<Iter>, std::reverse_iterator<Iter>, Iter>(backing.cend(), backing.cbegin())
 		{}
@@ -653,7 +695,9 @@ namespace linq {
 			return *this;
 		}
 
-		bool operator==(const base_iterator<Iter, cons>& other) override {
+		// CodeReview: Implement operator--
+
+		bool operator==(const base_iterator<Iter, cons>& other) {
 			return this->current == other.current && this->at_end == other.at_end;
 		}
 
@@ -670,22 +714,22 @@ namespace linq {
 	template<typename Iter>
 	class append : public abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, typename std::iterator_traits<Iter>::value_type> {
 	public:
-		append_iterator<Iter, is_const_iterator<Iter>::value> end() override {
-			return { this->ending, std::get<0>(this->args), std::get<1>(this->args), true };
+		typename abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, typename std::iterator_traits<Iter>::value_type>::iterator end() override {
+			return iterator_wrapper(append_iterator<Iter, is_const_iterator<Iter>::value>{ this->ending, std::get<0>(this->args), std::get<1>(this->args), true });
 		}
 
-		append_iterator<Iter, true> end() const override {
-			return { this->ending, std::get<0>(this->args), std::get<1>(this->args), true };
+		typename abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, typename std::iterator_traits<Iter>::value_type>::const_iterator end() const override {
+			return iterator_wrapper(append_iterator<Iter, true>{ this->ending, std::get<0>(this->args), std::get<1>(this->args), true });
 		}
 
 		using value_type = typename std::iterator_traits<Iter>::value_type;
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().begin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
 		append(Container& backing, value_type appended)
 			: abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, value_type>(backing.begin(), backing.end(), backing.cend(), appended)
 		{}
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().cbegin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
 		append(const Container& backing, value_type appended)
 			: abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, value_type>(backing.cbegin(), backing.cend(), backing.cend(), appended)
 		{}
@@ -698,26 +742,28 @@ namespace linq {
 	template<typename Iter, bool cons>
 	class prepend_iterator : public base_iterator<Iter, cons> {
 	public:
-		using value_type = typename std::iterator_traits<Iter>::value_type;
-		using reference = typename std::iterator_traits<Iter>::reference;
+		using value_type = typename base_iterator<Iter, cons>::value_type;
+		using reference = typename base_iterator<Iter, cons>::reference;
 
-		std::conditional_t<cons, consted_t<reference>, reference> operator*() override {
+		std::conditional_t<cons, consted_t<reference>, reference> operator*() {
 			if (this->at_beginning) return this->prepended;
 			return *this->current;
 		}
 
-		consted_t<reference> operator*() const override {
+		consted_t<reference> operator*() const {
 			if (this->at_beginning) return this->prepended;
 			return *this->current;
 		}
 
 		prepend_iterator& operator++() override {
-			if (this->at_beginning) this->at_end = true;
+			if (this->at_beginning) this->at_beginning = false;
 			else ++this->current;
 			return *this;
 		}
 
-		bool operator==(const base_iterator<Iter, cons>& other) override {
+		// CodeReview: Implement operator--
+
+		bool operator==(const base_iterator<Iter, cons>& other) {
 			return this->current == other.current && this->at_beginning == other.at_beginning;
 		}
 
@@ -731,40 +777,41 @@ namespace linq {
 	};
 
 	template<typename Iter>
-	class prepend : public abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, typename std::iterator_traits<Iter>::value_type> {
+	class prepend : public abstract_linq<prepend_iterator<Iter, is_const_iterator<Iter>::value>, prepend_iterator<Iter, true>, Iter, typename std::iterator_traits<Iter>::value_type> {
 	public:
-		prepend_iterator<Iter, is_const_iterator<Iter>::value> begin() override {
-			return { this->beginning, std::get<0>(this->args), true };
+		typename abstract_linq<prepend_iterator<Iter, is_const_iterator<Iter>::value>, prepend_iterator<Iter, true>, Iter, typename std::iterator_traits<Iter>::value_type>::iterator begin() override {
+			return iterator_wrapper(prepend_iterator<Iter, is_const_iterator<Iter>::value>(this->beginning, std::get<0>(this->args), true));
 		}
 
-		prepend_iterator<Iter, true> begin() const override {
-			return { this->beginning, std::get<0>(this->args), true };
+		typename abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, typename std::iterator_traits<Iter>::value_type>::const_iterator begin() const override {
+			return iterator_wrapper(prepend_iterator<Iter, true>(this->beginning, std::get<0>(this->args), true));
 		}
 
 		using value_type = typename std::iterator_traits<Iter>::value_type;
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().begin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
 		prepend(Container& backing, value_type prepended)
-			: abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, value_type>(backing.begin(), backing.end(), prepended)
+			: abstract_linq<prepend_iterator<Iter, is_const_iterator<Iter>::value>, prepend_iterator<Iter, true>, Iter, value_type>(backing.begin(), backing.end(), prepended)
 		{}
 
-		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<decltype(Container().cbegin()), Iter>>>
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
 		prepend(const Container& backing, value_type prepended)
-			: abstract_linq<append_iterator<Iter, is_const_iterator<Iter>::value>, append_iterator<Iter, true>, Iter, Iter, value_type>(backing.cbegin(), backing.cend(), prepended)
+			: abstract_linq<prepend_iterator<Iter, is_const_iterator<Iter>::value>, prepend_iterator<Iter, true>, Iter, value_type>(backing.cbegin(), backing.cend(), prepended)
 		{}
 
 		prepend(Iter beginning, Iter ending, value_type prepended)
-			: abstract_linq<std::reverse_iterator<Iter>, std::reverse_iterator<Iter>, Iter>(beginning, ending, ending, prepended)
+			: abstract_linq<prepend_iterator<Iter, is_const_iterator<Iter>::value>, prepend_iterator<Iter, true>, Iter, value_type>(beginning, ending, prepended)
 		{}
 	};
 
 	template<typename Iter, typename U>
 	class select_iterator : public base_iterator<Iter, true, std::input_iterator_tag, U, typename std::iterator_traits<Iter>::difference_type, U*, U> {
 	public:
-		consted_t<U> operator*() {
+		U operator*() {
 			return func(*this->current);
 		}
-		consted_t<U> operator*() const {
+
+		U operator*() const {
 			return func(*this->current);
 		}
 
@@ -777,23 +824,131 @@ namespace linq {
 	};
 
 	template<typename Iter, typename U>
-	class select_impl : public abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, std::function<U(const typename std::iterator_traits<Iter>::value_type&)>> {
+	class select : public abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, std::function<U(const typename std::iterator_traits<Iter>::value_type&)>> {
 	public:
 		using func_type = std::function<U(const typename std::iterator_traits<Iter>::value_type&)>;
 
 		template<typename Container, typename Func, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
-		select_impl(Container& backing, Func func)
+		select(Container& backing, Func func)
 			: abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, func_type>(backing.begin(), backing.end(), func)
 		{}
 
 		template<typename Container, typename Func, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
-		select_impl(const Container& backing, Func func)
+		select(const Container& backing, Func func)
 			: abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, func_type>(backing.cbegin(), backing.cend(), func)
 		{}
 
 		template<typename Func>
-		select_impl(Iter beginning, Iter ending, Func func)
-			: abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, func_type>(beginning, ending, ending, func)
+		select(Iter beginning, Iter ending, Func func)
+			: abstract_linq<select_iterator<Iter, U>, select_iterator<Iter, U>, Iter, func_type>(beginning, ending, func)
+		{}
+	};
+
+	template<typename Iter>
+	class removeFirst_iterator : public base_iterator<Iter, true, std::input_iterator_tag, typename std::iterator_traits<Iter>::value_type,
+		typename std::iterator_traits<Iter>::difference_type, consted_t<typename std::iterator_traits<Iter>::pointer>,
+		consted_t<typename std::iterator_traits<Iter>::reference>> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+		using reference = typename std::iterator_traits<Iter>::reference;
+
+		consted_t<reference> operator*() {
+			return *this->current;
+		}
+
+		consted_t<reference> operator*() const {
+			return *this->current;
+		}
+
+		removeFirst_iterator& operator++() {
+			++this->current;
+			if (!removed && *this->current == toRemove)++this->current;
+			return *this;
+		}
+
+		// CodeReview: Implement operator--
+
+		removeFirst_iterator(Iter current, value_type toRemove)
+			: base_iterator<Iter, true, std::input_iterator_tag, typename std::iterator_traits<Iter>::value_type,
+			typename std::iterator_traits<Iter>::difference_type, consted_t<typename std::iterator_traits<Iter>::pointer>,
+			consted_t<typename std::iterator_traits<Iter>::reference>>(current),
+			toRemove(toRemove)
+		{}
+
+	private:
+		value_type toRemove;
+		bool removed{ false };
+	};
+
+	template<typename Iter>
+	class removeFirst : public abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, typename std::iterator_traits<Iter>::value_type> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		removeFirst(Container& backing, value_type toRemove)
+			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(backing.begin(), backing.end(), toRemove)
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		removeFirst(const Container& backing, value_type toRemove)
+			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(backing.cbegin(), backing.cend(), toRemove)
+		{}
+
+		template<typename Func>
+		removeFirst(Iter beginning, Iter ending, value_type toRemove)
+			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(beginning, ending, toRemove)
+		{}
+	};
+
+	template<typename Iter, bool cons>
+	class concat_iterator : public base_iterator<Iter, cons> {
+	public:
+		using reference = typename std::iterator_traits<Iter>::reference;
+
+		std::conditional_t<cons, consted_t<reference>, reference> operator*() {
+			return *this->current;
+		}
+
+		consted_t<reference> operator*() const {
+			return *this->current;
+		}
+
+		concat_iterator& operator++() {
+			if (++this->current == this->firstEnding) this->current = this->secondBegin;
+			return *this;
+		}
+
+		concat_iterator& operator--() {
+			if (this->current == this->secondBegin) this->current = this->firstEnding;
+			--this->current;
+			return *this;
+		}
+
+		concat_iterator(Iter current, Iter firstEnding, Iter secondBegin)
+			: base_iterator<Iter, cons>(current), firstEnding(firstEnding), secondBegin(secondBegin)
+		{}
+
+	private:
+		Iter firstEnding;
+		Iter secondBegin;
+	};
+
+	template<typename Iter>
+	class concat : public abstract_linq<concat_iterator<Iter, is_const_iterator<Iter>::value>, concat_iterator<Iter, true>, Iter, Iter, Iter> {
+	public:
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		concat(Container& backing1, Container& backing2)
+			: abstract_linq<concat_iterator<Iter, is_const_iterator<Iter>::value>, concat_iterator<Iter, true>, Iter, Iter, Iter>(backing1.begin(), backing2.end(), backing1.end(), backing2.begin())
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		concat(const Container& backing1, const Container& backing2)
+			: abstract_linq<concat_iterator<Iter, is_const_iterator<Iter>::value>, concat_iterator<Iter, true>, Iter, Iter, Iter>(backing1.cbegin(), backing2.cend(), backing1.cend(), backing2.cbegin())
+		{}
+
+		concat(Iter beginning1, Iter ending1, Iter beginning2, Iter ending2)
+			: abstract_linq<concat_iterator<Iter, is_const_iterator<Iter>::value>, concat_iterator<Iter, true>, Iter, Iter, Iter>(beginning1, ending2, ending1, beginning2)
 		{}
 	};
 }
