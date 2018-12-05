@@ -1,14 +1,14 @@
 #include <memory>
 
-
-
 #include "g.h"
+#include "s.h"
 
 
 TokenManager::TokenManager(){
 	if (!tokens.empty()) return;
 	tokens = {};
 	GTokenManager().getTokens(tokens, mvids);
+	STokenManager().getTokens(tokens, mvids);
 }
 
 Token TokenManager::getToken(int mvid){
