@@ -59,23 +59,33 @@ namespace linq {
 	concat(Iter, Iter, Iter, Iter)->concat<Iter>;
 
 	template<typename Iter>
+	class orderBy;
+	template<typename Container>
+	orderBy(Container&)->orderBy<iterType<Container>>;
+	template<typename Container>
+	orderBy(const Container&)->orderBy<constIterType<Container>>;
+	template<typename Iter>
+	orderBy(Iter, Iter)->orderBy<Iter>;
+	template<typename Container, typename Func>
+	orderBy(Container&, Func)->orderBy<iterType<Container>>;
+	template<typename Container, typename Func>
+	orderBy(const Container&, Func)->orderBy<constIterType<Container>>;
+	template<typename Iter, typename Func>
+	orderBy(Iter, Iter, Func)->orderBy<Iter>;
+
+	template<typename Iter>
 	class distinct;
+	template<typename Container>
+	distinct(Container&)->distinct<iterType<Container>>;
+	template<typename Container>
+	distinct(const Container&)->distinct<constIterType<Container>>;
+	template<typename Iter>
+	distinct(Iter, Iter)->distinct<Iter>;
+
 	// group
 	// join
 	template<typename Iter>
 	class intersect;
-	template<typename Iter>
-	class orderBy;
-	template<typename Iter>
-	class flatten;
-	template<typename Iter>
-	class skip;
-	template<typename Iter>
-	class skipWhile;
-	template<typename Iter>
-	class take;
-	template<typename Iter>
-	class takeWhile;
 	template<typename Iter, typename Iter2>
 	class zip;
 
@@ -509,6 +519,60 @@ namespace linq {
 		auto concat(iterator iter1, iterator iter2) {
 			return linq::concat(this->begin(), this->end(), iter1, iter2);
 		}
+
+		auto orderBy() {
+			return linq::orderBy(*this);
+		}
+
+		auto orderBy(std::function<bool(const value_type&, const value_type&)> comparison) {
+			return linq::orderBy(*this, comparison);
+		}
+
+		// CodeReview: This potentially does computation at call site, evaluating the backing container, might need to be adjusted
+		auto take(size_t n) {
+			iterator copy = this->begin();
+			for (size_t i = 0; i < n; i++) ++copy;
+			return linq::id(this->begin(), copy);
+		}
+
+		// CodeReview: This potentially does computation at call site, evaluating the backing container, might need to be adjusted
+		auto skip(size_t n) {
+			iterator copy = this->begin();
+			for (size_t i = 0; i < n; i++) ++copy;
+			return linq::id(copy, this->end());
+		}
+
+		// CodeReview: This potentially does computation at call site, evaluating the backing container, might need to be adjusted
+		auto takeWhile(std::function<bool(const value_type&)> prop) {
+			iterator copy = this->begin();
+			while (prop(*copy)) { ++copy; }
+			return linq::id(this->begin(), copy);
+		}
+
+		// CodeReview: This potentially does computation at call site, evaluating the backing container, might need to be adjusted
+		auto skipWhile(std::function<bool(const value_type&)> prop) {
+			iterator copy = this->begin();
+			while (prop(*copy)) { ++copy; }
+			return linq::id(copy, this->end());
+		}
+
+		// CodeReview: This potentially does computation at call site, evaluating the backing container, might need to be adjusted
+		template<typename U = value_type, typename Enable = decltype(concat(std::declval(U), std::declval(U)))>
+		auto flatten() {
+			if (this->count() >= 2) {
+				value_type first = this->first();
+				value_type second = this->at(1);
+				auto result = linq::concat(first, second);
+				linq::id(first).skip(2).forEach([&result](const value_type& x) -> void { result.concat(id(x)); });
+				return result;
+			}
+			else if (this->count() == 1) {
+				return id(this->first());
+			}
+			else {
+				return id((value_type*)nullptr, (value_type*)nullptr);
+			}
+		}
 	};
 
 	template<typename Iter, bool cons = is_const_iterator<Iter>::value,
@@ -895,7 +959,6 @@ namespace linq {
 			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(backing.cbegin(), backing.cend(), toRemove)
 		{}
 
-		template<typename Func>
 		removeFirst(Iter beginning, Iter ending, value_type toRemove)
 			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(beginning, ending, toRemove)
 		{}
@@ -949,6 +1012,228 @@ namespace linq {
 
 		concat(Iter beginning1, Iter ending1, Iter beginning2, Iter ending2)
 			: abstract_linq<concat_iterator<Iter, is_const_iterator<Iter>::value>, concat_iterator<Iter, true>, Iter, Iter, Iter>(beginning1, ending2, ending1, beginning2)
+		{}
+	};
+
+	template<typename T>
+	class PairingHeap {
+	public:
+		bool empty() {
+			return !this->elem;
+		}
+
+		// Doesn't change the container
+		T findMind() const {
+			if (this->empty()) throw "Finding in empty heap";
+			else return this->elem;
+		}
+
+		// Assume that in the original container all elements in *this were left of all elements in other
+		// and that for all PairingHeaps recursively elem is their minimal leftmost element
+		// and each subheaps array is in left to right order meaning all elements of the leftmost heap come
+		// leftmost of all those in the rightmost
+		// Then there are three cases
+		// Case 1 this->elem < other.elem: Then we know the new elem should be this->elem and since we know other
+		// is rightmost of *this we can append it to our list
+		// Case 2 this->elem == other.elem: Then since we know *this is leftmost of other we should use this->elem
+		// and append other to our list
+		// Case 3 this->elem > other.elem: Then we know that the new elem should be other.elem and since we are leftmost
+		// of other we can prepend ourselves to their list of subheaps
+		// Therefore merge maintains the given assumptions
+		PairingHeap<T> merge(const PairingHeap<T>& other) const {
+			if (this->empty()) return other;
+			else if (other.empty()) return *this;
+			else if (comparison(this->elem, other.elem)) {
+				std::vector newSubHeaps = linq::append(this->subheaps, other).toVector();
+				return PairingHeap<T>{ this->elem, newSubHeaps };
+			}
+			else {
+				std::vector newSubHeaps = linq::prepend(other.subheaps, *this).toVector();
+				return PairingHeap<T>{ other.elem, newSubHeaps };
+			}
+		}
+
+		// Assume that in the original container all elements in *this were left of toInsert
+		// and that for all PairingHeaps recursively elem is their minimal leftmost element
+		// and each subheaps array is in left to right order meaning all elements of the leftmost heap come
+		// leftmost of all those in the rightmost
+		// If we create a new heap with just the element toInsert as elem we satisfy the above assumptions for merge
+		// Therefore merging those two will maintain our heap assumptions
+		PairingHeap<T> insert(T toInsert) const {
+			return this->merge(PairingHeap<T>{toInsert, {}});
+		}
+
+		// Assume that for all PairingHeaps recursively elem is their minimal leftmost element
+		// and each subheaps array is in left to right order meaning all elements of the leftmost heap come
+		// leftmost of all those in the rightmost
+		// Then we know that elem is the leftmost minimal element so removing it is the correct thing to do
+		// That leaves us with just the subtrees which follow the above property. If mergePairs on them
+		// creates a structure maintaining the property we're good(see mergePairs)
+		PairingHeap<T> deleteMin() const {
+			if (this->empty()) throw "Finding in empty heap";
+			else return this->mergePairs(this->subheaps);
+		}
+
+		template<typename U = T, typename Enable = decltype(std::declval(U) <= std::declval(U))>
+		PairingHeap()
+			: comparison([](const U& a, const U& b) { return a <= b; })
+		{}
+		PairingHeap(std::function<bool(const T&, const T&)> comparison)
+			: comparison(comparison)
+		{}
+
+	private:
+		std::optional<T> elem;
+		std::vector<PairingHeap<T>> subheaps;
+		std::function<bool(const T&, const T&)> comparison;
+
+		// Assume that for all PairingHeaps recursively elem is their minimal leftmost element
+		// and each subheaps array is in left to right order meaning all elements of the leftmost heap come
+		// leftmost of all those in the rightmost and that the list is in left to right order
+		// If the list is empty we create an empty structure which maintains the property
+		// If the list is singleton we can return that element
+		// If the list has at least two elements we merge the first two elements which maintains the property
+		// Then we recursively mergePairs on the rest of the list which maintains the property by this proof
+		// Finally we merge those two structures which maintains the desired property
+		PairingHeap<T> mergePairs(const std::vector<PairingHeap<T>>& list) const {
+			if (list.size() == 0) return { std::nullopt, {} };
+			else if (list.size() == 1) return list[0];
+			else return merge(merge(list[0], list[1]), mergePairs(std::vector<PairingHeap<T>>(list.begin() + 2, list.end())));
+		}
+	};
+
+	template<typename Iter>
+	class orderBy_iterator : public base_iterator<Iter, true, std::input_iterator_tag> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+		using reference = consted_t<typename std::iterator_traits<Iter>::reference>;
+
+		reference operator*() {
+			if (!this->initialized) this->initialize();
+			return this->heap.findMin();
+		}
+
+		reference operator*() const {
+			if (!this->initialized) this->initialize();
+			return this->heap.findMin();
+		}
+
+		orderBy_iterator& operator++() override {
+			if (!this->initialized) this->initialize();
+			this->heap = this->heap.deleteMin();
+		}
+
+		orderBy_iterator& operator--() override {
+			throw "Unsupported operation on orderBy_iterator";
+		}
+
+		orderBy_iterator(Iter current, Iter ending)
+			: base_iterator<Iter, true, std::input_iterator_tag>(current), ending(ending)
+		{}
+
+		orderBy_iterator(Iter current, Iter ending, std::function<bool(const value_type&, const value_type&)> comparison)
+			: base_iterator<Iter, true, std::input_iterator_tag>(current), heap([](const std::reference_wrapper<const value_type>& a, const std::reference_wrapper<const value_type>& b) { return comparison(a, b); }), ending(ending)
+		{}
+
+	private:
+		mutable PairingHeap<std::reference_wrapper<const value_type>> heap;
+		mutable bool initialized{ false };
+		Iter ending;
+
+		void initialize() const {
+			for (const value_type& value : id(this->current, this->ending)) {
+				this->heap = this->heap.insert(std::reference_wrapper(value));
+			}
+			this->initialized = true;
+		}
+	};
+
+	template<typename Iter>
+	class orderBy : public abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const typename std::iterator_traits<Iter>::value_type&, const typename std::iterator_traits<Iter>::value_type&)>> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		orderBy(Container& backing)
+			: abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const value_type&, const value_type&)>>(backing.begin(), backing.end(), backing.end(), defaultComparison)
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		orderBy(const Container& backing)
+			: abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const value_type&, const value_type&)>>(backing.cbegin(), backing.cend(), backing.cend(), defaultComparison)
+		{}
+
+		orderBy(Iter beginning, Iter ending)
+			: abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const value_type&, const value_type&)>>(beginning, ending, ending, defaultComparison)
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		orderBy(Container& backing, std::function<bool(const value_type&, const value_type&)> comparison)
+			: abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const value_type&, const value_type&)>>(backing.begin(), backing.end(), backing.end(), comparison)
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		orderBy(const Container& backing, std::function<bool(const value_type&, const value_type&)> comparison)
+			: abstract_linq<orderBy_iterator<Iter>, orderBy_iterator<Iter>, Iter, Iter, std::function<bool(const value_type&, const value_type&)>>(backing.cbegin(), backing.cend(), backing.cend(), comparison)
+		{}
+
+		orderBy(Iter beginning, Iter ending, std::function<bool(const value_type&, const value_type&)> comparison)
+			: abstract_linq<removeFirst_iterator<Iter>, removeFirst_iterator<Iter>, Iter, value_type>(beginning, ending, ending, comparison)
+		{}
+
+	private:
+		inline static std::function<bool(const value_type&, const value_type&)> defaultComparison{ [](const value_type& a, const value_type& b) { return a < b; } };
+	};
+
+	template<typename Iter>
+	class distinct_iterator : public base_iterator<Iter, true, std::input_iterator_tag> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+		using reference = typename base_iterator<Iter, true, std::input_iterator_tag>::reference;
+
+		reference operator*() {
+			return *this->current;
+		}
+
+		reference operator*() const {
+			return *this->current;
+		}
+
+		distinct_iterator<Iter>& operator++() {
+			while (this->seen.find(*(++this->current)) != this->seen.end()) {}
+			this->seen.insert(*this->current);
+			return *this;
+		}
+
+		distinct_iterator<Iter>& operator--() {
+			throw "Unsupported operation on distinct_iterator";
+		}
+
+		distinct_iterator(Iter current)
+			: base_iterator<Iter, true, std::input_iterator_tag>(current)
+		{ }
+
+	private:
+		std::set<value_type> seen;
+	};
+
+	template<typename Iter>
+	class distinct : public abstract_linq<distinct_iterator<Iter>, distinct_iterator<Iter>, Iter> {
+	public:
+		using value_type = typename std::iterator_traits<Iter>::value_type;
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<iterType<Container>, Iter>>>
+		distinct(Container& backing)
+			: abstract_linq<distinct_iterator<Iter>, distinct_iterator<Iter>, Iter>(backing.begin(), backing.end())
+		{}
+
+		template<typename Container, typename Enable = std::enable_if_t<std::is_same_v<constIterType<Container>, Iter>>>
+		distinct(const Container& backing)
+			: abstract_linq<distinct_iterator<Iter>, distinct_iterator<Iter>, Iter>(backing.cbegin(), backing.cend())
+		{}
+
+		distinct(Iter beginning, Iter ending)
+			: abstract_linq<distinct_iterator<Iter>, distinct_iterator<Iter>, Iter>(beginning, ending)
 		{}
 	};
 }
