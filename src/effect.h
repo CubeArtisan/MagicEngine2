@@ -2,7 +2,7 @@
 #define _EFFECT_H_
 
 #include "changeset.h"
-#include "util.h"
+#include "linq/util.h"
 
 struct Environment;
 

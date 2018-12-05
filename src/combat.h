@@ -5,7 +5,7 @@
 #include <typeinfo>
 
 #include "card.h"
-#include "util.h"
+#include "linq/util.h"
 
 class AttackRestriction {
 public:

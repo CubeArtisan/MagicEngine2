@@ -5,7 +5,7 @@
 
 #include "../changeset.h"
 #include "../environment.h"
-#include "../util.h"
+#include "../linq/util.h"
 
 class EtbTriggerHandler : public clone_inherit<EtbTriggerHandler, TriggerHandler> {
 public:

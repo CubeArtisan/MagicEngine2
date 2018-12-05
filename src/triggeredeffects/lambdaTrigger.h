@@ -5,7 +5,7 @@
 
 #include "../changeset.h"
 #include "../environment.h"
-#include "../util.h"
+#include "../linq/util.h"
 
 #include "../propositions/proposition.h"
 

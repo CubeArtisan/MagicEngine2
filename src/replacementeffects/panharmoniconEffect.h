@@ -3,7 +3,7 @@
 
 #include "../changeset.h"
 #include "../environment.h"
-#include "../util.h"
+#include "../linq/util.h"
 
 class PanharmoniconEffect : public clone_inherit<PanharmoniconEffect, EventHandler> {
 public:

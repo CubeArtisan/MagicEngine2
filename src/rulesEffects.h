@@ -2,7 +2,7 @@
 #define _RULESEFFECTS_H_
 
 #include "changeset.h"
-#include "util.h"
+#include "linq/util.h"
 
 class TokenMovementEffect : public clone_inherit<TokenMovementEffect, EventHandler> {
 public:

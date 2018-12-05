@@ -10,18 +10,18 @@
 
 #include "enum.h"
 #include "stateQuery.h"
-#include "util.h"
+#include "linq/util.h"
 
 struct Changeset;
 struct Environment;
 
 struct Targetable : public clone_inherit<abstract_method<Targetable>> {
-    // This is mutable state
-    xg::Guid id;
-    // CodeReview: potentially make const
+	// This is mutable state
+	xg::Guid id;
+	// CodeReview: potentially make const
 	xg::Guid owner;
 
-    Targetable();
+	Targetable();
 	virtual ~Targetable() {}
 };
 
@@ -40,13 +40,13 @@ public:
 
 class EventHandler : public clone_inherit<abstract_method<EventHandler>, Handler> {
 public:
-    virtual std::optional<std::vector<Changeset>> handleEvent(Changeset&, const Environment&) const = 0;
+	virtual std::optional<std::vector<Changeset>> handleEvent(Changeset&, const Environment&) const = 0;
 	using clone_inherit<abstract_method<EventHandler>, Handler>::clone_inherit;
 };
 
 class StaticEffectHandler : public clone_inherit<abstract_method<StaticEffectHandler>, Handler> {
 public:
-    virtual StaticEffectQuery& handleEvent(StaticEffectQuery&, const Environment&) const = 0;
+	virtual StaticEffectQuery& handleEvent(StaticEffectQuery&, const Environment&) const = 0;
 	virtual bool appliesTo(StaticEffectQuery&, const Environment&) const = 0;
 	virtual bool dependsOn(StaticEffectQuery& start, StaticEffectQuery& end, const Environment& env) const = 0;
 

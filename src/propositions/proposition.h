@@ -4,7 +4,7 @@
 #include <type_traits>
 
 #include "../environment.h"
-#include "../util.h"
+#include "../linq/util.h"
 
 template<typename... Args>
 class Proposition {
@@ -57,7 +57,6 @@ private:
 
 template<typename Prop, typename... Args>
 using UpcastProposition = UpcastPropositionImpl<void, Prop, Args...>;
-
 
 template<typename... Args>
 class TrueProposition : public Proposition<Args...> {
@@ -117,7 +116,7 @@ private:
 };
 
 template<typename T>
-NotProposition(T) -> NotProposition<ParentOfForm<T, Proposition>>;
+NotProposition(T)->NotProposition<ParentOfForm<T, Proposition>>;
 
 template<typename Enable, typename ArgsProp, typename... Args>
 class AndPropositionImpl;
@@ -128,12 +127,12 @@ public:
 	bool operator()(const ArgsPropArgs&... args) const override {
 		return andAll(args...);
 	}
-	template<size_t I=0>
+	template<size_t I = 0>
 	bool andAll(const ArgsPropArgs&... args) const {
 		const Proposition<ArgsPropArgs...>& prop = std::get<I>(children);
 		bool result = prop(args...);
 		if constexpr (I == sizeof...(Args) - 1) return result;
-		else return result && andAll<I+1>(args...);
+		else return result && andAll<I + 1>(args...);
 	}
 
 	AndPropositionImpl()
@@ -148,7 +147,7 @@ private:
 };
 
 template<typename... Args>
-AndPropositionImpl(Args...) -> AndPropositionImpl<void, typename union_packs_impl<void, ParentOfForm<Args, Proposition>...>::type, Args...>;
+AndPropositionImpl(Args...)->AndPropositionImpl<void, typename union_packs_impl<void, ParentOfForm<Args, Proposition>...>::type, Args...>;
 
 template<typename ArgsProp, typename... Args>
 using AndProposition = AndPropositionImpl<void, ArgsProp, Args...>;

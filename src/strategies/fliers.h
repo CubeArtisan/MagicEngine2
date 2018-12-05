@@ -3,7 +3,7 @@
 
 #include "../guid.hpp"
 #include "../strategy.h"
-#include "../util.h"
+#include "../linq/util.h"
 
 class FliersStrategy : public RandomStrategy {
 	virtual GameAction chooseGameAction(const Player& player, const Environment& env) override {
@@ -48,7 +48,7 @@ class FliersStrategy : public RandomStrategy {
 		else if (action.index() == index_of_v<PlayLand, GameAction>) {
 			return 0;
 		}
-		else if(action.index() == index_of_v<ActivateAnAbility, GameAction>){
+		else if (action.index() == index_of_v<ActivateAnAbility, GameAction>) {
 			const ActivateAnAbility& ability = std::get<ActivateAnAbility>(action);
 			if (std::dynamic_pointer_cast<ManaAbility>(ability.ability)) {
 				return 1;

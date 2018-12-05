@@ -1,0 +1,3 @@
+[submodule "src/linq"]
+	path = src/linq
+	url = https://github.com/ruler501/linq

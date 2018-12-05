@@ -9,10 +9,10 @@
 
 #include "enum.h"
 #include "handlers.h"
-#include "linq.h"
+#include "linq/linq.h"
 #include "mana.h"
 #include "stateQuery.h"
-#include "util.h"
+#include "linq/util.h"
 
 struct Ability;
 struct Changeset;

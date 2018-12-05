@@ -3,7 +3,7 @@
 
 #include "changeset.h"
 #include "mana.h"
-#include "util.h"
+#include "linq/util.h"
 
 struct Environment;
 struct Player;
@@ -21,7 +21,7 @@ struct Cost {
 	virtual Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const = 0;
 
 	virtual Cost& operator+=(const Cost& other) = 0;
-	
+
 	virtual Cost& operator-=(const Cost& other) = 0;
 
 	virtual CostValue createCostValue() const = 0;
@@ -71,23 +71,23 @@ struct CostImpl : public virtual Cost {
 };
 
 struct ManaCost : public virtual CostImpl<ManaCost> {
-    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
-    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 
 	ManaCost& operator+=(const Cost& other) override;
 	ManaCost& operator-=(const Cost& other) override;
 
 	CostValue createCostValue() const { return CostValue(*this); }
 
-    ManaCost(Mana mana);
+	ManaCost(Mana mana);
 
 protected:
-    Mana mana;
+	Mana mana;
 };
 
 struct LandPlayCost : public virtual CostImpl<LandPlayCost> {
-    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
-    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 
 	LandPlayCost& operator+=(const Cost&) { return *this; }
 	LandPlayCost& operator-=(const Cost&) { return *this; }
@@ -96,8 +96,8 @@ struct LandPlayCost : public virtual CostImpl<LandPlayCost> {
 };
 
 struct TapCost : public virtual CostImpl<TapCost> {
-    bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
-    Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
+	bool canPay(const Player& player, const Environment& env, const SourceType& source) const;
+	Changeset payCost(const Player& player, const Environment& env, const SourceType& source) const;
 
 	TapCost& operator+=(const Cost& other);
 	TapCost& operator-=(const Cost& other);

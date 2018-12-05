@@ -1,7 +1,7 @@
 #ifndef _ATTACKING_H_
 #define _ATTACKING_H_
 
-#include "../util.h"
+#include "../linq/util.h"
 #include "proposition.h"
 
 class AttackingProposition : public Proposition<Environment, xg::Guid> {

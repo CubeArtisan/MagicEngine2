@@ -1,8 +1,8 @@
 #ifndef _RAID_H_
 #define _RAID_H_
 
-#include "../linq.h"
-#include "../util.h"
+#include "../linq/linq.h"
+#include "../linq/util.h"
 #include "proposition.h"
 
 class RaidProposition : public Proposition<Environment> {
