@@ -43,6 +43,9 @@
     <Filter Include="Header Files\strategies">
       <UniqueIdentifier>{49d58974-fc4d-49b0-9f1b-70a5c3dfba06}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\linq">
+      <UniqueIdentifier>{f799e54d-6e76-4d47-8337-a5be8b5dddc4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ability.cpp">
@@ -215,9 +218,6 @@
     <ClInclude Include="src\cards\cardManager.h">
       <Filter>Header Files\cards</Filter>
     </ClInclude>
-    <ClInclude Include="src\util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\abilities\damageAbility.h">
       <Filter>Header Files\abilities</Filter>
     </ClInclude>
@@ -305,8 +305,11 @@
     <ClInclude Include="src\stepOrPhase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\linq.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\linq\linq.h">
+      <Filter>Header Files\linq</Filter>
+    </ClInclude>
+    <ClInclude Include="src\linq\util.h">
+      <Filter>Header Files\linq</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

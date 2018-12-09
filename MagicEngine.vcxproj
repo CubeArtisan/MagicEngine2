@@ -200,7 +200,8 @@
     <ClInclude Include="src\gameAction.h" />
     <ClInclude Include="src\guid.hpp" />
     <ClInclude Include="src\handlers.h" />
-    <ClInclude Include="src\linq.h" />
+    <ClInclude Include="src\linq\linq.h" />
+    <ClInclude Include="src\linq\util.h" />
     <ClInclude Include="src\mana.h" />
     <ClInclude Include="src\player.h" />
     <ClInclude Include="src\propositions\attacking.h" />
@@ -226,7 +227,6 @@
     <ClInclude Include="src\triggeredeffects\combatDamageTrigger.h" />
     <ClInclude Include="src\triggeredeffects\etb.h" />
     <ClInclude Include="src\triggeredeffects\lambdaTrigger.h" />
-    <ClInclude Include="src\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
