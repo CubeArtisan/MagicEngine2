@@ -64,7 +64,7 @@ struct HasEffectsAndAbilities : public HasEffect, public HasAbilities {
 };
 
 struct CardToken : public clone_inherit<abstract_method<CardToken>, HasEffectsAndAbilities> {
-	bool isTapped;
+	bool isTapped = false;
 	bool isSummoningSick = true;
 	// CodeReview: Implement phased out
 

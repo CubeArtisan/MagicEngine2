@@ -126,8 +126,8 @@ struct Environment {
 	std::vector<Changeset> changes;
 
 	StepOrPhaseId currentPhase;
-	unsigned int currentPlayer;
-	unsigned int turnPlayer;
+	size_t currentPlayer;
+	size_t turnPlayer;
 	size_t turnNumber = 1;
 
 	std::map<std::shared_ptr<CardToken>, xg::Guid> declaredAttacks;

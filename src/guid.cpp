@@ -201,6 +201,7 @@ unsigned char hexPairToChar(char a, char b)
 
 // create a guid from string
 Guid::Guid(const std::string &fromString)
+	: _bytes{ { 0 } }
 {
 	char charOne = '\0';
 	char charTwo = '\0';
@@ -344,7 +345,8 @@ Guid newGuid()
 Guid newGuid()
 {
 	GUID newId;
-	CoCreateGuid(&newId);
+	HRESULT result = CoCreateGuid(&newId);
+	if (result < 0) return {};
 
 	std::array<unsigned char, 16> bytes =
 	{

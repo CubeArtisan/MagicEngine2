@@ -207,8 +207,8 @@ void Runner::runGame() {
 	this->applyChangeset(startDraw);
 	// CodeReview: Handle mulligans
 
-	const int UNSET_PLAYER_PASS = -1;
-	int firstPlayerToPass = UNSET_PLAYER_PASS;
+	constexpr size_t UNSET_PLAYER_PASS = std::numeric_limits<size_t>::max();
+	size_t firstPlayerToPass = UNSET_PLAYER_PASS;
 	while (this->env.players.size() > 1) {
 		std::optional<Changeset> step = this->executeStep();
 
@@ -217,7 +217,7 @@ void Runner::runGame() {
 			firstPlayerToPass = UNSET_PLAYER_PASS;
 		}
 		else {
-			int nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
+			size_t nextPlayer = (this->env.currentPlayer + 1) % this->env.players.size();
 			if (firstPlayerToPass == nextPlayer) {
 				auto stack = this->env.stack;
 				// 500.2. A phase or step in which players receive priority ends when the stack is empty and all players

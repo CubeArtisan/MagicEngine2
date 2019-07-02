@@ -33,7 +33,7 @@ class FliersStrategy : public RandomStrategy {
 			if (spell->baseTypes->find(CREATURE) != spell->baseTypes->end()) {
 				if (env.currentPhase == PRECOMBATMAIN) return 999;
 				if (spell->name == "Tempest Djinn") return 20 - islandCount - lordCount;
-				else return 20 - spell->basePower - lordCount;
+				else return (size_t)20 - spell->basePower - lordCount;
 			}
 			else if (spell->name == "Favorable Winds") {
 				return 20 - creatures;

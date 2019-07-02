@@ -76,8 +76,8 @@ public:
 		}
 		else if (ToughnessQuery* toughnessQuery = std::get_if<ToughnessQuery>(&query)) {
 			if (env.permanentCounters.find(toughnessQuery->target.id) != env.permanentCounters.end()) {
-				return tryAtMap(env.permanentCounters.at(powerQuery->target.id), PLUSONEPLUSONECOUNTER, 0u) > 0
-					|| tryAtMap(env.permanentCounters.at(powerQuery->target.id), MINUSONEMINUSONECOUNTER, 0u) > 0;
+				return tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), PLUSONEPLUSONECOUNTER, 0u) > 0
+					|| tryAtMap(env.permanentCounters.at(toughnessQuery->target.id), MINUSONEMINUSONECOUNTER, 0u) > 0;
 			}
 		}
 		return false;

@@ -105,7 +105,7 @@ struct TapCost : public virtual CostImpl<TapCost> {
 	CostValue createCostValue() const { return CostValue(*this); }
 
 protected:
-	bool applies;
+	bool applies = true;
 };
 
 struct SacrificeCost : public virtual CostImpl<SacrificeCost> {

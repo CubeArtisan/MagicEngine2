@@ -124,7 +124,7 @@ std::string CreateObject::ToString(Environment& env) const {
 bool RemoveObject::ApplyTo(Environment& env, Runner&) {
 	std::shared_ptr<ZoneInterface> zoneUnwrapped = std::dynamic_pointer_cast<ZoneInterface>(env.gameObjects[this->zone]);
 	if (zoneUnwrapped->findObject(this->object)) {
-		zoneUnwrapped->removeObject(this->object);
+		std::shared_ptr<const Targetable> removed = zoneUnwrapped->removeObject(this->object);
 	}
 	else {
 #ifdef DEBUG

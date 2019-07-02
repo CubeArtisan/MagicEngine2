@@ -376,7 +376,7 @@ bool CleanupStep::applyEnter(Environment& env, Runner& runner) const {
 
 bool CleanupStep::applyLeave(Environment& env, Runner&) const {
 	// CodeReview: Get next player from Environment
-	unsigned int nextPlayer = (env.turnPlayer + 1) % env.players.size();
+	size_t nextPlayer = (env.turnPlayer + 1) % env.players.size();
 	env.currentPlayer = nextPlayer;
 	env.turnPlayer = nextPlayer;
 	env.turnNumber++;

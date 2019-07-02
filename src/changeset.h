@@ -386,12 +386,20 @@ struct Changeset {
 		return linq::id(this->changes).ofType<U>();
 	}
 
-	linq::id<iterator> linq() {
-		return { this->changes };
+	auto linq() {
+		return linq::id{ this->changes };
 	}
 
-	linq::id<const_iterator> linq() const {
-		return { this->changes };
+	auto linq() const {
+		return linq::id{ this->changes };
+	}
+
+	auto from() {
+		return this->linq();
+	}
+
+	auto from() const {
+		return this->linq();
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const Changeset& changeset);
